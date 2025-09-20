@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useRef } from 'react'
 import { Upload, File, X } from 'lucide-react'
 
@@ -73,7 +71,7 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
       // Call Heroku REST service to process the PDF
       if (resourceId) {
         try {
-          const response = await fetch(process.env.NEXT_PUBLIC_HEROKU_SERVICE_URL, {
+          const response = await fetch(import.meta.env.VITE_HEROKU_SERVICE_URL, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
