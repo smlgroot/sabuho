@@ -57,6 +57,7 @@ export default function HomePage() {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [parentDomainId, setParentDomainId] = useState(undefined);
   const [creatingQuiz, setCreatingQuiz] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const hasLoadedData = useRef(false);
 
   const { user } = useAuth();
@@ -293,7 +294,7 @@ export default function HomePage() {
 
   const AppSidebar = () => (
     <div className="drawer-side">
-      <label htmlFor="drawer-toggle" className="drawer-overlay"></label>
+      <div className="drawer-overlay" onClick={() => setSidebarOpen(false)}></div>
       <aside className="min-h-full w-80 bg-base-200 text-base-content">
         <div className="p-4">
           <h2 className="text-lg font-semibold">Quiz Quest Admin</h2>
@@ -344,18 +345,21 @@ export default function HomePage() {
 
   return (
     <ProtectedRoute>
-      <div className="drawer">
-        <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
+      <div className={`drawer ${sidebarOpen ? 'drawer-open' : ''}`}>
+        <input id="drawer-toggle" type="checkbox" className="drawer-toggle" checked={sidebarOpen} readOnly />
         <div className="drawer-content flex flex-col">
           {/* Header */}
           <header className="border-b p-4 bg-base-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <label htmlFor="drawer-toggle" className="btn btn-square btn-ghost drawer-button">
+                <button 
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="btn btn-square btn-ghost drawer-button"
+                >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
                   </svg>
-                </label>
+                </button>
                 {selectedDomain ? (
                   <div className="breadcrumbs text-sm">
                     <ul>
