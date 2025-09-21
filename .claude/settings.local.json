@@ -8,7 +8,9 @@
       "WebFetch(domain:www.duolingo.com)",
       "WebFetch(domain:www.messenger.com)",
       "Bash(yarn lint)",
-      "WebFetch(domain:daisyui.com)"
+      "WebFetch(domain:daisyui.com)",
+      "Bash(yarn add:*)",
+      "Bash(yarn dev)"
     ],
     "deny": [],
     "ask": []
