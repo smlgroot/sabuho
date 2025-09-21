@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, X, GraduationCap, Folder, FileText } from "lucide-react";
+import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { DomainTree } from "@/components/domain-tree";
 import { QuizList } from "@/components/quiz-list";
@@ -318,22 +318,28 @@ export default function HomePage() {
                 </a>
               </li>
               <li className="w-full">
-                <a className="w-full" onClick={() => {
+                <a className="w-full justify-between" onClick={() => {
                   setActiveView('domains');
                   setSelectedQuiz(null);
                   setCreatingQuiz(false);
                 }}>
-                  <Folder className="h-4 w-4" />
-                  Domains
+                  <div className="flex items-center gap-2">
+                    <Folder className="h-4 w-4" />
+                    Domains
+                  </div>
+                  <ChevronRight className="h-4 w-4" />
                 </a>
               </li>
               <li className="w-full">
-                <a className="w-full" onClick={() => {
+                <a className="w-full justify-between" onClick={() => {
                   setActiveView('quizzes');
                   setSelectedDomain(null);
                 }}>
-                  <FileText className="h-4 w-4" />
-                  Quizzes
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Quizzes
+                  </div>
+                  <ChevronRight className="h-4 w-4" />
                 </a>
               </li>
             </ul>
@@ -347,14 +353,14 @@ export default function HomePage() {
         {/* Overlay content for domains */}
         {activeView === 'domains' && (
           <div className="absolute inset-0 bg-base-200 flex flex-col h-full">
-            <div className="p-4 flex items-center justify-between border-b flex-shrink-0">
-              <h2 className="text-lg font-semibold">Domains</h2>
+            <div className="p-4 flex items-center border-b flex-shrink-0">
               <button 
-                className="btn btn-ghost btn-sm btn-circle"
+                className="btn btn-ghost btn-sm btn-circle mr-2"
                 onClick={() => setActiveView(null)}
               >
-                <X className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
+              <h2 className="text-lg font-semibold">Domains</h2>
             </div>
             <div className="flex-1 px-4 py-4 overflow-y-auto h-full">
               <DomainTree
@@ -375,14 +381,14 @@ export default function HomePage() {
         {/* Overlay content for quizzes */}
         {activeView === 'quizzes' && (
           <div className="absolute inset-0 bg-base-200 flex flex-col h-full">
-            <div className="p-4 flex items-center justify-between border-b flex-shrink-0">
-              <h2 className="text-lg font-semibold">Quizzes</h2>
+            <div className="p-4 flex items-center border-b flex-shrink-0">
               <button 
-                className="btn btn-ghost btn-sm btn-circle"
+                className="btn btn-ghost btn-sm btn-circle mr-2"
                 onClick={() => setActiveView(null)}
               >
-                <X className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
+              <h2 className="text-lg font-semibold">Quizzes</h2>
             </div>
             <div className="flex-1 px-4 py-4 overflow-y-auto h-full">
               <QuizList
