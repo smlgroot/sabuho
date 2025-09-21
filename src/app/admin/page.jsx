@@ -58,6 +58,7 @@ export default function HomePage() {
   const [parentDomainId, setParentDomainId] = useState(undefined);
   const [creatingQuiz, setCreatingQuiz] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeView, setActiveView] = useState(null); // 'learning-hub', 'domains', 'quizzes'
   const hasLoadedData = useRef(false);
 
   const { user } = useAuth();
@@ -295,39 +296,145 @@ export default function HomePage() {
   const AppSidebar = () => (
     <div className="drawer-side">
       <div className="drawer-overlay" onClick={() => setSidebarOpen(false)}></div>
-      <aside className="min-h-full w-80 bg-base-200 text-base-content">
-        <div className="p-4">
-          <h2 className="text-lg font-semibold">Quiz Quest Admin</h2>
-        </div>
-        <div className="flex-1 px-4">
-          <DomainTree
-            domains={domains}
-            onSelectDomain={(domain) => {
-              setSelectedQuiz(null);
-              setCreatingQuiz(false);
-              setSelectedDomain(domain);
-            }}
-            onCreateDomain={handleCreateDomain}
-            onEditDomain={handleEditDomain}
-            onDeleteDomain={handleDeleteDomain}
-          />
-          <QuizList
-            quizzes={quizzes}
-            onCreateQuiz={() => {
-              setSelectedDomain(null);
-              handleQuizCreate();
-            }}
-            onEditQuiz={(quiz) => {
-              setCreatingQuiz(false);
-              setSelectedDomain(null);
-              setSelectedQuiz(quiz);
-            }}
-            onDeleteQuiz={(quiz) => handleDeleteQuiz(quiz.id)}
-          />
-        </div>
-        <div className="p-4">
-          <UserMenu />
-        </div>
+      <aside className="min-h-full w-80 bg-base-200 text-base-content relative">
+        {/* Default sidebar content */}
+        {!activeView && (
+          <>
+            <div className="p-4">
+              <h2 className="text-lg font-semibold">Quiz Quest Admin</h2>
+            </div>
+            
+            {/* Main Navigation Menu */}
+            <div className="flex-1">
+              <ul className="menu menu-vertical px-4 space-y-2">
+                <li>
+                  <button 
+                    className="btn btn-ghost justify-start w-full"
+                    onClick={() => {
+                      setActiveView('learning-hub');
+                      setSelectedDomain(null);
+                      setSelectedQuiz(null);
+                      setCreatingQuiz(false);
+                    }}
+                  >
+                    <span>Learning Hub</span>
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    className="btn btn-ghost justify-start w-full"
+                    onClick={() => {
+                      setActiveView('domains');
+                      setSelectedQuiz(null);
+                      setCreatingQuiz(false);
+                    }}
+                  >
+                    <span>Domains</span>
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    className="btn btn-ghost justify-start w-full"
+                    onClick={() => {
+                      setActiveView('quizzes');
+                      setSelectedDomain(null);
+                    }}
+                  >
+                    <span>Quizzes</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="p-4">
+              <UserMenu />
+            </div>
+          </>
+        )}
+
+        {/* Overlay content for domains */}
+        {activeView === 'domains' && (
+          <div className="absolute inset-0 bg-base-200">
+            <div className="p-4 flex items-center justify-between border-b">
+              <h2 className="text-lg font-semibold">Domains</h2>
+              <button 
+                className="btn btn-ghost btn-sm btn-circle"
+                onClick={() => setActiveView(null)}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 px-4 overflow-y-auto">
+              <DomainTree
+                domains={domains}
+                onSelectDomain={(domain) => {
+                  setSelectedQuiz(null);
+                  setCreatingQuiz(false);
+                  setSelectedDomain(domain);
+                }}
+                onCreateDomain={handleCreateDomain}
+                onEditDomain={handleEditDomain}
+                onDeleteDomain={handleDeleteDomain}
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* Overlay content for quizzes */}
+        {activeView === 'quizzes' && (
+          <div className="absolute inset-0 bg-base-200">
+            <div className="p-4 flex items-center justify-between border-b">
+              <h2 className="text-lg font-semibold">Quizzes</h2>
+              <button 
+                className="btn btn-ghost btn-sm btn-circle"
+                onClick={() => setActiveView(null)}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 px-4 overflow-y-auto">
+              <QuizList
+                quizzes={quizzes}
+                onCreateQuiz={() => {
+                  setSelectedDomain(null);
+                  handleQuizCreate();
+                }}
+                onEditQuiz={(quiz) => {
+                  setCreatingQuiz(false);
+                  setSelectedDomain(null);
+                  setSelectedQuiz(quiz);
+                }}
+                onDeleteQuiz={(quiz) => handleDeleteQuiz(quiz.id)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Overlay content for learning hub */}
+        {activeView === 'learning-hub' && (
+          <div className="absolute inset-0 bg-base-200">
+            <div className="p-4 flex items-center justify-between border-b">
+              <h2 className="text-lg font-semibold">Learning Hub</h2>
+              <button 
+                className="btn btn-ghost btn-sm btn-circle"
+                onClick={() => setActiveView(null)}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 p-4">
+              <div className="text-center py-8">
+                <p className="text-gray-500">Learning Hub placeholder</p>
+              </div>
+            </div>
+          </div>
+        )}
       </aside>
     </div>
   );
@@ -387,7 +494,21 @@ export default function HomePage() {
 
           {/* Content */}
           <main className="flex-1 overflow-y-auto p-6">
-            {selectedDomain ? (
+            {activeView === 'learning-hub' ? (
+              <div className="text-center py-20">
+                <h2 className="text-xl font-semibold mb-2">
+                  Learning Hub
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  This is a placeholder for the Learning Hub feature.
+                </p>
+                <div className="bg-base-200 rounded-lg p-8 max-w-md mx-auto">
+                  <p className="text-sm text-gray-600">
+                    Coming soon: Interactive learning modules, progress tracking, and personalized study plans.
+                  </p>
+                </div>
+              </div>
+            ) : selectedDomain ? (
               <DomainDetail
                 domain={selectedDomain}
                 onUploadResource={() => setResourceUploadOpen(true)}
