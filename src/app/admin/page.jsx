@@ -305,9 +305,9 @@ export default function HomePage() {
             </div>
             
             {/* Main Navigation Menu */}
-            <ul className="menu bg-base-200 text-base-content">
-              <li>
-                <a onClick={() => {
+            <ul className="menu bg-base-200 text-base-content w-full">
+              <li className="w-full">
+                <a className="w-full" onClick={() => {
                   setActiveView('learning-hub');
                   setSelectedDomain(null);
                   setSelectedQuiz(null);
@@ -317,8 +317,8 @@ export default function HomePage() {
                   Learning Hub
                 </a>
               </li>
-              <li>
-                <a onClick={() => {
+              <li className="w-full">
+                <a className="w-full" onClick={() => {
                   setActiveView('domains');
                   setSelectedQuiz(null);
                   setCreatingQuiz(false);
@@ -327,8 +327,8 @@ export default function HomePage() {
                   Domains
                 </a>
               </li>
-              <li>
-                <a onClick={() => {
+              <li className="w-full">
+                <a className="w-full" onClick={() => {
                   setActiveView('quizzes');
                   setSelectedDomain(null);
                 }}>
@@ -346,8 +346,8 @@ export default function HomePage() {
 
         {/* Overlay content for domains */}
         {activeView === 'domains' && (
-          <div className="absolute inset-0 bg-base-200">
-            <div className="p-4 flex items-center justify-between border-b">
+          <div className="absolute inset-0 bg-base-200 flex flex-col h-full">
+            <div className="p-4 flex items-center justify-between border-b flex-shrink-0">
               <h2 className="text-lg font-semibold">Domains</h2>
               <button 
                 className="btn btn-ghost btn-sm btn-circle"
@@ -356,7 +356,7 @@ export default function HomePage() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="flex-1 px-4 overflow-y-auto">
+            <div className="flex-1 px-4 py-4 overflow-y-auto h-full">
               <DomainTree
                 domains={domains}
                 onSelectDomain={(domain) => {
@@ -374,8 +374,8 @@ export default function HomePage() {
         
         {/* Overlay content for quizzes */}
         {activeView === 'quizzes' && (
-          <div className="absolute inset-0 bg-base-200">
-            <div className="p-4 flex items-center justify-between border-b">
+          <div className="absolute inset-0 bg-base-200 flex flex-col h-full">
+            <div className="p-4 flex items-center justify-between border-b flex-shrink-0">
               <h2 className="text-lg font-semibold">Quizzes</h2>
               <button 
                 className="btn btn-ghost btn-sm btn-circle"
@@ -384,7 +384,7 @@ export default function HomePage() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="flex-1 px-4 overflow-y-auto">
+            <div className="flex-1 px-4 py-4 overflow-y-auto h-full">
               <QuizList
                 quizzes={quizzes}
                 onCreateQuiz={() => {

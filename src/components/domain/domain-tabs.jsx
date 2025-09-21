@@ -24,7 +24,7 @@ export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCo
         <FileText className="h-4 w-4 mr-2" />
         Resources
         {resourcesCount > 0 && (
-          <span className="badge badge-secondary ml-2 text-xs">
+          <span className="badge badge-secondary ml-2 text-xs px-2">
             {resourcesCount}
           </span>
         )}

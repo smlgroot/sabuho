@@ -14,7 +14,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
   return (
     <>
       <div className="w-full">
-        <div className="flex items-center group relative" style={{ paddingLeft: `${indentationLeft}px` }}>
+        <div className="flex items-center group relative min-w-0" style={{ paddingLeft: `${indentationLeft}px` }}>
           {hasChildren ? (
             <div
               onClick={(e) => {
@@ -33,7 +33,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
             <div className="w-4 h-4 mr-1 flex-shrink-0" />
           )}
           <button
-            className={`flex-1 pr-8 text-left p-2 rounded hover:bg-muted flex items-center ${isSelected ? 'bg-blue-300 text-white font-medium' : ''}`}
+            className={`flex-1 pr-8 text-left p-2 rounded hover:bg-muted flex items-center min-w-0 ${isSelected ? 'bg-blue-300 text-white font-medium' : ''}`}
             onClick={() => onSelectDomain(domain)}
           >
             <div className="flex items-center mr-2">
@@ -53,7 +53,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
                 )
               )}
             </div>
-            <span className={`flex-1 truncate ${level === 0 ? 'font-medium' : ''}`}>
+            <span className={`flex-1 truncate min-w-0 ${level === 0 ? 'font-medium' : ''}`}>
               {domain.name}
             </span>
             {domain.question_count && domain.question_count > 0 && (
@@ -128,44 +128,36 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
 
 export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain }) {
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between px-2">
-        <h3 className="text-sm font-medium text-muted-foreground mb-2">Domains</h3>
-        <button
-          className="btn btn-ghost btn-sm h-6 w-6 p-0 opacity-70 hover:opacity-100"
-          onClick={() => onCreateDomain()}
-        >
-          <Plus className="h-4 w-4" />
-          <span className="sr-only">Add Domain</span>
-        </button>
-      </div>
-      <div>
-        <div className="space-y-1">
-          {domains.length === 0 ? (
-            <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-              <p>No domains yet</p>
-              <button
-                className="btn btn-ghost btn-sm mt-2 text-xs"
-                onClick={() => onCreateDomain()}
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                Create your first domain
-              </button>
-            </div>
-          ) : (
-            domains.map((domain) => (
-              <DomainNode
-                key={domain.id}
-                domain={domain}
-                level={0}
-                onSelectDomain={onSelectDomain}
-                onCreateDomain={onCreateDomain}
-                onEditDomain={onEditDomain}
-                onDeleteDomain={onDeleteDomain}
-              />
-            ))
-          )}
-        </div>
+    <div className="space-y-4">
+      {/* Add Domain Button */}
+      <button
+        className="btn btn-primary w-full"
+        onClick={() => onCreateDomain()}
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Add Domain
+      </button>
+      
+      {/* Domains List */}
+      <div className="space-y-1 overflow-x-hidden">
+        {domains.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">
+            <p>No domains yet</p>
+            <p className="text-xs mt-1">Click the button above to create your first domain</p>
+          </div>
+        ) : (
+          domains.map((domain) => (
+            <DomainNode
+              key={domain.id}
+              domain={domain}
+              level={0}
+              onSelectDomain={onSelectDomain}
+              onCreateDomain={onCreateDomain}
+              onEditDomain={onEditDomain}
+              onDeleteDomain={onDeleteDomain}
+            />
+          ))
+        )}
       </div>
     </div>
   )
