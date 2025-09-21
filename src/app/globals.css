@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Varela+Round:wght@400&display=swap');
 @import "tailwindcss";
+@import "tw-animate-css";
 @plugin "daisyui" {
   themes: light --default, dark --prefersdark, all;
 }
-@import "tw-animate-css";
 
 
 @custom-variant dark (&:is(.dark *));

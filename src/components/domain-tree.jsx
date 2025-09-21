@@ -34,7 +34,10 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
           )}
           <button
             className={`flex-1 pr-8 text-left p-2 rounded hover:bg-muted flex items-center min-w-0 ${isSelected ? 'bg-blue-300 text-white font-medium' : ''}`}
-            onClick={() => onSelectDomain(domain)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectDomain(domain);
+            }}
           >
             <div className="flex items-center mr-2">
               {level === 0 ? (

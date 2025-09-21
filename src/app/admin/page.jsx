@@ -59,9 +59,31 @@ export default function HomePage() {
   const [creatingQuiz, setCreatingQuiz] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeView, setActiveView] = useState(null); // 'learning-hub', 'domains', 'quizzes'
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animatingOut, setAnimatingOut] = useState(false);
   const hasLoadedData = useRef(false);
 
   const { user } = useAuth();
+
+  const handleCloseActiveView = () => {
+    if (!isAnimating && !animatingOut) {
+      setAnimatingOut(true);
+      setTimeout(() => {
+        setActiveView(null);
+        setAnimatingOut(false);
+      }, 300);
+    }
+  };
+
+  const handleOpenView = (view) => {
+    if (!isAnimating && !animatingOut) {
+      setIsAnimating(true);
+      setActiveView(view);
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 300);
+    }
+  };
 
   const loadDomains = useCallback(async () => {
     try {
@@ -319,7 +341,7 @@ export default function HomePage() {
               </li>
               <li className="w-full">
                 <a className="w-full justify-between" onClick={() => {
-                  setActiveView('domains');
+                  handleOpenView('domains');
                   setSelectedQuiz(null);
                   setCreatingQuiz(false);
                 }}>
@@ -332,7 +354,7 @@ export default function HomePage() {
               </li>
               <li className="w-full">
                 <a className="w-full justify-between" onClick={() => {
-                  setActiveView('quizzes');
+                  handleOpenView('quizzes');
                   setSelectedDomain(null);
                 }}>
                   <div className="flex items-center gap-2">
@@ -352,11 +374,11 @@ export default function HomePage() {
 
         {/* Overlay content for domains */}
         {activeView === 'domains' && (
-          <div className="absolute inset-0 bg-base-200 flex flex-col h-full">
+          <div className={`absolute inset-0 bg-base-200 flex flex-col h-full ${isAnimating ? 'animate-in slide-in-from-right duration-300' : ''} ${animatingOut ? 'animate-out slide-out-to-right duration-300' : ''}`}>
             <div className="p-4 flex items-center border-b flex-shrink-0">
               <button 
                 className="btn btn-ghost btn-sm btn-circle mr-2"
-                onClick={() => setActiveView(null)}
+                onClick={handleCloseActiveView}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -380,11 +402,11 @@ export default function HomePage() {
         
         {/* Overlay content for quizzes */}
         {activeView === 'quizzes' && (
-          <div className="absolute inset-0 bg-base-200 flex flex-col h-full">
+          <div className={`absolute inset-0 bg-base-200 flex flex-col h-full ${isAnimating ? 'animate-in slide-in-from-right duration-300' : ''} ${animatingOut ? 'animate-out slide-out-to-right duration-300' : ''}`}>
             <div className="p-4 flex items-center border-b flex-shrink-0">
               <button 
                 className="btn btn-ghost btn-sm btn-circle mr-2"
-                onClick={() => setActiveView(null)}
+                onClick={handleCloseActiveView}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>

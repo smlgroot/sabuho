@@ -214,14 +214,6 @@ export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDom
               <Calendar className="h-4 w-4" />
               {new Date(localDomain.created_at).toLocaleDateString()}
             </div>
-            <div className="flex items-center gap-1">
-              <HelpCircle className="h-4 w-4" />
-              {localDomain.questions?.length || 0} questions
-            </div>
-            <div className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
-              {localDomain.resources?.length || 0} resources
-            </div>
           </div>
         </div>
       </div>

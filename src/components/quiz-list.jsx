@@ -35,9 +35,9 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
               <div className="flex items-center group relative min-w-0">
                 <button
                   className={`flex-1 pr-8 text-left p-2 rounded hover:bg-muted flex items-center min-w-0 ${selectedQuiz?.id === quiz.id ? 'bg-blue-300 text-white font-medium' : ''}`}
-                  onClick={() => {
-                    setSelectedDomain(null)
-                    setSelectedQuiz(quiz)
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditQuiz(quiz);
                   }}
                 >
                   <FileText className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
