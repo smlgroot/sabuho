@@ -347,17 +347,18 @@ export function QuestionsSection({
   return (
     <div className="card bg-base-100 border">
       <div className="card-body">
-        <div className="flex flex-row items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <h4 className="card-title text-base">Questions</h4>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {selectedQuestions.size > 0 && (
               <>
                 <button 
                   className="btn btn-outline btn-sm"
                   onClick={() => setMoveDialogOpen(true)}
                 >
-                  <Move className="h-4 w-4 mr-2" />
-                  Move ({selectedQuestions.size})
+                  <Move className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Move ({selectedQuestions.size})</span>
+                  <span className="sm:hidden">({selectedQuestions.size})</span>
                 </button>
                 
                 {moveDialogOpen && (
@@ -417,14 +418,14 @@ export function QuestionsSection({
               </>
             )}
             <button className="btn btn-sm" onClick={handleCreateQuestion} disabled={isCreatingQuestion}>
-              <Plus className="h-4 w-4 mr-2" />
-              {isCreatingQuestion ? 'Creating...' : 'Add'}
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{isCreatingQuestion ? 'Creating...' : 'Add'}</span>
             </button>
           </div>
         </div>
         
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <input
@@ -439,24 +440,26 @@ export function QuestionsSection({
               className="btn btn-outline btn-sm shrink-0"
               onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
             >
-              <ArrowUpDown className="h-4 w-4 mr-2" />
-              {sortOrder === 'desc' ? 'Newest' : 'Oldest'}
+              <ArrowUpDown className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{sortOrder === 'desc' ? 'Newest' : 'Oldest'}</span>
+              <span className="sm:hidden">{sortOrder === 'desc' ? 'New' : 'Old'}</span>
             </button>
           </div>
           
           <div className="collapse">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <button 
-                className="btn btn-ghost btn-sm p-0 h-auto"
+                className="btn btn-ghost btn-sm p-0 h-auto justify-start"
                 onClick={() => setFiltersExpanded(!filtersExpanded)}
               >
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    Advanced Filters
+                    <span className="hidden sm:inline">Advanced Filters</span>
+                    <span className="sm:hidden">Filters</span>
                     {hasActiveFilters && (
                       <span className="badge badge-secondary ml-2 text-xs">
-                        {[dateFromFilter && 'Date', resourceIdFilter !== 'all' && 'Type'].filter(Boolean).length} active
+                        {[dateFromFilter && 'Date', resourceIdFilter !== 'all' && 'Type'].filter(Boolean).length}
                       </span>
                     )}
                   </span>
@@ -465,7 +468,7 @@ export function QuestionsSection({
               </button>
               {hasActiveFilters && (
                 <button
-                  className="btn btn-ghost btn-sm text-sm text-muted-foreground hover:text-foreground"
+                  className="btn btn-ghost btn-sm text-sm text-muted-foreground hover:text-foreground self-start sm:self-auto"
                   onClick={() => {
                     setDateFromFilter('')
                     setDateToFilter('')
@@ -478,11 +481,11 @@ export function QuestionsSection({
             </div>
             
             {filtersExpanded && (
-              <div className="space-y-3 pt-3 border-t border-border/40">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
+              <div className="space-y-4 pt-3 border-t border-border/40">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2 lg:col-span-2">
                     <label className="text-sm font-medium text-muted-foreground">Created Date Range</label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                       <div className="flex-1">
                         <label htmlFor="date-from" className="sr-only">From date</label>
                         <input
@@ -494,7 +497,7 @@ export function QuestionsSection({
                           placeholder="From"
                         />
                       </div>
-                      <span className="text-muted-foreground text-sm">to</span>
+                      <span className="text-muted-foreground text-sm self-center hidden sm:block">to</span>
                       <div className="flex-1">
                         <label htmlFor="date-to" className="sr-only">To date</label>
                         <input
@@ -516,9 +519,11 @@ export function QuestionsSection({
                         tabIndex={0}
                         className="btn btn-outline w-full justify-between text-sm"
                       >
-                        {resourceIdFilter === 'all' ? 'All Questions' : 
-                         resourceIdFilter === 'manual' ? 'Manual Questions' : 'Auto-generated Questions'}
-                        <ChevronDown className="h-4 w-4" />
+                        <span className="truncate">
+                          {resourceIdFilter === 'all' ? 'All Questions' : 
+                           resourceIdFilter === 'manual' ? 'Manual' : 'Auto-generated'}
+                        </span>
+                        <ChevronDown className="h-4 w-4 ml-2 shrink-0" />
                       </button>
                       <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-full p-2 shadow">
                         <li>
@@ -539,23 +544,20 @@ export function QuestionsSection({
                       </ul>
                     </div>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Actions</label>
-                    <div className="flex gap-2">
-                      <button
-                        className="btn btn-outline btn-sm flex-1"
-                        onClick={() => {
-                          setDateFromFilter('')
-                          setDateToFilter('')
-                          setResourceIdFilter('all')
-                        }}
-                        disabled={!hasActiveFilters}
-                      >
-                        Reset Filters
-                      </button>
-                    </div>
-                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => {
+                      setDateFromFilter('')
+                      setDateToFilter('')
+                      setResourceIdFilter('all')
+                    }}
+                    disabled={!hasActiveFilters}
+                  >
+                    Reset Filters
+                  </button>
                 </div>
               </div>
             )}
@@ -564,24 +566,26 @@ export function QuestionsSection({
         
         {filteredAndSortedQuestions.length > 0 ? (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
-              <input
-                type="checkbox"
-                className="checkbox"
-                checked={
-                  filteredAndSortedQuestions.length > 0 &&
-                  filteredAndSortedQuestions.every(q => selectedQuestions.has(q.id))
-                }
-                onChange={handleSelectAll}
-              />
-              <span className="text-sm font-medium">
-                {selectedQuestions.size > 0
-                  ? `${selectedQuestions.size} of ${filteredAndSortedQuestions.length} selected`
-                  : 'Select all'}
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 bg-gray-50 rounded-md">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="checkbox"
+                  checked={
+                    filteredAndSortedQuestions.length > 0 &&
+                    filteredAndSortedQuestions.every(q => selectedQuestions.has(q.id))
+                  }
+                  onChange={handleSelectAll}
+                />
+                <span className="text-sm font-medium">
+                  {selectedQuestions.size > 0
+                    ? `${selectedQuestions.size} of ${filteredAndSortedQuestions.length} selected`
+                    : 'Select all'}
+                </span>
+              </div>
               {selectedQuestions.size > 0 && (
                 <button
-                  className="btn btn-ghost btn-sm h-auto p-1 text-xs"
+                  className="btn btn-ghost btn-sm h-auto p-1 text-xs self-start sm:self-auto"
                   onClick={() => setSelectedQuestions(new Set())}
                 >
                   Clear selection
