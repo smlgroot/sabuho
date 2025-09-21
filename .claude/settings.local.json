@@ -7,7 +7,8 @@
       "Bash(npx tsc:*)",
       "WebFetch(domain:www.duolingo.com)",
       "WebFetch(domain:www.messenger.com)",
-      "Bash(yarn lint)"
+      "Bash(yarn lint)",
+      "WebFetch(domain:daisyui.com)"
     ],
     "deny": [],
     "ask": []

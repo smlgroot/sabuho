@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus } from "lucide-react";
+import { Plus, X, GraduationCap, Folder, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { DomainTree } from "@/components/domain-tree";
 import { QuizList } from "@/components/quiz-list";
@@ -298,55 +298,47 @@ export default function HomePage() {
       <div className="drawer-overlay" onClick={() => setSidebarOpen(false)}></div>
       <aside className="min-h-full w-80 bg-base-200 text-base-content relative">
         {/* Default sidebar content */}
-        {!activeView && (
+        {activeView !== 'domains' && activeView !== 'quizzes' && (
           <>
             <div className="p-4">
               <h2 className="text-lg font-semibold">Quiz Quest Admin</h2>
             </div>
             
             {/* Main Navigation Menu */}
-            <div className="flex-1">
-              <ul className="menu menu-vertical px-4 space-y-2">
-                <li>
-                  <button 
-                    className="btn btn-ghost justify-start w-full"
-                    onClick={() => {
-                      setActiveView('learning-hub');
-                      setSelectedDomain(null);
-                      setSelectedQuiz(null);
-                      setCreatingQuiz(false);
-                    }}
-                  >
-                    <span>Learning Hub</span>
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    className="btn btn-ghost justify-start w-full"
-                    onClick={() => {
-                      setActiveView('domains');
-                      setSelectedQuiz(null);
-                      setCreatingQuiz(false);
-                    }}
-                  >
-                    <span>Domains</span>
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    className="btn btn-ghost justify-start w-full"
-                    onClick={() => {
-                      setActiveView('quizzes');
-                      setSelectedDomain(null);
-                    }}
-                  >
-                    <span>Quizzes</span>
-                  </button>
-                </li>
-              </ul>
-            </div>
+            <ul className="menu bg-base-200 text-base-content">
+              <li>
+                <a onClick={() => {
+                  setActiveView('learning-hub');
+                  setSelectedDomain(null);
+                  setSelectedQuiz(null);
+                  setCreatingQuiz(false);
+                }}>
+                  <GraduationCap className="h-4 w-4" />
+                  Learning Hub
+                </a>
+              </li>
+              <li>
+                <a onClick={() => {
+                  setActiveView('domains');
+                  setSelectedQuiz(null);
+                  setCreatingQuiz(false);
+                }}>
+                  <Folder className="h-4 w-4" />
+                  Domains
+                </a>
+              </li>
+              <li>
+                <a onClick={() => {
+                  setActiveView('quizzes');
+                  setSelectedDomain(null);
+                }}>
+                  <FileText className="h-4 w-4" />
+                  Quizzes
+                </a>
+              </li>
+            </ul>
             
-            <div className="p-4">
+            <div className="absolute bottom-0 w-full p-4">
               <UserMenu />
             </div>
           </>
@@ -361,9 +353,7 @@ export default function HomePage() {
                 className="btn btn-ghost btn-sm btn-circle"
                 onClick={() => setActiveView(null)}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+                <X className="h-4 w-4" />
               </button>
             </div>
             <div className="flex-1 px-4 overflow-y-auto">
@@ -391,9 +381,7 @@ export default function HomePage() {
                 className="btn btn-ghost btn-sm btn-circle"
                 onClick={() => setActiveView(null)}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+                <X className="h-4 w-4" />
               </button>
             </div>
             <div className="flex-1 px-4 overflow-y-auto">
@@ -410,28 +398,6 @@ export default function HomePage() {
                 }}
                 onDeleteQuiz={(quiz) => handleDeleteQuiz(quiz.id)}
               />
-            </div>
-          </div>
-        )}
-
-        {/* Overlay content for learning hub */}
-        {activeView === 'learning-hub' && (
-          <div className="absolute inset-0 bg-base-200">
-            <div className="p-4 flex items-center justify-between border-b">
-              <h2 className="text-lg font-semibold">Learning Hub</h2>
-              <button 
-                className="btn btn-ghost btn-sm btn-circle"
-                onClick={() => setActiveView(null)}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 p-4">
-              <div className="text-center py-8">
-                <p className="text-gray-500">Learning Hub placeholder</p>
-              </div>
             </div>
           </div>
         )}
