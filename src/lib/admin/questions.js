@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase } from '../supabase'
 
 export async function createQuestion(questionData) {
   const { data: { user } } = await supabase.auth.getUser()

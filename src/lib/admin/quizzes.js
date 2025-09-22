@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase } from '../supabase'
 
 export async function fetchQuizzes() {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()

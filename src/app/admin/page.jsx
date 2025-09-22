@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, Menu } from "lucide-react";
+import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, Menu, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { DomainTree } from "./components/domains/domain-tree";
 import { QuizList } from "./components/quizzes/quiz-list";
@@ -25,6 +25,7 @@ import { uploadResource } from "@/lib/admin/resources";
 import { createQuestion } from "@/lib/admin/questions";
 import { fetchQuizzes, createQuiz as createQuizApi, updateQuiz as updateQuizApi, deleteQuiz as deleteQuizApi } from "@/lib/admin/quizzes";
 import LearningPath from '../game/LearningPath';
+import Quizzes from '../game/Quizzes';
 
 export default function AdminPage() {
   const {
@@ -61,7 +62,7 @@ export default function AdminPage() {
   const [creatingQuiz, setCreatingQuiz] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [secondSidebarOpen, setSecondSidebarOpen] = useState(true);
-  const [activeView, setActiveView] = useState('learning-hub'); // 'learning-hub', 'domains', 'quizzes'
+  const [activeView, setActiveView] = useState('learning-hub'); // 'learning-hub', 'domains', 'quizzes', 'shop'
   const hasLoadedData = useRef(false);
 
   const { user } = useAuth();
@@ -324,6 +325,24 @@ export default function AdminPage() {
           <span className="text-xs">Learning</span>
         </button>
         
+        {/* Shop */}
+        <button 
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'shop' ? 'btn-active' : ''}`}
+          onClick={() => {
+            setActiveView('shop');
+            setSelectedDomain(null);
+            setSelectedQuiz(null);
+            setCreatingQuiz(false);
+            if (!secondSidebarOpen) setSecondSidebarOpen(true);
+          }}
+        >
+          <ShoppingBag className="h-6 w-6" />
+          <span className="text-xs">Shop</span>
+        </button>
+        
+        {/* Separator */}
+        <div className="divider w-12 my-2 mx-auto"></div>
+        
         {/* Domains */}
         <button 
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'domains' ? 'btn-active' : ''}`}
@@ -364,9 +383,13 @@ export default function AdminPage() {
    
     <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col min-h-full">
       {activeView === 'learning-hub' && (
-<LearningPath />
+        <LearningPath />
       )}
       
+      {activeView === 'shop' && (
+        <Quizzes />
+      )}
+
       {activeView === 'domains' && (
         <div className="flex flex-col h-full">
           <div className="p-4 border-b">
@@ -448,6 +471,21 @@ export default function AdminPage() {
                 <div className="bg-base-200 rounded-lg p-8 max-w-md mx-auto">
                   <p className="text-sm text-gray-600">
                     Coming soon: Interactive learning modules, progress tracking, and personalized study plans.
+                  </p>
+                </div>
+              </div>
+            ) : activeView === 'shop' ? (
+              <div className="text-center py-20">
+                <h2 className="text-xl font-semibold mb-2">
+                  Quiz Shop
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  This is a placeholder for the Quiz Shop feature.
+                </p>
+                <div className="bg-base-200 rounded-lg p-8 max-w-md mx-auto">
+                  <ShoppingBag className="h-16 w-16 text-base-300 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600">
+                    Coming soon: unlock special question packs, and access exclusive learning materials.
                   </p>
                 </div>
               </div>

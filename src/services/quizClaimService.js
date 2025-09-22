@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { database } from '../lib/database'
+import { database } from '../lib/game/database'
 
 const LevelType = {
   NORMAL: 'normal',

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LearningHubLayout from './LearningHubLayout';
 import LearningPathHeader from './LearningPathHeader';
 import { Star, Zap, Crown, Lock, CheckCircle, BookOpen, AlertTriangle, Plus } from 'lucide-react';
 import { database } from '../../lib/game/database';
@@ -217,9 +216,9 @@ function LearningPath() {
   );
 
   return (
-    <LearningHubLayout title="Learning">
-      {/* Second Sticky Header - Quiz Selector */}
-      <div className="sticky top-16 z-30 bg-base-100 border-b border-base-200 py-4 -mx-4 md:-mx-6 px-4 md:px-6 mb-6 -mt-4 pt-4">
+<>
+    {/* Second Sticky Header - Quiz Selector */}
+      <div className="sticky top-2 right-0 left-0 z-30 bg-base-100 border-b border-base-200 ">
         <LearningPathHeader 
           availableQuizzes={availableQuizzes}
           isLoading={isLoading}
@@ -313,7 +312,7 @@ function LearningPath() {
           </div>
         </div>
       )}
-    </LearningHubLayout>
+  </>
   );
 }
 
