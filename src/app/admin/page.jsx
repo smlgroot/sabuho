@@ -58,32 +58,11 @@ export default function AdminPage() {
   const [parentDomainId, setParentDomainId] = useState(undefined);
   const [creatingQuiz, setCreatingQuiz] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeView, setActiveView] = useState(null); // 'learning-hub', 'domains', 'quizzes'
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [animatingOut, setAnimatingOut] = useState(false);
+  const [activeView, setActiveView] = useState('learning-hub'); // 'learning-hub', 'domains', 'quizzes'
   const hasLoadedData = useRef(false);
 
   const { user } = useAuth();
 
-  const handleCloseActiveView = () => {
-    if (!isAnimating && !animatingOut) {
-      setAnimatingOut(true);
-      setTimeout(() => {
-        setActiveView(null);
-        setAnimatingOut(false);
-      }, 300);
-    }
-  };
-
-  const handleOpenView = (view) => {
-    if (!isAnimating && !animatingOut) {
-      setIsAnimating(true);
-      setActiveView(view);
-      setTimeout(() => {
-        setIsAnimating(false);
-      }, 300);
-    }
-  };
 
   const loadDomains = useCallback(async () => {
     try {
@@ -315,122 +294,119 @@ export default function AdminPage() {
     return path;
   };
 
-  const AppSidebar = () => (
-    <div className="drawer-side">
-      <div className="drawer-overlay" onClick={() => setSidebarOpen(false)}></div>
-      <aside className="min-h-full w-80 bg-base-200 text-base-content relative">
-        {/* Default sidebar content */}
-        {activeView !== 'domains' && activeView !== 'quizzes' && (
-          <>
-            <div className="p-4">
-              <h2 className="text-lg font-semibold">Quiz Quest Admin</h2>
-            </div>
-            
-            {/* Main Navigation Menu */}
-            <ul className="menu bg-base-200 text-base-content w-full">
-              <li className="w-full">
-                <a className="w-full" onClick={() => {
-                  setActiveView('learning-hub');
-                  setSelectedDomain(null);
-                  setSelectedQuiz(null);
-                  setCreatingQuiz(false);
-                }}>
-                  <GraduationCap className="h-4 w-4" />
-                  Learning Hub
-                </a>
-              </li>
-              <li className="w-full">
-                <a className="w-full justify-between" onClick={() => {
-                  handleOpenView('domains');
-                  setSelectedQuiz(null);
-                  setCreatingQuiz(false);
-                }}>
-                  <div className="flex items-center gap-2">
-                    <Folder className="h-4 w-4" />
-                    Domains
-                  </div>
-                  <ChevronRight className="h-4 w-4" />
-                </a>
-              </li>
-              <li className="w-full">
-                <a className="w-full justify-between" onClick={() => {
-                  handleOpenView('quizzes');
-                  setSelectedDomain(null);
-                }}>
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Quizzes
-                  </div>
-                  <ChevronRight className="h-4 w-4" />
-                </a>
-              </li>
-            </ul>
-            
-            <div className="absolute bottom-0 w-full p-4">
-              <UserMenu />
-            </div>
-          </>
-        )}
-
-        {/* Overlay content for domains */}
-        {activeView === 'domains' && (
-          <div className={`absolute inset-0 bg-base-200 flex flex-col h-full ${isAnimating ? 'animate-in slide-in-from-right duration-300' : ''} ${animatingOut ? 'animate-out slide-out-to-right duration-300' : ''}`}>
-            <div className="p-4 flex items-center border-b flex-shrink-0">
-              <button 
-                className="btn btn-ghost btn-sm btn-circle mr-2"
-                onClick={handleCloseActiveView}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <h2 className="text-lg font-semibold">Domains</h2>
-            </div>
-            <div className="flex-1 px-4 py-4 overflow-y-auto h-full">
-              <DomainTree
-                domains={domains}
-                onSelectDomain={(domain) => {
-                  setSelectedQuiz(null);
-                  setCreatingQuiz(false);
-                  setSelectedDomain(domain);
-                }}
-                onCreateDomain={handleCreateDomain}
-                onEditDomain={handleEditDomain}
-                onDeleteDomain={handleDeleteDomain}
-              />
-            </div>
-          </div>
-        )}
+  const MainSidebar = () => (
+    <aside className="w-20 bg-base-200 text-base-content flex flex-col min-h-full border-r border-base-300">
+      {/* Main Navigation Menu */}
+      <div className="flex-1 flex flex-col items-center py-4 gap-2">
+        {/* Learning Hub */}
+        <button 
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'learning-hub' ? 'btn-active' : ''}`}
+          onClick={() => {
+            setActiveView('learning-hub');
+            setSelectedDomain(null);
+            setSelectedQuiz(null);
+            setCreatingQuiz(false);
+          }}
+        >
+          <GraduationCap className="h-6 w-6" />
+          <span className="text-xs">Learning</span>
+        </button>
         
-        {/* Overlay content for quizzes */}
-        {activeView === 'quizzes' && (
-          <div className={`absolute inset-0 bg-base-200 flex flex-col h-full ${isAnimating ? 'animate-in slide-in-from-right duration-300' : ''} ${animatingOut ? 'animate-out slide-out-to-right duration-300' : ''}`}>
-            <div className="p-4 flex items-center border-b flex-shrink-0">
-              <button 
-                className="btn btn-ghost btn-sm btn-circle mr-2"
-                onClick={handleCloseActiveView}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <h2 className="text-lg font-semibold">Quizzes</h2>
-            </div>
-            <div className="flex-1 px-4 py-4 overflow-y-auto h-full">
-              <QuizList
-                quizzes={quizzes}
-                onCreateQuiz={() => {
-                  setSelectedDomain(null);
-                  handleQuizCreate();
-                }}
-                onEditQuiz={(quiz) => {
-                  setCreatingQuiz(false);
-                  setSelectedDomain(null);
-                  setSelectedQuiz(quiz);
-                }}
-                onDeleteQuiz={(quiz) => handleDeleteQuiz(quiz.id)}
-              />
+        {/* Domains */}
+        <button 
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'domains' ? 'btn-active' : ''}`}
+          onClick={() => {
+            setActiveView('domains');
+            setSelectedQuiz(null);
+            setCreatingQuiz(false);
+          }}
+        >
+          <Folder className="h-6 w-6" />
+          <span className="text-xs">Domains</span>
+        </button>
+        
+        {/* Quizzes */}
+        <button 
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'quizzes' ? 'btn-active' : ''}`}
+          onClick={() => {
+            setActiveView('quizzes');
+            setSelectedDomain(null);
+          }}
+        >
+          <FileText className="h-6 w-6" />
+          <span className="text-xs">Quizzes</span>
+        </button>
+      </div>
+      
+      {/* User Menu at bottom */}
+      <div className="p-2">
+        <UserMenu />
+      </div>
+    </aside>
+  );
+
+  const SecondSidebar = () => (
+    <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col min-h-full">
+      {activeView === 'learning-hub' && (
+        <div className="p-6 flex flex-col h-full">
+          <h3 className="text-lg font-semibold mb-4">Learning Hub</h3>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center py-8">
+              <div className="bg-base-200 rounded-lg p-8 max-w-sm">
+                <GraduationCap className="h-12 w-12 mx-auto mb-4 text-primary" />
+                <p className="text-sm text-gray-600">
+                  Learning hub content will appear here. This is a placeholder for future learning modules and progress tracking.
+                </p>
+              </div>
             </div>
           </div>
-        )}
-      </aside>
-    </div>
+        </div>
+      )}
+      
+      {activeView === 'domains' && (
+        <div className="flex flex-col h-full">
+          <div className="p-4 border-b">
+            <h3 className="text-lg font-semibold">Domains</h3>
+          </div>
+          <div className="flex-1 p-4 overflow-y-auto">
+            <DomainTree
+              domains={domains}
+              onSelectDomain={(domain) => {
+                setSelectedQuiz(null);
+                setCreatingQuiz(false);
+                setSelectedDomain(domain);
+              }}
+              onCreateDomain={handleCreateDomain}
+              onEditDomain={handleEditDomain}
+              onDeleteDomain={handleDeleteDomain}
+            />
+          </div>
+        </div>
+      )}
+      
+      {activeView === 'quizzes' && (
+        <div className="flex flex-col h-full">
+          <div className="p-4 border-b">
+            <h3 className="text-lg font-semibold">Quizzes</h3>
+          </div>
+          <div className="flex-1 p-4 overflow-y-auto">
+            <QuizList
+              quizzes={quizzes}
+              onCreateQuiz={() => {
+                setSelectedDomain(null);
+                handleQuizCreate();
+              }}
+              onEditQuiz={(quiz) => {
+                setCreatingQuiz(false);
+                setSelectedDomain(null);
+                setSelectedQuiz(quiz);
+              }}
+              onDeleteQuiz={(quiz) => handleDeleteQuiz(quiz.id)}
+            />
+          </div>
+        </div>
+      )}
+    </aside>
   );
 
   if (loading) {
@@ -446,16 +422,22 @@ export default function AdminPage() {
 
   return (
     <ProtectedRoute>
-      <div className={`drawer ${sidebarOpen ? 'drawer-open' : ''}`}>
-        <input id="drawer-toggle" type="checkbox" className="drawer-toggle" checked={sidebarOpen} readOnly />
-        <div className="drawer-content flex flex-col">
+      <div className="min-h-screen flex">
+        {/* Main Sidebar */}
+        {sidebarOpen && <MainSidebar />}
+        
+        {/* Second Sidebar */}
+        <SecondSidebar />
+        
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col">
           {/* Header */}
           <header className="border-b p-4 bg-base-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="btn btn-square btn-ghost drawer-button"
+                  className="btn btn-square btn-ghost"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -488,7 +470,7 @@ export default function AdminPage() {
 
           {/* Content */}
           <main className="flex-1 overflow-y-auto p-6">
-            {activeView === 'learning-hub' ? (
+            {activeView === 'learning-hub' && !selectedDomain && !selectedQuiz && !creatingQuiz ? (
               <div className="text-center py-20">
                 <h2 className="text-xl font-semibold mb-2">
                   Learning Hub
@@ -581,8 +563,6 @@ export default function AdminPage() {
           domain={deletingDomain}
           onConfirm={handleConfirmDeleteDomain}
         />
-
-        <AppSidebar />
       </div>
     </ProtectedRoute>
   );
