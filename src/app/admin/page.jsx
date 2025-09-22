@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, Menu } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ import {
 import { uploadResource } from "@/lib/admin/resources";
 import { createQuestion } from "@/lib/admin/questions";
 import { fetchQuizzes, createQuiz as createQuizApi, updateQuiz as updateQuizApi, deleteQuiz as deleteQuizApi } from "@/lib/admin/quizzes";
+import LearningPath from '../game/LearningPath';
 
 export default function AdminPage() {
   const {
@@ -356,23 +358,13 @@ export default function AdminPage() {
       </div>
     </aside>
   );
+  const { t } = useTranslation();
 
   const SecondSidebar = () => (
+   
     <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col min-h-full">
       {activeView === 'learning-hub' && (
-        <div className="p-6 flex flex-col h-full">
-          <h3 className="text-lg font-semibold mb-4">Learning Hub</h3>
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center py-8">
-              <div className="bg-base-200 rounded-lg p-8 max-w-sm">
-                <GraduationCap className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <p className="text-sm text-gray-600">
-                  Learning hub content will appear here. This is a placeholder for future learning modules and progress tracking.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+<LearningPath />
       )}
       
       {activeView === 'domains' && (

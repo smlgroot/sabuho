@@ -7,6 +7,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   es: {
     translation: {
+      "Learning Hub": "Centro de Aprendizaje",
       // Navigation and common
       "Welcome to Sabuho": "Bienvenido a Sabuho",
       "Home": "Inicio",
@@ -37,7 +38,6 @@ const resources = {
       "Create Account": "Crear Cuenta",
       "Already have an account?": "¿Ya tienes una cuenta?",
       "Don't have an account?": "¿No tienes una cuenta?",
-      "Welcome back": "Bienvenido de vuelta",
       "Sign in to continue your learning journey": "Inicia sesión para continuar tu viaje de aprendizaje",
       "Email address": "Dirección de correo electrónico",
       "Enter your email": "Ingresa tu correo electrónico",
@@ -52,7 +52,6 @@ const resources = {
       "Confirm password": "Confirmar contraseña",
       "Confirm your password": "Confirma tu contraseña",
       "Creating account": "Creando cuenta",
-      "Close": "Cerrar",
       "An unexpected error occurred": "Ocurrió un error inesperado",
       "Passwords do not match": "Las contraseñas no coinciden",
       "Password must be at least 6 characters long": "La contraseña debe tener al menos 6 caracteres",
@@ -98,12 +97,10 @@ const resources = {
       "Completed": "Completado",
       "In Progress": "En Progreso",
       "Accuracy": "Precisión",
-      "Continue Learning": "Continuar Aprendiendo",
       "Pick up where you left off in your learning path.": "Continúa donde lo dejaste en tu ruta de aprendizaje.",
       "Continue": "Continuar",
       "Take a Quiz": "Tomar un Cuestionario",
       "Test your knowledge with practice quizzes.": "Pon a prueba tu conocimiento con cuestionarios de práctica.",
-      "Start Quiz": "Iniciar Cuestionario",
       "Notifications": "Notificaciones",
       
       // Quiz Screen
@@ -111,15 +108,12 @@ const resources = {
       "Review Mode": "Modo de Revisión",
       "Question": "Pregunta",
       "of": "de",
-      "Previous": "Anterior",
       "Submit Answer": "Enviar Respuesta",
-      "Next": "Siguiente",
       "Finish": "Finalizar",
       "Answer Review": "Revisión de Respuesta",
       "Explanation": "Explicación",
       "Exit Quiz?": "¿Salir del Cuestionario?",
       "Are you sure you want to exit this quiz? Your progress will be lost.": "¿Estás seguro de que quieres salir de este cuestionario? Tu progreso se perderá.",
-      "Cancel": "Cancelar",
       "Exit Quiz": "Salir del Cuestionario",
       
       // Common actions
