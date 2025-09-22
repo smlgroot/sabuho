@@ -54,7 +54,7 @@ const getQuizColor = (quiz) => {
   return colors[colorIndex];
 };
 
-function LearningPathHeader({ availableQuizzes = [], isLoading = false }) {
+function LearningPathHeader({ availableQuizzes = [], isLoading = false, onAddMore }) {
   // Get selected quiz from store for consistency
   const { selectedQuiz, setSelectedQuiz } = useGameStore();
   const [isOpen, setIsOpen] = useState(false);
@@ -153,9 +153,10 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false }) {
                           <div className="flex justify-center">
                             <button
                               onClick={() => {
-                                // Add your handler for adding more quizzes here
-                                console.log('Add more quizzes clicked');
                                 setIsOpen(false);
+                                if (onAddMore) {
+                                  onAddMore();
+                                }
                               }}
                               className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 bg-base-200/50 hover:bg-base-200 border-2 border-dashed border-base-300 hover:border-primary"
                             >
@@ -200,9 +201,10 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false }) {
                           {/* Add More Quizzes Option */}
                           <button
                             onClick={() => {
-                              // Add your handler for adding more quizzes here
-                              console.log('Add more quizzes clicked');
                               setIsOpen(false);
+                              if (onAddMore) {
+                                onAddMore();
+                              }
                             }}
                             className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 bg-base-200/50 hover:bg-base-200 border-2 border-dashed border-base-300 hover:border-primary"
                           >

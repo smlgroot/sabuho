@@ -5,7 +5,7 @@ import { Star, Zap, Crown, Lock, CheckCircle, BookOpen, AlertTriangle, Plus } fr
 import { database } from '../../lib/game/database';
 import useGameStore from '../../store/useGameStore';
 
-function LearningPath() {
+function LearningPath({ onNavigateToShop }) {
   // Get selected quiz from store for persistence
   const { selectedQuiz, setSelectedQuiz } = useGameStore();
   const navigate = useNavigate();
@@ -222,6 +222,7 @@ function LearningPath() {
         <LearningPathHeader 
           availableQuizzes={availableQuizzes}
           isLoading={isLoading}
+          onAddMore={onNavigateToShop}
         />
       </div>
       
