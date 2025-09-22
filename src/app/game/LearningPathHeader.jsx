@@ -12,7 +12,8 @@ import {
   Beaker, 
   Brain,
   Trophy,
-  HelpCircle
+  HelpCircle,
+  Plus
 } from 'lucide-react';
 
 // Default icon mapping for quizzes (fallback when no specific icon is available)
@@ -125,7 +126,7 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false }) {
                   <div className="mx-4 md:mx-0 bg-base-100 rounded-2xl shadow-2xl border border-base-200 animate-in slide-in-from-top duration-200">
                     {/* Header with close button */}
                     <div className="px-4 py-3 border-b border-base-200 flex items-center justify-between">
-                      <h3 className="font-semibold text-base-content">Choose Subject</h3>
+                      <h3 className="font-semibold text-base-content">Choose Quiz</h3>
                       <button
                         onClick={() => setIsOpen(false)}
                         className="btn btn-ghost btn-sm btn-circle hover:bg-base-200"
@@ -143,10 +144,29 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false }) {
                       ) : availableQuizzes.length === 0 ? (
                         <div className="text-center py-8">
                           <HelpCircle className="w-12 h-12 text-base-content/40 mx-auto mb-3" />
-                          <p className="text-base-content/70 text-sm">
+                          <p className="text-base-content/70 text-sm mb-4">
                             No quizzes available.<br/>
                             Add a quiz code to get started!
                           </p>
+                          
+                          {/* Add More Quizzes Option - Always visible */}
+                          <div className="flex justify-center">
+                            <button
+                              onClick={() => {
+                                // Add your handler for adding more quizzes here
+                                console.log('Add more quizzes clicked');
+                                setIsOpen(false);
+                              }}
+                              className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 bg-base-200/50 hover:bg-base-200 border-2 border-dashed border-base-300 hover:border-primary"
+                            >
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary">
+                                <Plus className="w-5 h-5" />
+                              </div>
+                              <span className="text-xs font-medium text-center text-base-content">
+                                Add More
+                              </span>
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div className="grid grid-cols-4 gap-3">
@@ -176,6 +196,23 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false }) {
                               </button>
                             );
                           })}
+                          
+                          {/* Add More Quizzes Option */}
+                          <button
+                            onClick={() => {
+                              // Add your handler for adding more quizzes here
+                              console.log('Add more quizzes clicked');
+                              setIsOpen(false);
+                            }}
+                            className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 bg-base-200/50 hover:bg-base-200 border-2 border-dashed border-base-300 hover:border-primary"
+                          >
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary">
+                              <Plus className="w-5 h-5" />
+                            </div>
+                            <span className="text-xs font-medium text-center text-base-content">
+                              Add More
+                            </span>
+                          </button>
                         </div>
                       )}
                     </div>
