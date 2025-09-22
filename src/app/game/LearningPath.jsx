@@ -146,17 +146,17 @@ function LearningPath({ onNavigateToShop }) {
     }
 
     if (completed) {
-      return `${baseStyles} ${interactiveStyles} bg-success text-success-content shadow-lg`;
+      return `${baseStyles} ${interactiveStyles} bg-success text-success-content`;
     }
 
     switch (type) {
       case 'mini-boss':
-        return `${baseStyles} ${interactiveStyles} bg-warning text-warning-content shadow-md w-16 h-16`;
+        return `${baseStyles} ${interactiveStyles} bg-warning text-warning-content w-16 h-16`;
       case 'boss':
-        return `${baseStyles} ${interactiveStyles} bg-error text-error-content shadow-xl w-20 h-20`;
+        return `${baseStyles} ${interactiveStyles} bg-error text-error-content w-20 h-20`;
       default: {
         const levelColor = getLevelColor(index, type);
-        return `${baseStyles} ${interactiveStyles} ${levelColor} shadow-md w-12 h-12`;
+        return `${baseStyles} ${interactiveStyles} ${levelColor} w-12 h-12`;
       }
     }
   };
@@ -245,55 +245,30 @@ function LearningPath({ onNavigateToShop }) {
                 <div key={level.id} className="relative">
                   {/* Level card with icon and name */}
                   <div
-                    className={`shadow-md relative z-10 ${
-                      level.type === 'boss' ? 'border-2 border-error bg-error/5' : 
-                      level.type === 'mini-boss' ? 'border-2 border-warning bg-warning/5' : 
-                      'bg-base-100'
-                    } ${level.locked ? 'opacity-60 cursor-not-allowed' : 'card cursor-pointer hover:shadow-lg transition-all duration-300'} ${level.completed ? 'hover:bg-base-200' : ''}`}
+                    className={`relative z-10 p-4 ${
+                      level.locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-base-200/50 transition-colors duration-200'
+                    }`}
                     onClick={() => handleLevelClick(level)}
                   >
-                    <div className="card-body p-4">
-                      <div className="flex items-center gap-4">
-                        {/* Level icon - Each level gets a different color based on its position */}
-                        <div className={`${getLevelStyles(level.type, level.completed, level.locked, index)} ${getLevelSize(level.type)} flex-shrink-0`}>
-                          {level.locked ? (
-                            <Lock className="w-5 h-5" />
-                          ) : level.completed ? (
-                            <CheckCircle className="w-6 h-6" />
-                          ) : (
-                            getLevelIcon(level.type)
-                          )}
-                        </div>
-
-                        {/* Level info */}
-                        <div className="flex-1">
-                          <h3 className={`text-lg font-semibold ${level.locked ? 'text-base-content/50' : 'text-base-content'}`}>
-                            {level.name}
-                          </h3>
-                          <p className={`text-sm ${
-                            level.type === 'boss' ? 'text-error' : 
-                            level.type === 'mini-boss' ? 'text-warning' : 
-                            'text-base-content/70'
-                          }`}>
-                            {level.type === 'mini-boss' ? 'Mini Boss Challenge' : 
-                             level.type === 'boss' ? 'Final Boss Battle' : 
-                             'Standard Level'}
-                            {level.completed && (
-                              <span className="text-xs text-base-content/50 ml-2">• Click to review</span>
-                            )}
-                          </p>
-                        </div>
-
-                        {/* Status indicator */}
-                        {level.completed && (
-                          <div className="text-success">
-                            <CheckCircle className="w-5 h-5" />
-                          </div>
+                    <div className="flex items-center gap-4">
+                      {/* Level icon - Each level gets a different color based on its position */}
+                      <div className={`${getLevelStyles(level.type, level.completed, level.locked, index)} ${getLevelSize(level.type)} flex-shrink-0`}>
+                        {level.locked ? (
+                          <Lock className="w-5 h-5" />
+                        ) : level.completed ? (
+                          <CheckCircle className="w-6 h-6" />
+                        ) : (
+                          getLevelIcon(level.type)
                         )}
-                        {level.locked && (
-                          <div className="text-base-content/30">
-                            <Lock className="w-5 h-5" />
-                          </div>
+                      </div>
+
+                      {/* Level info */}
+                      <div className="flex-1">
+                        <h3 className={`text-lg font-semibold ${level.locked ? 'text-base-content/50' : 'text-base-content'}`}>
+                          {level.name}
+                        </h3>
+                        {level.completed && (
+                          <span className="text-xs text-base-content/50">Click to review</span>
                         )}
                       </div>
                     </div>
