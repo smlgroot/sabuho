@@ -16,24 +16,24 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
       <div className="w-full">
         <div className="flex items-center group relative min-w-0" style={{ paddingLeft: `${indentationLeft}px` }}>
           {hasChildren ? (
-            <div
+            <button
               onClick={(e) => {
                 e.stopPropagation()
                 toggleDomainCollapsed(domain.id)
               }}
-              className="hover:bg-muted rounded p-0.5 mr-1 cursor-pointer flex-shrink-0"
+              className="btn btn-ghost btn-xs p-0.5 mr-1 flex-shrink-0"
             >
               {isCollapsed ? (
-                <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                <ChevronRight className="h-3 w-3" />
               ) : (
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                <ChevronDown className="h-3 w-3" />
               )}
-            </div>
+            </button>
           ) : (
             <div className="w-4 h-4 mr-1 flex-shrink-0" />
           )}
           <button
-            className={`flex-1 pr-8 text-left p-2 rounded hover:bg-muted flex items-center min-w-0 ${isSelected ? 'bg-blue-300 text-white font-medium' : ''}`}
+            className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${isSelected ? 'btn-active btn-primary' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               onSelectDomain(domain);
@@ -43,16 +43,16 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
               {level === 0 ? (
                 // Root level domains - always show folder icons
                 hasChildren ? (
-                  <FolderOpen className="h-4 w-4 text-blue-600 mr-2" />
+                  <FolderOpen className="h-4 w-4 text-primary mr-2" />
                 ) : (
-                  <Folder className="h-4 w-4 text-blue-600 mr-2" />
+                  <Folder className="h-4 w-4 text-primary mr-2" />
                 )
               ) : (
                 // Child domains - show smaller, muted folder icons
                 hasChildren ? (
-                  <FolderOpen className="h-3.5 w-3.5 text-muted-foreground mr-2" />
+                  <FolderOpen className="h-3.5 w-3.5 opacity-70 mr-2" />
                 ) : (
-                  <Folder className="h-3.5 w-3.5 text-muted-foreground mr-2" />
+                  <Folder className="h-3.5 w-3.5 opacity-70 mr-2" />
                 )
               )}
             </div>
@@ -60,9 +60,9 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
               {domain.name}
             </span>
             {domain.question_count && domain.question_count > 0 && (
-              <span className="ml-2 px-1.5 py-0.5 text-xs bg-muted text-muted-foreground rounded">
+              <div className="badge badge-neutral badge-sm ml-2">
                 {domain.question_count}
-              </span>
+              </div>
             )}
           </button>
           
@@ -86,7 +86,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
                   Add Subdomain
                 </button>
               </li>
-              <li><hr className="my-1" /></li>
+              <li><hr className="divider my-1" /></li>
               <li>
                 <button
                   onClick={(e) => {
@@ -144,9 +144,11 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
       {/* Domains List */}
       <div className="space-y-1 overflow-x-hidden">
         {domains.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">
-            <p>No domains yet</p>
-            <p className="text-xs mt-1">Click the button above to create your first domain</p>
+          <div className="alert alert-info">
+            <div className="text-center w-full">
+              <p>No domains yet</p>
+              <p className="text-sm opacity-70 mt-1">Click the button above to create your first domain</p>
+            </div>
           </div>
         ) : (
           domains.map((domain) => (

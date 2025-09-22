@@ -25,22 +25,24 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
       {/* Quizzes List */}
       <div className="space-y-1 overflow-x-hidden">
         {quizzes.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">
-            <p>No quizzes yet</p>
-            <p className="text-xs mt-1">Click the button above to create your first quiz</p>
+          <div className="alert alert-info">
+            <div className="text-center w-full">
+              <p>No quizzes yet</p>
+              <p className="text-sm opacity-70 mt-1">Click the button above to create your first quiz</p>
+            </div>
           </div>
         ) : (
           quizzes.map((quiz) => (
             <div key={quiz.id} className="w-full min-w-0">
               <div className="flex items-center group relative min-w-0">
                 <button
-                  className={`flex-1 pr-8 text-left p-2 rounded hover:bg-muted flex items-center min-w-0 ${selectedQuiz?.id === quiz.id ? 'bg-blue-300 text-white font-medium' : ''}`}
+                  className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${selectedQuiz?.id === quiz.id ? 'btn-active btn-primary' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onEditQuiz(quiz);
                   }}
                 >
-                  <FileText className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
+                  <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
                   <span className="flex-1 truncate min-w-0">{quiz.name}</span>
                 </button>
 
