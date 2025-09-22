@@ -218,7 +218,7 @@ function LearningPath() {
   return (
 <>
     {/* Second Sticky Header - Quiz Selector */}
-      <div className="sticky top-2 right-0 left-0 z-30 bg-base-100 border-b border-base-200 ">
+      <div className="sticky top-2 right-0 left-0 z-30 bg-base-100 border-b border-base-200 p-4">
         <LearningPathHeader 
           availableQuizzes={availableQuizzes}
           isLoading={isLoading}
