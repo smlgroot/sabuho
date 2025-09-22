@@ -138,7 +138,7 @@ function LearningPath({ onNavigateToShop }) {
   };
 
   const getLevelStyles = (type, completed, locked, index = 0) => {
-    const baseStyles = "relative flex items-center justify-center rounded-full";
+    const baseStyles = "relative flex items-center justify-center rounded-full w-12 h-12";
     const interactiveStyles = "transition-all duration-300 hover:scale-105";
     
     if (locked) {
@@ -151,12 +151,12 @@ function LearningPath({ onNavigateToShop }) {
 
     switch (type) {
       case 'mini-boss':
-        return `${baseStyles} ${interactiveStyles} bg-warning text-warning-content w-16 h-16`;
+        return `${baseStyles} ${interactiveStyles} bg-warning text-warning-content`;
       case 'boss':
-        return `${baseStyles} ${interactiveStyles} bg-error text-error-content w-20 h-20`;
+        return `${baseStyles} ${interactiveStyles} bg-error text-error-content`;
       default: {
         const levelColor = getLevelColor(index, type);
-        return `${baseStyles} ${interactiveStyles} ${levelColor} w-12 h-12`;
+        return `${baseStyles} ${interactiveStyles} ${levelColor}`;
       }
     }
   };
@@ -238,21 +238,21 @@ function LearningPath({ onNavigateToShop }) {
         <div className="flex justify-center h-[calc(100vh-200px)]">
           <div className="max-w-lg w-full overflow-y-auto px-4">
             {/* Level nodes */}
-            <div className="relative space-y-6 py-4">
+            <div className="relative space-y-1 py-4">
               {/* Vertical connecting line - aligned with center of icons */}
               <div className="absolute top-4 bottom-4 w-1 bg-base-300" style={{ left: 'calc(1rem + 1.5rem)' }}></div>
               {levels.map((level, index) => (
                 <div key={level.id} className="relative">
                   {/* Level card with icon and name */}
                   <div
-                    className={`relative z-10 p-4 ${
-                      level.locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-base-200/50 transition-colors duration-200'
+                    className={`relative z-10 p-4 rounded-lg ${
+                      level.locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-primary/20 transition-all duration-200'
                     }`}
                     onClick={() => handleLevelClick(level)}
                   >
                     <div className="flex items-center gap-4">
                       {/* Level icon - Each level gets a different color based on its position */}
-                      <div className={`${getLevelStyles(level.type, level.completed, level.locked, index)} ${getLevelSize(level.type)} flex-shrink-0`}>
+                      <div className={`${getLevelStyles(level.type, level.completed, level.locked, index)} flex-shrink-0`}>
                         {level.locked ? (
                           <Lock className="w-5 h-5" />
                         ) : level.completed ? (
