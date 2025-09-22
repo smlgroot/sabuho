@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, Menu, ShoppingBag } from "lucide-react";
+import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Menu, ShoppingBag, Star } from "lucide-react";
 import { toast } from "sonner";
 import { DomainTree } from "./components/domains/domain-tree";
 import { QuizList } from "./components/quizzes/quiz-list";
@@ -62,6 +62,7 @@ export default function AdminPage() {
   const [creatingQuiz, setCreatingQuiz] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [secondSidebarOpen, setSecondSidebarOpen] = useState(true);
+  const [creatorOpen, setCreatorOpen] = useState(false);
   const [activeView, setActiveView] = useState('learning-hub'); // 'learning-hub', 'domains', 'quizzes', 'shop'
   const hasLoadedData = useRef(false);
 
@@ -343,32 +344,56 @@ export default function AdminPage() {
         {/* Separator */}
         <div className="divider w-12 my-2 mx-auto"></div>
         
-        {/* Domains */}
+        {/* Creator */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'domains' ? 'btn-active' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${creatorOpen ? 'opacity-60' : ''}`}
           onClick={() => {
-            setActiveView('domains');
-            setSelectedQuiz(null);
-            setCreatingQuiz(false);
-            if (!secondSidebarOpen) setSecondSidebarOpen(true);
+            setCreatorOpen(!creatorOpen);
+            if (!creatorOpen) {
+              setActiveView('creator');
+              if (!secondSidebarOpen) setSecondSidebarOpen(true);
+            }
           }}
         >
-          <Folder className="h-6 w-6" />
-          <span className="text-xs">Domains</span>
+          <Star className="h-6 w-6" />
+          <span className="text-xs">Creator</span>
+          {creatorOpen ? (
+            <ChevronUp className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )}
         </button>
         
-        {/* Quizzes */}
-        <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'quizzes' ? 'btn-active' : ''}`}
-          onClick={() => {
-            setActiveView('quizzes');
-            setSelectedDomain(null);
-            if (!secondSidebarOpen) setSecondSidebarOpen(true);
-          }}
-        >
-          <FileText className="h-6 w-6" />
-          <span className="text-xs">Quizzes</span>
-        </button>
+        {/* Domains - only show when creator is open */}
+        {creatorOpen && (
+          <button 
+            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'domains' ? 'btn-active' : ''}`}
+            onClick={() => {
+              setActiveView('domains');
+              setSelectedQuiz(null);
+              setCreatingQuiz(false);
+              if (!secondSidebarOpen) setSecondSidebarOpen(true);
+            }}
+          >
+            <Folder className="h-6 w-6" />
+            <span className="text-xs">Domains</span>
+          </button>
+        )}
+        
+        {/* Quizzes - only show when creator is open */}
+        {creatorOpen && (
+          <button 
+            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'quizzes' ? 'btn-active' : ''}`}
+            onClick={() => {
+              setActiveView('quizzes');
+              setSelectedDomain(null);
+              if (!secondSidebarOpen) setSecondSidebarOpen(true);
+            }}
+          >
+            <FileText className="h-6 w-6" />
+            <span className="text-xs">Quizzes</span>
+          </button>
+        )}
       </div>
       
       {/* User Menu at bottom */}
@@ -388,6 +413,30 @@ export default function AdminPage() {
       
       {activeView === 'shop' && (
         <Quizzes />
+      )}
+
+      {activeView === 'creator' && (
+        <div className="flex flex-col h-full">
+          <div className="p-4 border-b">
+            <h3 className="text-lg font-semibold">Quiz Creator</h3>
+          </div>
+          <div className="flex-1 p-6 flex items-center justify-center">
+            <div className="text-center max-w-sm">
+              <Star className="h-16 w-16 text-yellow-500 mx-auto mb-6" />
+              <h4 className="text-xl font-semibold mb-4">Welcome to Quiz Creator</h4>
+              <p className="text-base-content/70 mb-6 leading-relaxed">
+                As a quiz creator, you have the power to build engaging learning experiences. 
+                Create domains to organize your content, upload resources, craft questions, 
+                and design comprehensive quizzes to help learners master new skills.
+              </p>
+              <div className="bg-base-200 rounded-lg p-4">
+                <p className="text-sm text-base-content/60">
+                  💡 Start by creating domains to organize your content, then add resources and questions to build your quiz library.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {activeView === 'domains' && (
