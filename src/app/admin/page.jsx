@@ -24,7 +24,7 @@ import { uploadResource } from "@/lib/resources";
 import { createQuestion } from "@/lib/questions";
 import { fetchQuizzes, createQuiz as createQuizApi, updateQuiz as updateQuizApi, deleteQuiz as deleteQuizApi } from "@/lib/quizzes";
 
-export default function HomePage() {
+export default function AdminPage() {
   const {
     domains,
     selectedDomain,
