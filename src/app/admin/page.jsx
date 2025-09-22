@@ -313,7 +313,7 @@ export default function AdminPage() {
         
         {/* Learning Hub */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'learning-hub' ? 'btn-active' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-blue-100 hover:text-blue-600 transition-colors ${activeView === 'learning-hub' ? 'btn-active' : ''}`}
           onClick={() => {
             setActiveView('learning-hub');
             setSelectedDomain(null);
@@ -328,7 +328,7 @@ export default function AdminPage() {
         
         {/* Shop */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'shop' ? 'btn-active' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-blue-100 hover:text-blue-600 transition-colors ${activeView === 'shop' ? 'btn-active' : ''}`}
           onClick={() => {
             setActiveView('shop');
             setSelectedDomain(null);
@@ -346,7 +346,7 @@ export default function AdminPage() {
         
         {/* Creator */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${creatorOpen ? 'opacity-60' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-blue-100 hover:text-blue-600 transition-colors ${creatorOpen ? 'opacity-60' : ''}`}
           onClick={() => {
             setCreatorOpen(!creatorOpen);
             if (!creatorOpen) {
@@ -367,7 +367,7 @@ export default function AdminPage() {
         {/* Domains - only show when creator is open */}
         {creatorOpen && (
           <button 
-            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'domains' ? 'btn-active' : ''}`}
+            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-blue-100 hover:text-blue-600 transition-colors ${activeView === 'domains' ? 'btn-active' : ''}`}
             onClick={() => {
               setActiveView('domains');
               setSelectedQuiz(null);
@@ -383,7 +383,7 @@ export default function AdminPage() {
         {/* Quizzes - only show when creator is open */}
         {creatorOpen && (
           <button 
-            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'quizzes' ? 'btn-active' : ''}`}
+            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-blue-100 hover:text-blue-600 transition-colors ${activeView === 'quizzes' ? 'btn-active' : ''}`}
             onClick={() => {
               setActiveView('quizzes');
               setSelectedDomain(null);
