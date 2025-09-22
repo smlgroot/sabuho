@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Plus, Search, ArrowUpDown, Filter, ChevronDown, Move, Folder, ChevronRight, FolderOpen } from 'lucide-react'
 import { fetchQuestionOptions, updateQuestion, createQuestion, deleteQuestion, addQuestionOption, updateQuestionOptions, removeQuestionOption, moveQuestionsToDomain } from '@/lib/questions'
-import { QuestionCard } from '../question-card'
+import { QuestionCard } from '../questions/question-card'
 
 export function QuestionsSection({ 
   domain, 
