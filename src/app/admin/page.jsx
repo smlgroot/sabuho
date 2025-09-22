@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft } from "lucide-react";
+import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { DomainTree } from "@/components/domain-tree";
 import { QuizList } from "@/components/quiz-list";
@@ -58,6 +58,7 @@ export default function AdminPage() {
   const [parentDomainId, setParentDomainId] = useState(undefined);
   const [creatingQuiz, setCreatingQuiz] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [secondSidebarOpen, setSecondSidebarOpen] = useState(true);
   const [activeView, setActiveView] = useState('learning-hub'); // 'learning-hub', 'domains', 'quizzes'
   const hasLoadedData = useRef(false);
 
@@ -298,6 +299,14 @@ export default function AdminPage() {
     <aside className="w-20 bg-base-200 text-base-content flex flex-col min-h-full border-r border-base-300">
       {/* Main Navigation Menu */}
       <div className="flex-1 flex flex-col items-center py-4 gap-2">
+        {/* Sidebar Toggle */}
+        <button 
+          className="btn btn-ghost p-3 h-auto w-16"
+          onClick={() => setSecondSidebarOpen(!secondSidebarOpen)}
+        >
+          <Menu className="h-6 w-6" />
+        </button>
+        
         {/* Learning Hub */}
         <button 
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 ${activeView === 'learning-hub' ? 'btn-active' : ''}`}
@@ -306,6 +315,7 @@ export default function AdminPage() {
             setSelectedDomain(null);
             setSelectedQuiz(null);
             setCreatingQuiz(false);
+            if (!secondSidebarOpen) setSecondSidebarOpen(true);
           }}
         >
           <GraduationCap className="h-6 w-6" />
@@ -319,6 +329,7 @@ export default function AdminPage() {
             setActiveView('domains');
             setSelectedQuiz(null);
             setCreatingQuiz(false);
+            if (!secondSidebarOpen) setSecondSidebarOpen(true);
           }}
         >
           <Folder className="h-6 w-6" />
@@ -331,6 +342,7 @@ export default function AdminPage() {
           onClick={() => {
             setActiveView('quizzes');
             setSelectedDomain(null);
+            if (!secondSidebarOpen) setSecondSidebarOpen(true);
           }}
         >
           <FileText className="h-6 w-6" />
@@ -427,47 +439,10 @@ export default function AdminPage() {
         {sidebarOpen && <MainSidebar />}
         
         {/* Second Sidebar */}
-        <SecondSidebar />
+        {secondSidebarOpen && <SecondSidebar />}
         
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="border-b p-4 bg-base-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="btn btn-square btn-ghost"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                  </svg>
-                </button>
-                {selectedDomain ? (
-                  <div className="breadcrumbs text-sm">
-                    <ul>
-                      {getBreadcrumbPath(selectedDomain.id).map((item, index, array) => (
-                        <li key={item.id}>
-                          <span className={index === array.length - 1 ? "font-semibold" : ""}>
-                            {item.name}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : selectedQuiz ? (
-                  <h1 className="text-2xl font-bold">{selectedQuiz.name}</h1>
-                ) : creatingQuiz ? (
-                  <h1 className="text-2xl font-bold">New Quiz</h1>
-                ) : (
-                  <h1 className="text-2xl font-bold">Quiz Quest Admin</h1>
-                )}
-              </div>
-
-              <div></div>
-            </div>
-          </header>
-
           {/* Content */}
           <main className="flex-1 overflow-y-auto p-6">
             {activeView === 'learning-hub' && !selectedDomain && !selectedQuiz && !creatingQuiz ? (
