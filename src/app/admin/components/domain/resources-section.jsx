@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { Upload } from 'lucide-react'
 import { checkResourceStatus } from '@/lib/resources'
-import { ResourceCard } from '@/components/resource-card'
+import { ResourceCard } from '../resource-card'
 
 export function ResourcesSection({ domain, onUploadResource, onDomainUpdate }) {
   const [checkingResourceStatus, setCheckingResourceStatus] = useState(new Set())

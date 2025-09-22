@@ -10,7 +10,8 @@
       "Bash(yarn lint)",
       "WebFetch(domain:daisyui.com)",
       "Bash(yarn add:*)",
-      "Bash(yarn dev)"
+      "Bash(yarn dev)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

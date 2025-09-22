@@ -37,7 +37,7 @@ export function UserMenu() {
       <div className="dropdown dropdown-top dropdown-start w-full">
         <div tabIndex={0} role="button" className="btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16">
           <div className="avatar placeholder">
-            <div className="bg-primary text-primary-content rounded-full w-8 h-8">
+            <div className="bg-primary text-primary-content rounded-full w-8 h-8 flex items-center justify-center">
               <span className="text-sm">{getUserInitials(user.email || 'U')}</span>
             </div>
           </div>

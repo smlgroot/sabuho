@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/auth'
 import { useNavigate, Navigate } from 'react-router-dom'
-import { UserMenu } from '@/components/auth/user-menu'
+import { UserMenu } from './auth/components/user-menu'
 
 export default function HomePage() {
   const { user, loading } = useAuth()

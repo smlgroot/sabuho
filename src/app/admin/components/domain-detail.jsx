@@ -3,9 +3,9 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Calendar, FileText, HelpCircle } from 'lucide-react'
 import { updateDomain, fetchDomains } from '@/lib/domains'
-import { QuestionsSection } from '@/components/domain/questions-section'
-import { ResourcesSection } from '@/components/domain/resources-section'
-import { DomainTabs } from '@/components/domain/domain-tabs'
+import { QuestionsSection } from './domain/questions-section'
+import { ResourcesSection } from './domain/resources-section'
+import { DomainTabs } from './domain/domain-tabs'
 
 export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDomainUpdate }) {
   const [localDomain, setLocalDomain] = useState(domain)

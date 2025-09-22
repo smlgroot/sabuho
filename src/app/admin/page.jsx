@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, Menu } from "lucide-react";
 import { toast } from "sonner";
-import { DomainTree } from "@/components/domain-tree";
-import { QuizList } from "@/components/quiz-list";
-import { QuizDetail } from "@/components/quiz-detail";
-import { DomainDetail } from "@/components/domain-detail";
-import { DomainForm } from "@/components/domain-form";
-import { DeleteDomainDialog } from "@/components/delete-domain-dialog";
-import { ResourceUpload } from "@/components/resource-upload";
-import { QuestionForm } from "@/components/question-form";
-import { SearchBar } from "@/components/search-bar";
-import { ProtectedRoute } from "@/components/auth/protected-route";
+import { DomainTree } from "./components/domain-tree";
+import { QuizList } from "./components/quiz-list";
+import { QuizDetail } from "./components/quiz-detail";
+import { DomainDetail } from "./components/domain-detail";
+import { DomainForm } from "./components/domain-form";
+import { DeleteDomainDialog } from "./components/delete-domain-dialog";
+import { ResourceUpload } from "./components/resource-upload";
+import { QuestionForm } from "./components/question-form";
+import { SearchBar } from "./components/search-bar";
+import { ProtectedRoute } from "../auth/components/protected-route";
 import { useAuth } from "@/lib/auth";
-import { UserMenu } from "@/components/auth/user-menu";
+import { UserMenu } from "../auth/components/user-menu";
 import { useStore } from "@/store/useStore";
 import {
   fetchDomains,
