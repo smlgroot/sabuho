@@ -216,9 +216,9 @@ function LearningPath({ onNavigateToShop }) {
   );
 
   return (
-<>
-    {/* Second Sticky Header - Quiz Selector */}
-      <div className="sticky top-2 right-0 left-0 z-30 bg-base-100 border-b border-base-200 p-4">
+    <div className="flex flex-col h-full">
+      {/* Second Sticky Header - Quiz Selector */}
+      <div className="flex-shrink-0 bg-base-100 border-b border-base-200 p-4">
         <LearningPathHeader 
           availableQuizzes={availableQuizzes}
           isLoading={isLoading}
@@ -226,17 +226,18 @@ function LearningPath({ onNavigateToShop }) {
         />
       </div>
       
-      {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="loading loading-spinner loading-lg"></div>
-        </div>
-      ) : availableQuizzes.length === 0 ? (
-        <NoQuizzesPlaceholder />
-      ) : !selectedQuiz ? (
-        <NoQuizSelectedPlaceholder />
-      ) : (
-        <div className="flex justify-center h-[calc(100vh-200px)]">
-          <div className="max-w-lg w-full overflow-y-auto px-4">
+      <div className="flex-1 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <div className="loading loading-spinner loading-lg"></div>
+          </div>
+        ) : availableQuizzes.length === 0 ? (
+          <NoQuizzesPlaceholder />
+        ) : !selectedQuiz ? (
+          <NoQuizSelectedPlaceholder />
+        ) : (
+          <div className="flex justify-center h-full">
+            <div className="max-w-lg w-full px-4">
             {/* Level nodes */}
             <div className="relative space-y-1 py-4">
               {/* Vertical connecting line - aligned with center of icons */}
@@ -284,10 +285,11 @@ function LearningPath({ onNavigateToShop }) {
                 </div>
               ))}
             </div>
+            </div>
           </div>
-        </div>
-      )}
-  </>
+        )}
+      </div>
+    </div>
   );
 }
 

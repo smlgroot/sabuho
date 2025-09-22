@@ -381,7 +381,7 @@ export default function AdminPage() {
 
   const SecondSidebar = () => (
    
-    <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col min-h-full">
+    <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-screen">
       {activeView === 'learning-hub' && (
         <LearningPath onNavigateToShop={() => setActiveView('shop')} />
       )}
