@@ -33,22 +33,12 @@ export function UserMenu() {
   }
 
   return (
-    <div className="border-t">
-      <div className="dropdown dropdown-top dropdown-end w-full">
-        <div tabIndex={0} role="button" className="btn btn-ghost w-full justify-start h-12 p-2">
-          <div className="flex items-center gap-3 w-full">
-            <div className="avatar placeholder">
-              <div className="bg-primary text-primary-content rounded-full w-8">
-                <span className="text-xs">{getUserInitials(user.email || 'U')}</span>
-              </div>
-            </div>
-            <div className="flex flex-col items-start text-left min-w-0 flex-1">
-              <span className="text-sm font-medium truncate">
-                {formatUserEmail(user.email || 'User')}
-              </span>
-              <span className="text-xs opacity-60">
-                Admin
-              </span>
+    <div>
+      <div className="dropdown dropdown-top dropdown-start w-full">
+        <div tabIndex={0} role="button" className="btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16">
+          <div className="avatar placeholder">
+            <div className="bg-primary text-primary-content rounded-full w-8 h-8">
+              <span className="text-sm">{getUserInitials(user.email || 'U')}</span>
             </div>
           </div>
         </div>
