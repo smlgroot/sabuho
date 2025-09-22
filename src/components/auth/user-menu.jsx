@@ -9,7 +9,16 @@ export function UserMenu() {
   if (!user) return null
 
   const handleSignOut = async () => {
-    await signOut()
+    try {
+      const { error } = await signOut()
+      if (error) {
+        console.error('Failed to sign out:', error)
+        alert('Failed to sign out. Please try again.')
+      }
+    } catch (err) {
+      console.error('Sign out error:', err)
+      alert('Failed to sign out. Please try again.')
+    }
   }
 
   const getUserInitials = (email) => {

@@ -25,61 +25,78 @@ export function Login({ onToggleMode }) {
   }
 
   return (
-    <div className="card w-full max-w-md mx-auto bg-base-100 shadow-xl">
-      <div className="card-body">
-        <h2 className="card-title">Sign In</h2>
-        <p className="text-base-content/70">
-          Enter your credentials to access Quiz Quest Admin
+    <div className="card-body">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold">Welcome Back</h2>
+        <p className="py-4 text-base-content/70">
+          Sign in to access Quiz Quest Admin
         </p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Email</span>
+          </label>
+          <input
+            type="email"
+            placeholder="email@example.com"
+            className="input input-bordered w-full"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="form-control">
-            <label className="label" htmlFor="email">
-              <span className="label-text">Email</span>
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              className="input input-bordered"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Password</span>
+          </label>
+          <input
+            type="password"
+            placeholder="Enter your password"
+            className="input input-bordered w-full"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        
+        {error && (
+          <div className="alert alert-error mt-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
           </div>
-          <div className="form-control">
-            <label className="label" htmlFor="password">
-              <span className="label-text">Password</span>
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              className="input input-bordered"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          {error && (
-            <div className="alert alert-error">
-              <span>{error}</span>
-            </div>
-          )}
-          <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+        )}
+        
+        <div className="form-control mt-6">
+          <button className="btn btn-primary" disabled={loading}>
+            {loading ? (
+              <>
+                <span className="loading loading-spinner"></span>
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </button>
-          <div className="text-center">
+        </div>
+        
+        <div className="text-center mt-4">
+          <p className="text-sm">
+            Don&apos;t have an account?{' '}
             <button
               type="button"
               onClick={onToggleMode}
-              className="link link-primary text-sm"
+              className="link link-primary"
             >
-              Don&apos;t have an account? Sign up
+              Sign up
             </button>
-          </div>
-        </form>
-      </div>
+          </p>
+        </div>
+      </form>
     </div>
   )
 }

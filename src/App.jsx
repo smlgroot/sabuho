@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/lib/auth'
 import HomePage from '@/app/page'
 import AdminPage from '@/app/admin/page'
+import AuthPage from '@/app/auth/page'
 import NotFoundPage from '@/app/not-found'
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/auth" element={<AuthPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

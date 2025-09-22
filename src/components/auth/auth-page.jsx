@@ -8,12 +8,16 @@ export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      {isLogin ? (
-        <Login onToggleMode={() => setIsLogin(false)} />
-      ) : (
-        <Signup onToggleMode={() => setIsLogin(true)} />
-      )}
+    <div className="hero min-h-screen bg-base-200">
+      <div className="hero-content flex-col lg:flex-row-reverse w-full max-w-md">
+        <div className="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
+          {isLogin ? (
+            <Login onToggleMode={() => setIsLogin(false)} />
+          ) : (
+            <Signup onToggleMode={() => setIsLogin(true)} />
+          )}
+        </div>
+      </div>
     </div>
   )
 }

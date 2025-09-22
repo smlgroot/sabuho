@@ -42,80 +42,101 @@ export function Signup({ onToggleMode }) {
   }
 
   return (
-    <div className="card w-full max-w-md mx-auto bg-base-100 shadow-xl">
-      <div className="card-body">
-        <h2 className="card-title">Sign Up</h2>
-        <p className="text-base-content/70">
-          Create an account to access Quiz Quest Admin
+    <div className="card-body">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold">Create Account</h2>
+        <p className="py-4 text-base-content/70">
+          Join Quiz Quest Admin
         </p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Email</span>
+          </label>
+          <input
+            type="email"
+            placeholder="email@example.com"
+            className="input input-bordered w-full"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="form-control">
-            <label className="label" htmlFor="email">
-              <span className="label-text">Email</span>
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              className="input input-bordered"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Password</span>
+          </label>
+          <input
+            type="password"
+            placeholder="Create a password (min 6 chars)"
+            className="input input-bordered w-full"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Confirm Password</span>
+          </label>
+          <input
+            type="password"
+            placeholder="Confirm your password"
+            className="input input-bordered w-full"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+        </div>
+        
+        {error && (
+          <div className="alert alert-error mt-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
           </div>
-          <div className="form-control">
-            <label className="label" htmlFor="password">
-              <span className="label-text">Password</span>
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Create a password"
-              className="input input-bordered"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+        )}
+        
+        {message && (
+          <div className="alert alert-success mt-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{message}</span>
           </div>
-          <div className="form-control">
-            <label className="label" htmlFor="confirmPassword">
-              <span className="label-text">Confirm Password</span>
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              placeholder="Confirm your password"
-              className="input input-bordered"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-          {error && (
-            <div className="alert alert-error">
-              <span>{error}</span>
-            </div>
-          )}
-          {message && (
-            <div className="alert alert-success">
-              <span>{message}</span>
-            </div>
-          )}
-          <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-            {loading ? 'Creating account...' : 'Sign Up'}
+        )}
+        
+        <div className="form-control mt-6">
+          <button className="btn btn-primary" disabled={loading}>
+            {loading ? (
+              <>
+                <span className="loading loading-spinner"></span>
+                Creating account...
+              </>
+            ) : (
+              'Sign Up'
+            )}
           </button>
-          <div className="text-center">
+        </div>
+        
+        <div className="text-center mt-4">
+          <p className="text-sm">
+            Already have an account?{' '}
             <button
               type="button"
               onClick={onToggleMode}
-              className="link link-primary text-sm"
+              className="link link-primary"
             >
-              Already have an account? Sign in
+              Sign in
             </button>
-          </div>
-        </form>
-      </div>
+          </p>
+        </div>
+      </form>
     </div>
   )
 }
