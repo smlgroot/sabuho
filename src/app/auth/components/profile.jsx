@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/lib/admin/auth'
 
 export function Profile() {
   const { user, signOut } = useAuth()

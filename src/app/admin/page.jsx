@@ -11,7 +11,7 @@ import { ResourceUpload } from "./components/resources/resource-upload";
 import { QuestionForm } from "./components/questions/question-form";
 import { SearchBar } from "./components/shared/search-bar";
 import { ProtectedRoute } from "../auth/components/protected-route";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/admin/auth";
 import { UserMenu } from "../auth/components/user-menu";
 import { useStore } from "@/store/useStore";
 import {
@@ -19,10 +19,10 @@ import {
   createDomain,
   updateDomain,
   deleteDomain,
-} from "@/lib/domains";
-import { uploadResource } from "@/lib/resources";
-import { createQuestion } from "@/lib/questions";
-import { fetchQuizzes, createQuiz as createQuizApi, updateQuiz as updateQuizApi, deleteQuiz as deleteQuizApi } from "@/lib/quizzes";
+} from "@/lib/admin/domains";
+import { uploadResource } from "@/lib/admin/resources";
+import { createQuestion } from "@/lib/admin/questions";
+import { fetchQuizzes, createQuiz as createQuizApi, updateQuiz as updateQuizApi, deleteQuiz as deleteQuizApi } from "@/lib/admin/quizzes";
 
 export default function AdminPage() {
   const {

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Calendar, FileText, HelpCircle } from 'lucide-react'
-import { updateDomain, fetchDomains } from '@/lib/domains'
+import { updateDomain, fetchDomains } from '@/lib/admin/domains'
 import { QuestionsSection } from './questions-section'
 import { ResourcesSection } from './resources-section'
 import { DomainTabs } from './domain-tabs'

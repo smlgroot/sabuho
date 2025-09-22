@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Upload } from 'lucide-react'
-import { checkResourceStatus } from '@/lib/resources'
+import { checkResourceStatus } from '@/lib/admin/resources'
 import { ResourceCard } from '../resources/resource-card'
 
 export function ResourcesSection({ domain, onUploadResource, onDomainUpdate }) {

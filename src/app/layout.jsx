@@ -1,6 +1,6 @@
 import { Varela_Round } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/lib/auth";
+import { AuthProvider } from "@/lib/admin/auth";
 
 const varelaRound = Varela_Round({
   variable: "--font-varela-round",

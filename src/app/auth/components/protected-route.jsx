@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/lib/admin/auth'
 import { AuthPage } from './auth-page'
 
 export function ProtectedRoute({ children }) {

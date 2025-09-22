@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/lib/admin/auth'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { UserMenu } from './auth/components/user-menu'
 

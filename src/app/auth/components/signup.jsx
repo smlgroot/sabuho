@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/lib/admin/auth'
 
 export function Signup({ onToggleMode }) {
   const [email, setEmail] = useState('')

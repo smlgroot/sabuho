@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/lib/admin/auth'
 import { User, LogOut, Settings, HelpCircle, Keyboard, Moon } from 'lucide-react'
 
 export function UserMenu() {

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { AuthProvider } from '@/lib/auth'
+import { AuthProvider } from '@/lib/admin/auth'
 import HomePage from '@/app/page'
 import AdminPage from '@/app/admin/page'
 import AuthPage from '@/app/auth/page'
