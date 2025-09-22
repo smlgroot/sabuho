@@ -182,32 +182,16 @@ function Quizzes() {
         <ActionButtons size="compact" />
       </div>
 
-      <div className="grid gap-4">
+      <div className="space-y-1 overflow-x-hidden">
         {quizzes.map((quiz) => (
-          <div 
-            key={quiz.id} 
-            className="card bg-base-100 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer" 
-            onClick={() => navigate(`/quiz/${quiz.id}`)}
-          >
-            <div className="card-body p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="card-title text-lg mb-1">
-                    {quiz.name}
-                  </h3>
-                  <p className="text-sm text-base-content/70">
-                    Created: {formatDate(quiz.created_at)}
-                  </p>
-                  {quiz.is_published && (
-                    <div className="badge badge-success badge-sm mt-2">Published</div>
-                  )}
-                </div>
-                <div className="opacity-50 hover:opacity-100 transition-opacity">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
+          <div key={quiz.id} className="w-full min-w-0">
+            <div className="flex items-center group relative min-w-0">
+              <button
+                className="btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0"
+                onClick={() => navigate(`/quiz/${quiz.id}`)}
+              >
+                <span className="flex-1 truncate min-w-0">{quiz.name}</span>
+              </button>
             </div>
           </div>
         ))}
