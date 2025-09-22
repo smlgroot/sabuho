@@ -87,29 +87,18 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false, onAddMor
       <div className="relative max-w-lg w-full">
             <button
               onClick={() => setIsOpen(true)}
-              className="w-full bg-primary hover:bg-primary-focus text-primary-content rounded-lg p-4 transition-colors duration-200 flex items-center justify-between cursor-pointer"
+              className="w-full bg-primary/10 border border-primary/20 hover:border-primary hover:bg-primary/15 text-base-content rounded-lg px-4 py-3 transition-all duration-200 flex items-center justify-between cursor-pointer"
             >
               {selectedQuiz ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary-content/15">
-                    {(() => {
-                      const QuizIcon = getQuizIcon(selectedQuiz);
-                      return <QuizIcon className="w-5 h-5 text-primary-content" />;
-                    })()}
-                  </div>
-                  <div className="text-left">
-                    <h2 className="text-xl font-bold text-primary-content">{selectedQuiz.name}</h2>
-                  </div>
+                <div className="text-left">
+                  <span className="text-base font-medium text-base-content">{selectedQuiz.name}</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="w-6 h-6 text-primary-content opacity-80" />
-                  <span className="text-base font-medium text-primary-content">No quiz selected</span>
-                </div>
+                <span className="text-base font-normal text-base-content/70">Select a quiz</span>
               )}
               
               {/* Chevron at the end */}
-              <ChevronDown className="w-5 h-5 text-primary-content/80" />
+              <ChevronDown className="w-5 h-5 text-base-content/70" />
             </button>
 
             {/* Quiz Selector Dropdown */}
