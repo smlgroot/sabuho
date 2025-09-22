@@ -234,81 +234,80 @@ function LearningPath() {
       ) : !selectedQuiz ? (
         <NoQuizSelectedPlaceholder />
       ) : (
-        <div className="flex justify-center">
-          <div className="relative max-w-lg w-full">
-          {/* Vertical connecting line - aligned with center of icons */}
-          <div className="absolute top-0 bottom-0 w-1 bg-base-300" style={{ left: 'calc(1rem + 1.5rem)' }}></div>
-          
-          {/* Level nodes */}
-          <div className="space-y-6">
-            {levels.map((level, index) => (
-              <div key={level.id} className="relative">
-                {/* Level card with icon and name */}
-                <div
-                  className={`shadow-md relative z-10 ${
-                    level.type === 'boss' ? 'border-2 border-error bg-error/5' : 
-                    level.type === 'mini-boss' ? 'border-2 border-warning bg-warning/5' : 
-                    'bg-base-100'
-                  } ${level.locked ? 'opacity-60 cursor-not-allowed' : 'card cursor-pointer hover:shadow-lg transition-all duration-300'} ${level.completed ? 'hover:bg-base-200' : ''}`}
-                  onClick={() => handleLevelClick(level)}
-                >
-                  <div className="card-body p-4">
-                    <div className="flex items-center gap-4">
-                      {/* Level icon - Each level gets a different color based on its position */}
-                      <div className={`${getLevelStyles(level.type, level.completed, level.locked, index)} ${getLevelSize(level.type)} flex-shrink-0`}>
-                        {level.locked ? (
-                          <Lock className="w-5 h-5" />
-                        ) : level.completed ? (
-                          <CheckCircle className="w-6 h-6" />
-                        ) : (
-                          getLevelIcon(level.type)
+        <div className="flex justify-center h-[calc(100vh-200px)]">
+          <div className="max-w-lg w-full overflow-y-auto px-4">
+            {/* Level nodes */}
+            <div className="relative space-y-6 py-4">
+              {/* Vertical connecting line - aligned with center of icons */}
+              <div className="absolute top-4 bottom-4 w-1 bg-base-300" style={{ left: 'calc(1rem + 1.5rem)' }}></div>
+              {levels.map((level, index) => (
+                <div key={level.id} className="relative">
+                  {/* Level card with icon and name */}
+                  <div
+                    className={`shadow-md relative z-10 ${
+                      level.type === 'boss' ? 'border-2 border-error bg-error/5' : 
+                      level.type === 'mini-boss' ? 'border-2 border-warning bg-warning/5' : 
+                      'bg-base-100'
+                    } ${level.locked ? 'opacity-60 cursor-not-allowed' : 'card cursor-pointer hover:shadow-lg transition-all duration-300'} ${level.completed ? 'hover:bg-base-200' : ''}`}
+                    onClick={() => handleLevelClick(level)}
+                  >
+                    <div className="card-body p-4">
+                      <div className="flex items-center gap-4">
+                        {/* Level icon - Each level gets a different color based on its position */}
+                        <div className={`${getLevelStyles(level.type, level.completed, level.locked, index)} ${getLevelSize(level.type)} flex-shrink-0`}>
+                          {level.locked ? (
+                            <Lock className="w-5 h-5" />
+                          ) : level.completed ? (
+                            <CheckCircle className="w-6 h-6" />
+                          ) : (
+                            getLevelIcon(level.type)
+                          )}
+                        </div>
+
+                        {/* Level info */}
+                        <div className="flex-1">
+                          <h3 className={`text-lg font-semibold ${level.locked ? 'text-base-content/50' : 'text-base-content'}`}>
+                            {level.name}
+                          </h3>
+                          <p className={`text-sm ${
+                            level.type === 'boss' ? 'text-error' : 
+                            level.type === 'mini-boss' ? 'text-warning' : 
+                            'text-base-content/70'
+                          }`}>
+                            {level.type === 'mini-boss' ? 'Mini Boss Challenge' : 
+                             level.type === 'boss' ? 'Final Boss Battle' : 
+                             'Standard Level'}
+                            {level.completed && (
+                              <span className="text-xs text-base-content/50 ml-2">• Click to review</span>
+                            )}
+                          </p>
+                        </div>
+
+                        {/* Status indicator */}
+                        {level.completed && (
+                          <div className="text-success">
+                            <CheckCircle className="w-5 h-5" />
+                          </div>
+                        )}
+                        {level.locked && (
+                          <div className="text-base-content/30">
+                            <Lock className="w-5 h-5" />
+                          </div>
                         )}
                       </div>
-
-                      {/* Level info */}
-                      <div className="flex-1">
-                        <h3 className={`text-lg font-semibold ${level.locked ? 'text-base-content/50' : 'text-base-content'}`}>
-                          {level.name}
-                        </h3>
-                        <p className={`text-sm ${
-                          level.type === 'boss' ? 'text-error' : 
-                          level.type === 'mini-boss' ? 'text-warning' : 
-                          'text-base-content/70'
-                        }`}>
-                          {level.type === 'mini-boss' ? 'Mini Boss Challenge' : 
-                           level.type === 'boss' ? 'Final Boss Battle' : 
-                           'Standard Level'}
-                          {level.completed && (
-                            <span className="text-xs text-base-content/50 ml-2">• Click to review</span>
-                          )}
-                        </p>
-                      </div>
-
-                      {/* Status indicator */}
-                      {level.completed && (
-                        <div className="text-success">
-                          <CheckCircle className="w-5 h-5" />
-                        </div>
-                      )}
-                      {level.locked && (
-                        <div className="text-base-content/30">
-                          <Lock className="w-5 h-5" />
-                        </div>
-                      )}
                     </div>
                   </div>
-                </div>
 
-                {/* Progress indicator for the connecting line - aligned with center of icons */}
-                {index < levels.length - 1 && (
-                  <div 
-                    className={`absolute top-full w-1 h-6 z-0 ${level.completed ? 'bg-success' : 'bg-base-300'}`}
-                    style={{ left: 'calc(1rem + 1.5rem)' }}
-                  ></div>
-                )}
-              </div>
-            ))}
-          </div>
+                  {/* Progress indicator for the connecting line - aligned with center of icons */}
+                  {index < levels.length - 1 && (
+                    <div 
+                      className={`absolute top-full w-1 h-6 z-0 ${level.completed ? 'bg-success' : 'bg-base-300'}`}
+                      style={{ left: 'calc(1rem + 1.5rem)' }}
+                    ></div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
