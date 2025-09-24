@@ -11,7 +11,8 @@
       "WebFetch(domain:daisyui.com)",
       "Bash(yarn add:*)",
       "Bash(yarn dev)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Read(//Users/smlg/projects/me/sabuho-app/src/components/**)"
     ],
     "deny": [],
     "ask": []

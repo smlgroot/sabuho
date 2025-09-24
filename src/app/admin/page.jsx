@@ -342,7 +342,7 @@ export default function AdminPage() {
         
         {/* Learning Hub */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-blue-100 hover:text-blue-600 transition-colors ${activeView === 'learning-hub' ? 'btn-active' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'learning-hub' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
             setActiveView('learning-hub');
             setSelectedDomain(null);
@@ -357,7 +357,7 @@ export default function AdminPage() {
         
         {/* Shop */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-blue-100 hover:text-blue-600 transition-colors ${activeView === 'shop' ? 'btn-active' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'shop' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
             setActiveView('shop');
             setSelectedDomain(null);
@@ -375,7 +375,7 @@ export default function AdminPage() {
         
         {/* Creator */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-blue-100 hover:text-blue-600 transition-colors ${creatorOpen ? 'opacity-60' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-accent/10 hover:text-accent transition-colors ${creatorOpen ? 'bg-accent/10 text-accent' : ''}`}
           onClick={() => {
             setCreatorOpen(!creatorOpen);
             if (!creatorOpen) {
@@ -396,7 +396,7 @@ export default function AdminPage() {
         {/* Domains - only show when creator is open */}
         {creatorOpen && (
           <button 
-            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-blue-100 hover:text-blue-600 transition-colors ${activeView === 'domains' ? 'btn-active' : ''}`}
+            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={() => {
               setActiveView('domains');
               setSelectedQuiz(null);
@@ -412,7 +412,7 @@ export default function AdminPage() {
         {/* Quizzes - only show when creator is open */}
         {creatorOpen && (
           <button 
-            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-blue-100 hover:text-blue-600 transition-colors ${activeView === 'quizzes' ? 'btn-active' : ''}`}
+            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'quizzes' ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={() => {
               setActiveView('quizzes');
               setSelectedDomain(null);
@@ -455,7 +455,7 @@ export default function AdminPage() {
           </div>
           <div className="flex-1 p-6 flex items-center justify-center">
             <div className="text-center max-w-sm">
-              <Star className="h-16 w-16 text-yellow-500 mx-auto mb-6" />
+              <Star className="h-16 w-16 text-accent mx-auto mb-6" />
               <h4 className="text-xl font-semibold mb-4">Welcome to Quiz Creator</h4>
               <p className="text-base-content/70 mb-6 leading-relaxed">
                 As a quiz creator, you have the power to build engaging learning experiences. 

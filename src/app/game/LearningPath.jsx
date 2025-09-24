@@ -117,24 +117,24 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
     }
   };
 
-  // Color palette for level icons - 10 carefully selected colors for learning apps
+  // Color palette for level icons using DaisyUI theme-aware colors
   const getLevelColor = (levelId, type) => {
     if (type === 'mini-boss' || type === 'boss') {
       return type; // Keep existing special level colors
     }
     
-    // 10 excellent colors for learning apps - vibrant but not overwhelming
+    // Use DaisyUI theme-aware colors that work in both light and dark themes
     const learningAppColors = [
-      'bg-blue-500 text-white',      // Trust, knowledge
-      'bg-green-500 text-white',     // Growth, success
-      'bg-purple-500 text-white',    // Creativity, wisdom
-      'bg-orange-500 text-white',    // Energy, enthusiasm
-      'bg-teal-500 text-white',      // Focus, balance
-      'bg-pink-500 text-white',      // Engagement, fun
-      'bg-indigo-500 text-white',    // Deep learning, concentration
-      'bg-emerald-500 text-white',   // Achievement, progress
-      'bg-amber-500 text-white',     // Attention, discovery
-      'bg-cyan-500 text-white'       // Clarity, understanding
+      'bg-primary text-primary-content',
+      'bg-secondary text-secondary-content',
+      'bg-accent text-accent-content',
+      'bg-info text-info-content',
+      'bg-success text-success-content',
+      'bg-warning text-warning-content',
+      'bg-error text-error-content',
+      'bg-neutral text-neutral-content',
+      'bg-base-300 text-base-content',
+      'bg-primary/80 text-primary-content'
     ];
     
     // Use level ID to generate consistent random color for each level

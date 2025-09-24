@@ -1,16 +1,24 @@
 'use client'
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Login } from './login'
 import { Signup } from './signup'
 
 export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
+  const navigate = useNavigate()
 
   return (
     <div className="hero min-h-screen bg-base-200">
       <div className="hero-content flex-col lg:flex-row-reverse w-full max-w-md">
-        <div className="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
+        <div className="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100 relative">
+          <button
+            onClick={() => navigate('/')}
+            className="btn btn-ghost btn-sm absolute top-2 right-2"
+          >
+            ✕
+          </button>
           {isLogin ? (
             <Login onToggleMode={() => setIsLogin(false)} />
           ) : (

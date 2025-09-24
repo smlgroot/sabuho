@@ -33,10 +33,7 @@ export function AuthProvider({ children }) {
           navigate('/admin')
         }
         
-        // Redirect to auth page after logout
-        if (event === 'SIGNED_OUT') {
-          navigate('/auth')
-        }
+        // Don't redirect automatically after logout - let the component handle it
       }
     )
 

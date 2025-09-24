@@ -131,15 +131,22 @@
 }
 
 @layer components {
-  /* Force blue styling for selected domains with high specificity */
+  /* Force primary styling for selected domains with high specificity */
   .domain-selected[data-sidebar="menu-button"][data-active="true"] {
-    background-color: rgb(147 197 253) !important; /* blue-300 */
-    color: white !important;
+    background-color: oklch(from var(--primary) l c h / 0.2) !important;
+    color: var(--primary) !important;
     font-weight: 500 !important;
   }
   
   .domain-selected[data-sidebar="menu-button"][data-active="true"]:hover {
-    background-color: rgb(96 165 250) !important; /* blue-400 */
+    background-color: oklch(from var(--primary) l c h / 0.3) !important;
+  }
+  
+  /* Theme transition animations */
+  * {
+    transition: background-color 0.2s ease-in-out, 
+                border-color 0.2s ease-in-out, 
+                color 0.2s ease-in-out;
   }
 }
 

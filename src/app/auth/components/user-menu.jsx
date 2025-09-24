@@ -1,10 +1,13 @@
 'use client'
 
 import { useAuth } from '@/lib/admin/auth'
+import { useNavigate } from 'react-router-dom'
 import { User, LogOut, Settings, HelpCircle, Keyboard, Moon } from 'lucide-react'
+import { ThemeToggle } from '../../../components/ThemeToggle'
 
 export function UserMenu() {
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
 
   if (!user) return null
 
@@ -14,6 +17,8 @@ export function UserMenu() {
       if (error) {
         console.error('Failed to sign out:', error)
         alert('Failed to sign out. Please try again.')
+      } else {
+        navigate('/')
       }
     } catch (err) {
       console.error('Sign out error:', err)
@@ -58,11 +63,12 @@ export function UserMenu() {
               Keyboard Shortcuts
             </a>
           </li>
-          <li>
-            <a>
+          <li className="flex items-center justify-between px-3 py-2">
+            <div className="flex items-center gap-3">
               <Moon className="w-4 h-4" />
-              Theme Settings
-            </a>
+              <span>Dark Mode</span>
+            </div>
+            <ThemeToggle size="sm" variant="outline" />
           </li>
           <li><hr></hr></li>
           <li>

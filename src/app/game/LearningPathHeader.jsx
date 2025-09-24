@@ -34,19 +34,19 @@ const getQuizIcon = (quiz) => {
   return HelpCircle;
 };
 
-// Generate color scheme based on quiz ID
+// Generate color scheme based on quiz ID using DaisyUI theme-aware classes
 const getQuizColor = (quiz) => {
   const colors = [
-    'text-blue-500 bg-blue-100',
-    'text-green-500 bg-green-100',
-    'text-purple-500 bg-purple-100',
-    'text-pink-500 bg-pink-100',
-    'text-orange-500 bg-orange-100',
-    'text-red-500 bg-red-100',
-    'text-indigo-500 bg-indigo-100',
-    'text-yellow-500 bg-yellow-100',
-    'text-teal-500 bg-teal-100',
-    'text-cyan-500 bg-cyan-100'
+    'text-primary bg-primary/10',
+    'text-secondary bg-secondary/10',
+    'text-accent bg-accent/10',
+    'text-info bg-info/10',
+    'text-success bg-success/10',
+    'text-warning bg-warning/10',
+    'text-error bg-error/10',
+    'text-neutral bg-neutral/10',
+    'text-base-content bg-base-300',
+    'text-primary bg-primary/20'
   ];
   
   // Use quiz ID to consistently assign colors
