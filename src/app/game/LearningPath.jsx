@@ -93,7 +93,6 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
   const handleLevelClick = async (level) => {
     if (level.locked) return;
 
-    console.log(`${level.completed ? 'Reviewing' : 'Starting'} level: ${level.name}`);
     
     if (onLevelClick) {
       // Use callback (modal mode)

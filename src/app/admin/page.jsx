@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Menu, ShoppingBag, Star } from "lucide-react";
+import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Menu, ShoppingBag, Star, Settings, HelpCircle, LogOut, Moon, Sun, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { DomainTree } from "./components/domains/domain-tree";
 import { QuizList } from "./components/quizzes/quiz-list";
@@ -15,6 +15,8 @@ import { ProtectedRoute } from "../auth/components/protected-route";
 import { useAuth } from "@/lib/admin/auth";
 import { UserMenu } from "../auth/components/user-menu";
 import { useStore } from "@/store/useStore";
+import { ProfileSidebar } from "./components/ProfileSidebar";
+import { useNavigate } from 'react-router-dom';
 import {
   fetchDomains,
   createDomain,
@@ -65,6 +67,7 @@ export default function AdminPage() {
   const [secondSidebarOpen, setSecondSidebarOpen] = useState(true);
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [activeView, setActiveView] = useState('learning-hub'); // 'learning-hub', 'domains', 'quizzes', 'shop'
+  const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
   const hasLoadedData = useRef(false);
   
   // Quiz modal state
@@ -218,7 +221,6 @@ export default function AdminPage() {
     if (confirm("Are you sure you want to delete this question?")) {
       try {
         // TODO: Implement deleteQuestion in lib/questions.ts
-        console.log("Delete question:", question.id);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to delete question";
         setError(errorMessage);
@@ -345,6 +347,7 @@ export default function AdminPage() {
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'learning-hub' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
             setActiveView('learning-hub');
+            setProfileSidebarOpen(false);
             setSelectedDomain(null);
             setSelectedQuiz(null);
             setCreatingQuiz(false);
@@ -360,6 +363,7 @@ export default function AdminPage() {
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'shop' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
             setActiveView('shop');
+            setProfileSidebarOpen(false);
             setSelectedDomain(null);
             setSelectedQuiz(null);
             setCreatingQuiz(false);
@@ -375,11 +379,12 @@ export default function AdminPage() {
         
         {/* Creator */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-accent/10 hover:text-accent transition-colors ${creatorOpen ? 'bg-accent/10 text-accent' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${creatorOpen ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
             setCreatorOpen(!creatorOpen);
             if (!creatorOpen) {
               setActiveView('creator');
+              setProfileSidebarOpen(false);
               if (!secondSidebarOpen) setSecondSidebarOpen(true);
             }
           }}
@@ -399,6 +404,7 @@ export default function AdminPage() {
             className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={() => {
               setActiveView('domains');
+              setProfileSidebarOpen(false);
               setSelectedQuiz(null);
               setCreatingQuiz(false);
               if (!secondSidebarOpen) setSecondSidebarOpen(true);
@@ -415,6 +421,7 @@ export default function AdminPage() {
             className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'quizzes' ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={() => {
               setActiveView('quizzes');
+              setProfileSidebarOpen(false);
               setSelectedDomain(null);
               if (!secondSidebarOpen) setSecondSidebarOpen(true);
             }}
@@ -427,11 +434,15 @@ export default function AdminPage() {
       
       {/* User Menu at bottom */}
       <div className="p-2">
-        <UserMenu />
+        <UserMenu 
+          onProfileClick={() => setProfileSidebarOpen(!profileSidebarOpen)}
+          profileSidebarOpen={profileSidebarOpen}
+        />
       </div>
     </aside>
   );
-  const { t } = useTranslation();
+
+  const { t, i18n } = useTranslation();
 
   const SecondSidebar = () => (
    
@@ -536,7 +547,10 @@ export default function AdminPage() {
         {sidebarOpen && <MainSidebar />}
         
         {/* Second Sidebar */}
-        {secondSidebarOpen && <SecondSidebar />}
+        {secondSidebarOpen && !profileSidebarOpen && <SecondSidebar />}
+        
+        {/* Profile Sidebar */}
+        {profileSidebarOpen && <ProfileSidebar onClose={() => setProfileSidebarOpen(false)} />}
         
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">

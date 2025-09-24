@@ -18,8 +18,6 @@ function Quizzes() {
   const { user } = useAuth()
   const  isAuthenticated  = !!user
 
-  console.log('user', user)
-  console.log('isAuthenticated', isAuthenticated)
 
   const loadQuizzes = async () => {
     try {

@@ -63,7 +63,6 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
 
       // Upload file and get resource ID from the onUpload callback
       const resourceId = await onUpload(file, name, description)
-      console.log('XXXXXXXXXXXXXX', resourceId)
       
       clearInterval(progressInterval)
       setUploadProgress(80)
@@ -86,7 +85,6 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
           }
 
           const result = await response.json()
-          console.log('PDF processing started:', result)
         } catch (herokuError) {
           console.error('Failed to start PDF processing:', herokuError)
           // Don't fail the entire upload if processing fails

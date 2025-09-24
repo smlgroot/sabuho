@@ -23,7 +23,6 @@ export function AuthProvider({ children }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id)
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
@@ -58,13 +57,11 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     try {
-      console.log('Attempting to sign out...')
       const { error } = await supabase.auth.signOut({ scope: 'local' })
       if (error) {
         console.error('Sign out error:', error)
         return { error }
       }
-      console.log('Sign out successful')
       return { error: null }
     } catch (err) {
       console.error('Sign out exception:', err)
