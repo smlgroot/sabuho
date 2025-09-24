@@ -296,7 +296,7 @@ function QuizScreen({
   const closeButton = (
     <button
       onClick={handleExitQuiz}
-      className="btn btn-sm btn-circle btn-error btn-outline hover:btn-error hover:text-error-content transition-all duration-200 shadow-md"
+      className="btn btn-sm btn-circle btn-error btn-outline hover:btn-error hover:text-error-content transition-all duration-200"
       aria-label="Exit quiz and return to learning hub"
       title="Exit Quiz"
     >
@@ -316,7 +316,7 @@ function QuizScreen({
         <div className="flex-1">
           <h1 className="text-lg font-semibold">
             {currentLevel ? `${quiz?.name || t('Quiz')} - ${currentLevel.name}` : quiz?.name || t('Quiz')}
-            {isReadonly && <span className="badge badge-info badge-sm ml-2">{t('Review Mode')}</span>}
+            {isReadonly && <span className="badge badge-info badge-sm ml-2 px-3">{t('Review Mode')}</span>}
           </h1>
         </div>
         <div className="flex-none">
@@ -399,10 +399,10 @@ function QuizScreen({
                         {/* Your choice indicator */}
                         {showBadge && isSelected && (
                           <div className="flex justify-start">
-                            <div className={`badge badge-sm font-semibold px-3 py-1 ${
+                            <div className={`badge badge-sm px-3 ${
                               isCorrect 
-                                ? 'bg-green-100 text-green-700 border-green-200' 
-                                : 'bg-red-100 text-red-700 border-red-200'
+                                ? 'badge-success' 
+                                : 'badge-error'
                             }`}>
                               Your choice
                             </div>
@@ -543,15 +543,15 @@ function QuizScreen({
                       {/* Status badges */}
                       <div className="flex gap-2 justify-start">
                         {isCorrect && (
-                          <div className="badge bg-green-100 text-green-700 border-green-200 font-semibold px-3 py-1">
+                          <div className="badge badge-success px-3">
                             Correct Answer
                           </div>
                         )}
                         {isSelected && (
-                          <div className={`badge font-semibold px-3 py-1 ${
+                          <div className={`badge px-3 ${
                             isCorrect 
-                              ? 'bg-green-100 text-green-700 border-green-200' 
-                              : 'bg-red-100 text-red-700 border-red-200'
+                              ? 'badge-success' 
+                              : 'badge-error'
                           }`}>
                             Your Choice
                           </div>
