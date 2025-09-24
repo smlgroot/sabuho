@@ -1,4 +1,4 @@
-import { database } from '../lib/database'
+import { database } from '../lib/game/database'
 
 export class QuizLoadingService {
   // Version: 2024-09-15-fix-array-parsing
@@ -37,7 +37,7 @@ export class QuizLoadingService {
   /**
    * Loads a quiz with its questions from the database
    */
-  async loadQuizData(quizId, userId, levelType = 'normal') {
+  async loadQuizData(quizId, userId, levelType = 'normal', levelId = null) {
     try {
       // Get quiz data
       const quiz = await database.getQuiz(quizId)
@@ -50,7 +50,7 @@ export class QuizLoadingService {
       const questions = await this.selectQuestions(quizId, questionCount)
 
       // Create or get existing quiz session
-      const sessionId = await this.createQuizSession(quiz, questions, userId)
+      const sessionId = await this.createQuizSession(quiz, questions, userId, levelId)
 
       return {
         quiz,
@@ -66,13 +66,64 @@ export class QuizLoadingService {
   /**
    * Creates a quiz session
    */
-  async createQuizSession() {
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
-    // Note: In a more complete implementation, we would save this session to the database
-    // For now, we just return the generated session ID
+  async createQuizSession(quiz, questions, userId, levelId = null) {
+    // Create quiz session in the database
+    const sessionId = await database.getOrCreateQuizSession(userId, quiz.id, levelId)
     
     return sessionId
+  }
+
+  /**
+   * Loads existing quiz session data for readonly mode
+   */
+  async loadQuizSessionData(sessionId, questions) {
+    try {
+      // Get the session
+      const session = await database.getQuizSession(sessionId)
+      if (!session) {
+        throw new Error('Quiz session not found')
+      }
+
+      // Get question attempts for this session
+      const questionAttempts = await database.getQuestionAttempts(sessionId)
+      
+      console.log('Loading session data:', {
+        sessionId,
+        session,
+        questionAttempts: questionAttempts.length,
+        questions: questions.length,
+        attempts: questionAttempts.map(att => ({
+          question_id: att.question_id,
+          selected_answer_index: att.selected_answer_index
+        }))
+      })
+      
+      // Convert attempts to answers format expected by QuizScreen
+      // Match question attempts to current quiz questions by question_id
+      const answers = {}
+      
+      questions.forEach((question, questionIndex) => {
+        console.log(`Looking for question ${questionIndex} with id: ${question.id}`)
+        const attempt = questionAttempts.find(att => att.question_id === question.id)
+        if (attempt) {
+          answers[questionIndex] = attempt.selected_answer_index
+          console.log(`✓ Mapped question ${questionIndex} (id: ${question.id}) to answer ${attempt.selected_answer_index}`)
+        } else {
+          console.log(`✗ No attempt found for question ${questionIndex} (id: ${question.id})`)
+        }
+      })
+
+      console.log('Final answers mapping:', answers)
+
+      return {
+        session,
+        questionAttempts,
+        answers
+      }
+    } catch (error) {
+      console.error('Error loading quiz session data:', error)
+      throw error
+    }
   }
 
   /**

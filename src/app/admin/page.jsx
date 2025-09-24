@@ -26,6 +26,7 @@ import { createQuestion } from "@/lib/admin/questions";
 import { fetchQuizzes, createQuiz as createQuizApi, updateQuiz as updateQuizApi, deleteQuiz as deleteQuizApi } from "@/lib/admin/quizzes";
 import LearningPath from '../game/LearningPath';
 import Quizzes from '../game/Quizzes';
+import QuizScreen from '../game/QuizScreen';
 
 export default function AdminPage() {
   const {
@@ -65,6 +66,11 @@ export default function AdminPage() {
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [activeView, setActiveView] = useState('learning-hub'); // 'learning-hub', 'domains', 'quizzes', 'shop'
   const hasLoadedData = useRef(false);
+  
+  // Quiz modal state
+  const [quizModalOpen, setQuizModalOpen] = useState(false);
+  const [quizModalData, setQuizModalData] = useState({ quizId: null, levelId: null, readonly: false });
+  const learningPathRef = useRef(null);
 
   const { user } = useAuth();
 
@@ -275,6 +281,29 @@ export default function AdminPage() {
     }
   };
 
+  // Handle level click from learning path
+  const handleLevelClick = (quizId, levelId, isCompleted) => {
+    setQuizModalData({
+      quizId,
+      levelId,
+      readonly: isCompleted
+    });
+    setQuizModalOpen(true);
+  };
+
+  // Handle quiz modal close
+  const handleQuizModalClose = () => {
+    setQuizModalOpen(false);
+    // Reload levels to show updated unlock status if not in readonly mode
+    if (!quizModalData.readonly && learningPathRef.current) {
+      learningPathRef.current.reloadLevels();
+    }
+    // Reset quiz modal data after a brief delay to allow for animations
+    setTimeout(() => {
+      setQuizModalData({ quizId: null, levelId: null, readonly: false });
+    }, 300);
+  };
+
   const getBreadcrumbPath = (domainId) => {
     const path = [];
 
@@ -408,7 +437,11 @@ export default function AdminPage() {
    
     <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-screen">
       {activeView === 'learning-hub' && (
-        <LearningPath onNavigateToShop={() => setActiveView('shop')} />
+        <LearningPath 
+          ref={learningPathRef}
+          onNavigateToShop={() => setActiveView('shop')} 
+          onLevelClick={handleLevelClick}
+        />
       )}
       
       {activeView === 'shop' && (
@@ -617,6 +650,17 @@ export default function AdminPage() {
           domain={deletingDomain}
           onConfirm={handleConfirmDeleteDomain}
         />
+
+        {/* Quiz Modal */}
+        {quizModalOpen && quizModalData.quizId && quizModalData.levelId && (
+          <QuizScreen
+            quizId={quizModalData.quizId}
+            levelId={quizModalData.levelId}
+            readonly={quizModalData.readonly}
+            onClose={handleQuizModalClose}
+            isModal={true}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );

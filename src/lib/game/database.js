@@ -9,25 +9,6 @@ class SabuhoDatabase extends Dexie {
     this.version(1).stores({
       codes: '++id, code, verified, updated_at, tombstone',
       outbox: '++id, op, payload, created_at, retries',
-      meta: 'key, value'
-    })
-
-    this.version(2).stores({
-      codes: '++id, code, verified, updated_at, tombstone',
-      outbox: '++id, op, payload, created_at, retries',
-      meta: 'key, value',
-      domains: 'id, parent_id, root_parent_id, author_id, name, created_at, updated_at',
-      quizzes: 'id, author_id, name, is_published, created_at, updated_at',
-      questions: 'id, quiz_id, domain_id, author_id, created_at, updated_at',
-      quiz_learning_levels: 'id, quiz_id, index_position, name, type, created_at, updated_at',
-      quiz_learning_level_names: 'id, name, type, created_at, updated_at',
-      quiz_sessions: 'id, user_id, quiz_id, level_id, start_time',
-      question_attempts: '++id, session_id, quiz_id, question_id, timestamp'
-    })
-
-    this.version(4).stores({
-      codes: '++id, code, verified, updated_at, tombstone',
-      outbox: '++id, op, payload, created_at, retries',
       meta: 'key, value',
       domains: 'id, parent_id, root_parent_id, author_id, name, created_at, updated_at',
       quizzes: 'id, author_id, name, is_published, created_at, updated_at',
@@ -35,14 +16,7 @@ class SabuhoDatabase extends Dexie {
       quiz_learning_levels: 'id, quiz_id, index_position, name, type, is_unlocked, is_completed, created_at, updated_at',
       quiz_learning_level_names: 'id, name, type, created_at, updated_at',
       quiz_sessions: 'id, user_id, quiz_id, level_id, start_time',
-      question_attempts: '++id, session_id, quiz_id, question_id, timestamp'
-    }).upgrade(tx => {
-      // Migrate existing levels to have is_unlocked and is_completed columns
-      return tx.quiz_learning_levels.toCollection().modify(level => {
-        // First level should always be unlocked
-        level.is_unlocked = level.index_position === 0 ? 1 : 0
-        level.is_completed = 0 // Initially no levels are completed
-      })
+      question_attempts: '++id, session_id, quiz_id, question_id, selected_answer_index, is_correct, timestamp'
     })
     
     // Add indexes for performance
@@ -242,6 +216,96 @@ class DatabaseManager {
     
     // Unlock the next level
     return await this.unlockNextLevel(levelId, quizId)
+  }
+
+  // Quiz session operations
+  async createQuizSession(userId, quizId, levelId) {
+    const sessionData = {
+      id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      user_id: userId,
+      quiz_id: quizId,
+      level_id: levelId,
+      start_time: new Date().toISOString()
+    }
+    
+    await this.db.quiz_sessions.put(sessionData)
+    return sessionData.id
+  }
+
+  async getQuizSession(sessionId) {
+    return await this.db.quiz_sessions.where('id').equals(sessionId).first()
+  }
+
+  async getExistingQuizSession(userId, quizId, levelId) {
+    return await this.db.quiz_sessions
+      .where('user_id').equals(userId)
+      .and(session => session.quiz_id === quizId && session.level_id === levelId)
+      .first()
+  }
+
+  async getOrCreateQuizSession(userId, quizId, levelId) {
+    try {
+      // Check if there's already a session for this user/quiz/level combination
+      let existingSession = await this.getExistingQuizSession(userId, quizId, levelId)
+      
+      console.log('getOrCreateQuizSession:', {
+        userId,
+        quizId, 
+        levelId,
+        existingSession: existingSession ? existingSession.id : 'none'
+      })
+      
+      if (existingSession) {
+        console.log('Using existing session:', existingSession.id)
+        return existingSession.id
+      }
+      
+      // Create new session if none exists
+      const newSessionId = await this.createQuizSession(userId, quizId, levelId)
+      console.log('Created new session:', newSessionId)
+      return newSessionId
+    } catch (error) {
+      console.error('Error in getOrCreateQuizSession:', error)
+      
+      // If session creation fails, try to find existing session again
+      // This handles race conditions where multiple calls try to create at the same time
+      const existingSession = await this.getExistingQuizSession(userId, quizId, levelId)
+      if (existingSession) {
+        console.log('Found existing session after error:', existingSession.id)
+        return existingSession.id
+      }
+      
+      throw error
+    }
+  }
+
+  // Question attempt operations
+  async createQuestionAttempt(sessionId, quizId, questionId, selectedAnswerIndex, isCorrect) {
+    const attemptData = {
+      session_id: sessionId,
+      quiz_id: quizId,
+      question_id: questionId,
+      selected_answer_index: selectedAnswerIndex,
+      is_correct: isCorrect,
+      timestamp: new Date().toISOString()
+    }
+    
+    return await this.db.question_attempts.add(attemptData)
+  }
+
+  async getQuestionAttempts(sessionId) {
+    return await this.db.question_attempts
+      .where('session_id')
+      .equals(sessionId)
+      .orderBy('timestamp')
+      .toArray()
+  }
+
+  async getQuestionAttempt(sessionId, questionId) {
+    return await this.db.question_attempts
+      .where('session_id').equals(sessionId)
+      .and(attempt => attempt.question_id === questionId)
+      .first()
   }
 }
 

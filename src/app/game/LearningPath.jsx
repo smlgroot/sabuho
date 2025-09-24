@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LearningPathHeader from './LearningPathHeader';
 import { Star, Zap, Crown, Lock, CheckCircle, BookOpen, AlertTriangle, Plus } from 'lucide-react';
 import { database } from '../../lib/game/database';
 import useGameStore from '../../store/useGameStore';
 
-function LearningPath({ onNavigateToShop }) {
+const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
   // Get selected quiz from store for persistence
   const { selectedQuiz, setSelectedQuiz } = useGameStore();
   const navigate = useNavigate();
@@ -84,16 +84,26 @@ function LearningPath({ onNavigateToShop }) {
     }
   };
 
-  // Handle level click - navigate to quiz screen
+  // Expose reloadLevels function to parent component
+  useImperativeHandle(ref, () => ({
+    reloadLevels
+  }));
+
+  // Handle level click - use callback if provided, otherwise navigate
   const handleLevelClick = async (level) => {
     if (level.locked) return;
 
     console.log(`${level.completed ? 'Reviewing' : 'Starting'} level: ${level.name}`);
     
-    // Navigate to the quiz screen with the selected quiz ID and level ID
-    // If the level is completed, open in readonly mode
-    const queryParams = level.completed ? '?readonly=true' : '';
-    navigate(`/quiz/${selectedQuiz.id}/${level.id}${queryParams}`);
+    if (onLevelClick) {
+      // Use callback (modal mode)
+      onLevelClick(selectedQuiz.id, level.id, level.completed);
+    } else {
+      // Navigate to the quiz screen with the selected quiz ID and level ID
+      // If the level is completed, open in readonly mode
+      const queryParams = level.completed ? '?readonly=true' : '';
+      navigate(`/quiz/${selectedQuiz.id}/${level.id}${queryParams}`);
+    }
   };
 
   const getLevelIcon = (type) => {
@@ -291,6 +301,8 @@ function LearningPath({ onNavigateToShop }) {
       </div>
     </div>
   );
-}
+});
+
+LearningPath.displayName = 'LearningPath';
 
 export default LearningPath;
