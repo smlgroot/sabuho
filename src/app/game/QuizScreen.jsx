@@ -262,7 +262,7 @@ function QuizScreen({
     return quizLoadingService.getCorrectAnswerIndex(currentQuestion)
   }, [currentQuestion, questions.length])
 
-  const progress = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0
+  const progress = questions.length > 0 ? (Object.keys(answers).length / questions.length) * 100 : 0
 
   if (loading) {
     return (
@@ -346,7 +346,7 @@ function QuizScreen({
 
           {/* Question Card */}
           <div className="bg-base-200/30 border border-base-300 rounded-lg p-8 mb-6">
-              <h2 className="text-xl font-semibold mb-6 text-base-content">
+              <h2 className="text-2xl font-semibold mb-6 text-base-content">
                 {currentQuestion?.body}
               </h2>
               
@@ -490,10 +490,10 @@ function QuizScreen({
       />
       <div className="modal modal-bottom sm:modal-middle">
         <div className="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-6 sticky top-0 bg-base-100 z-10 pb-4">
+          <div className="flex justify-between items-center mb-4 sticky top-0 bg-base-100 z-10 pb-2">
             <h3 className="text-xl font-semibold flex items-center gap-2">
               <Info className="w-6 h-6 text-info" />
-              {t('Explanation')}
+              {t('Answer Review')}
             </h3>
             <button 
               className="btn btn-sm btn-circle btn-ghost"
@@ -506,7 +506,6 @@ function QuizScreen({
           <div className="space-y-6">
             {/* Answer Options Review - Only show selected and correct */}
             <div className="space-y-3">
-              <h4 className="text-lg font-medium">{t('Answer Review')}</h4>
               {questionOptions.map((option, index) => {
                 const isSelected = selectedAnswerIndex === index
                 const isCorrect = index === correctAnswerIndex
@@ -565,7 +564,7 @@ function QuizScreen({
 
             {/* Explanation Section */}
             <div className="bg-base-200/30 border border-base-300 rounded-lg p-6">
-                <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-info/10 flex items-center justify-center">
                     <Info className="w-4 h-4 text-info" />
                   </div>
