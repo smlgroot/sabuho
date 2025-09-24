@@ -345,9 +345,8 @@ function QuizScreen({
           </div>
 
           {/* Question Card */}
-          <div className="card bg-base-100 shadow-lg mb-6">
-            <div className="card-body">
-              <h2 className="card-title text-xl font-semibold mb-6 text-base-content">
+          <div className="bg-base-200/30 border border-base-300 rounded-lg p-8 mb-6">
+              <h2 className="text-xl font-semibold mb-6 text-base-content">
                 {currentQuestion?.body}
               </h2>
               
@@ -363,9 +362,9 @@ function QuizScreen({
                     optionClass += ' btn-primary'
                   } else if (showBadge) {
                     if (isCorrect) {
-                      optionClass += ' bg-success text-success-content border-success hover:bg-success hover:text-success-content cursor-default'
+                      optionClass += ' bg-green-50 text-green-800 border-green-200 hover:bg-green-50 hover:text-green-800 cursor-default'
                     } else if (isSelected && !isCorrect) {
-                      optionClass += ' bg-error text-error-content border-error hover:bg-error hover:text-error-content cursor-default'
+                      optionClass += ' bg-red-50 text-red-800 border-red-200 hover:bg-red-50 hover:text-red-800 cursor-default'
                     } else {
                       optionClass += ' bg-base-200 text-base-content border-base-300 hover:bg-base-200 hover:text-base-content cursor-default'
                     }
@@ -386,13 +385,13 @@ function QuizScreen({
                         <div className="flex items-start justify-between mb-2">
                           <span className="flex-1 font-medium leading-relaxed">{option}</span>
                           {showBadge && isCorrect && (
-                            <div className="bg-success-content rounded-full p-1 ml-3 flex-shrink-0">
-                              <Check className="w-4 h-4 text-success" />
+                            <div className="bg-green-600 rounded-full p-1.5 ml-3 flex-shrink-0">
+                              <Check className="w-4 h-4 text-white" />
                             </div>
                           )}
                           {showBadge && isSelected && !isCorrect && (
-                            <div className="bg-error-content rounded-full p-1 ml-3 flex-shrink-0">
-                              <X className="w-4 h-4 text-error" />
+                            <div className="bg-red-600 rounded-full p-1.5 ml-3 flex-shrink-0">
+                              <X className="w-4 h-4 text-white" />
                             </div>
                           )}
                         </div>
@@ -400,10 +399,10 @@ function QuizScreen({
                         {/* Your choice indicator */}
                         {showBadge && isSelected && (
                           <div className="flex justify-start">
-                            <div className={`badge badge-sm font-semibold ${
+                            <div className={`badge badge-sm font-semibold px-3 py-1 ${
                               isCorrect 
-                                ? 'bg-success-content text-success border-success-content' 
-                                : 'bg-error-content text-error border-error-content'
+                                ? 'bg-green-100 text-green-700 border-green-200' 
+                                : 'bg-red-100 text-red-700 border-red-200'
                             }`}>
                               Your choice
                             </div>
@@ -414,33 +413,32 @@ function QuizScreen({
                   )
                 })}
               </div>
-            </div>
           </div>
 
         </div>
       </div>
 
       {/* Footer Navigation */}
-      <div className="border-t border-base-300 bg-base-100 p-4">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
+      <div className="border-t border-base-300 bg-base-100 px-6 py-8 safe-area-inset-bottom">
+        <div className="max-w-4xl mx-auto flex justify-between items-center gap-4">
           {/* Previous Button */}
           <button
             onClick={handlePrevious}
             disabled={currentQuestionIndex === 0}
-            className="btn btn-ghost btn-sm"
+            className="btn btn-ghost btn-md flex-shrink-0 min-w-24"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-5 h-5" />
             {t('Previous')}
           </button>
 
           {/* Center Actions */}
-          <div className="flex gap-2">
+          <div className="flex gap-3 flex-shrink-0">
             {(showAnswers || isReadonly) && currentQuestion?.explanation && (
               <button
                 onClick={() => setShowInfoModal(true)}
-                className="btn btn-info btn-sm"
+                className="btn btn-info btn-md"
               >
-                <Info className="w-4 h-4" />
+                <Info className="w-5 h-5" />
                 Info
               </button>
             )}
@@ -450,7 +448,7 @@ function QuizScreen({
               <button
                 onClick={handleAnswer}
                 disabled={selectedAnswerIndex === null}
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-md"
               >
                 {t('Submit Answer')}
               </button>
@@ -461,22 +459,22 @@ function QuizScreen({
           {(showAnswers || isReadonly) ? (
             <button
               onClick={handleNext}
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-md flex-shrink-0 min-w-24"
             >
               {currentQuestionIndex === questions.length - 1 ? (
                 <>
-                  <Home className="w-4 h-4" />
+                  <Home className="w-5 h-5" />
                   {t('Finish')}
                 </>
               ) : (
                 <>
                   {t('Next')}
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-5 h-5" />
                 </>
               )}
             </button>
           ) : (
-            <div className="w-20"></div>
+            <div className="w-24 flex-shrink-0"></div>
           )}
         </div>
       </div>
@@ -519,9 +517,9 @@ function QuizScreen({
                 let optionClass = 'btn btn-lg justify-start text-left h-auto min-h-16 py-4 px-6 cursor-default w-full'
                 
                 if (isCorrect) {
-                  optionClass += ' bg-success text-success-content border-success'
+                  optionClass += ' bg-green-50 text-green-800 border-green-200'
                 } else if (isSelected && !isCorrect) {
-                  optionClass += ' bg-error text-error-content border-error'
+                  optionClass += ' bg-red-50 text-red-800 border-red-200'
                 }
 
                 return (
@@ -531,13 +529,13 @@ function QuizScreen({
                       <div className="flex items-start justify-between mb-2">
                         <span className="flex-1 font-medium leading-relaxed">{option}</span>
                         {isCorrect && (
-                          <div className="bg-success-content rounded-full p-1 ml-3 flex-shrink-0">
-                            <Check className="w-4 h-4 text-success" />
+                          <div className="bg-green-600 rounded-full p-1.5 ml-3 flex-shrink-0">
+                            <Check className="w-4 h-4 text-white" />
                           </div>
                         )}
                         {isSelected && !isCorrect && (
-                          <div className="bg-error-content rounded-full p-1 ml-3 flex-shrink-0">
-                            <X className="w-4 h-4 text-error" />
+                          <div className="bg-red-600 rounded-full p-1.5 ml-3 flex-shrink-0">
+                            <X className="w-4 h-4 text-white" />
                           </div>
                         )}
                       </div>
@@ -545,15 +543,15 @@ function QuizScreen({
                       {/* Status badges */}
                       <div className="flex gap-2 justify-start">
                         {isCorrect && (
-                          <div className="badge bg-success-content text-success border-success-content font-semibold">
+                          <div className="badge bg-green-100 text-green-700 border-green-200 font-semibold px-3 py-1">
                             Correct Answer
                           </div>
                         )}
                         {isSelected && (
-                          <div className={`badge font-semibold ${
+                          <div className={`badge font-semibold px-3 py-1 ${
                             isCorrect 
-                              ? 'bg-success-content text-success border-success-content' 
-                              : 'bg-error-content text-error border-error-content'
+                              ? 'bg-green-100 text-green-700 border-green-200' 
+                              : 'bg-red-100 text-red-700 border-red-200'
                           }`}>
                             Your Choice
                           </div>
@@ -566,9 +564,8 @@ function QuizScreen({
             </div>
 
             {/* Explanation Section */}
-            <div className="card bg-base-100 border border-base-300 shadow-sm">
-              <div className="card-body">
-                <h4 className="card-title text-lg mb-4 flex items-center gap-2">
+            <div className="bg-base-200/30 border border-base-300 rounded-lg p-6">
+                <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-info/10 flex items-center justify-center">
                     <Info className="w-4 h-4 text-info" />
                   </div>
@@ -577,7 +574,6 @@ function QuizScreen({
                 <div className="prose max-w-none">
                   <p className="text-base-content leading-relaxed">{currentQuestion?.explanation}</p>
                 </div>
-              </div>
             </div>
           </div>
         </div>
