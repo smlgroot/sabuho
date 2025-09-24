@@ -237,10 +237,20 @@ class DatabaseManager {
   }
 
   async getExistingQuizSession(userId, quizId, levelId) {
-    return await this.db.quiz_sessions
+    const session = await this.db.quiz_sessions
       .where('user_id').equals(userId)
       .and(session => session.quiz_id === quizId && session.level_id === levelId)
       .first()
+    
+    console.log('getExistingQuizSession result:', {
+      userId,
+      quizId,
+      levelId,
+      foundSession: session ? session.id : null,
+      sessionDetails: session
+    })
+    
+    return session
   }
 
   async getOrCreateQuizSession(userId, quizId, levelId) {
@@ -294,11 +304,26 @@ class DatabaseManager {
   }
 
   async getQuestionAttempts(sessionId) {
-    return await this.db.question_attempts
+    const attempts = await this.db.question_attempts
       .where('session_id')
       .equals(sessionId)
-      .orderBy('timestamp')
       .toArray()
+    
+    // Sort by timestamp after fetching
+    attempts.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    
+    console.log('getQuestionAttempts result:', {
+      sessionId,
+      attemptsFound: attempts.length,
+      attempts: attempts.map(a => ({
+        question_id: a.question_id,
+        selected_answer_index: a.selected_answer_index,
+        is_correct: a.is_correct,
+        timestamp: a.timestamp
+      }))
+    })
+    
+    return attempts
   }
 
   async getQuestionAttempt(sessionId, questionId) {

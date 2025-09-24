@@ -43,7 +43,7 @@ function QuizScreen({
     
     setIsReadonly(isReadonlyMode)
     
-    loadQuizData()
+    loadQuizData(isReadonlyMode) // Pass the calculated value directly
   }, [quizId, levelId, searchParams, propReadonly])
 
   // Additional effect to handle readonly mode after questions load
@@ -51,7 +51,10 @@ function QuizScreen({
     if (isReadonly && questions.length > 0) {
       // In readonly mode, set the selected answer from loaded session data
       const savedAnswer = answers[currentQuestionIndex]
-      setSelectedAnswerIndex(savedAnswer !== undefined ? savedAnswer : null)
+      console.log('Readonly mode useEffect: Setting answer for question', currentQuestionIndex, ':', savedAnswer, 'from answers:', answers)
+      if (savedAnswer !== undefined) {
+        setSelectedAnswerIndex(savedAnswer)
+      }
       setShowAnswers(true)
     }
   }, [isReadonly, questions, currentQuestionIndex, answers])
@@ -60,7 +63,7 @@ function QuizScreen({
     setQuestionStartTime(Date.now())
   }, [currentQuestionIndex])
 
-  const loadQuizData = async () => {
+  const loadQuizData = async (isReadonlyMode = false) => {
     // Prevent concurrent loading attempts
     if (loadingRef.current) {
       console.log('LoadQuizData already in progress, skipping...')
@@ -87,10 +90,69 @@ function QuizScreen({
       
       // Use quiz loading service to load quiz data
       const userId = 'default_user' // In a real app, get this from auth context
+      
+      console.log('QuizScreen loadQuizData parameters:', {
+        quizId,
+        userId,
+        levelType,
+        levelId,
+        isReadonlyMode,
+        quizIdType: typeof quizId,
+        levelIdType: typeof levelId
+      })
+      
       const result = await quizLoadingService.loadQuizData(quizId, userId, levelType, levelId)
+      
+      // In readonly mode, load existing session data BEFORE setting other state
+      let initialAnswers = {}
+      let initialSelectedAnswer = null
+      
+      if (isReadonlyMode) {
+        console.log('READONLY MODE: Attempting to load session data', {
+          isReadonlyMode,
+          sessionId: result.sessionId,
+          questionsLength: result.questions.length
+        })
+        
+        try {
+          if (result.sessionId) {
+            console.log('READONLY MODE: Calling loadQuizSessionData...')
+            const sessionData = await quizLoadingService.loadQuizSessionData(result.sessionId, result.questions)
+            console.log('READONLY MODE: Session data loaded:', sessionData)
+            
+            if (sessionData.answers && Object.keys(sessionData.answers).length > 0) {
+              console.log('Setting answers from session data:', sessionData.answers)
+              initialAnswers = sessionData.answers
+              // Set the first answer as selected if available
+              initialSelectedAnswer = sessionData.answers[0]
+            } else {
+              console.warn('READONLY MODE: No answers found in session data:', sessionData)
+            }
+          } else {
+            console.warn('No session ID available for readonly mode')
+          }
+        } catch (error) {
+          console.warn('Could not load existing session data for readonly mode:', error)
+        }
+      }
+
+      // Now set all state at once to avoid race conditions
+      console.log('READONLY MODE: Setting initial state:', {
+        initialAnswers,
+        initialSelectedAnswer,
+        isReadonlyMode
+      })
       
       setQuiz(result.quiz)
       setQuestions(result.questions)
+      setAnswers(initialAnswers)
+      if (initialSelectedAnswer !== null && initialSelectedAnswer !== undefined) {
+        console.log('READONLY MODE: Setting initial selected answer:', initialSelectedAnswer)
+        setSelectedAnswerIndex(initialSelectedAnswer)
+      }
+      if (isReadonlyMode) {
+        setShowAnswers(true)
+      }
       
       // Set quiz session
       setQuizSession({
@@ -100,26 +162,6 @@ function QuizScreen({
         start_time: new Date().toISOString(),
         state: 'in_progress'
       })
-
-      // In readonly mode, load existing session data
-      if (isReadonly && result.sessionId) {
-        try {
-          const sessionData = await quizLoadingService.loadQuizSessionData(result.sessionId, result.questions)
-          if (sessionData.answers && Object.keys(sessionData.answers).length > 0) {
-            setAnswers(sessionData.answers)
-            // Set the first answer as selected if available
-            const firstAnswer = sessionData.answers[0]
-            if (firstAnswer !== undefined) {
-              setSelectedAnswerIndex(firstAnswer)
-            }
-          }
-          setShowAnswers(true)
-        } catch (error) {
-          console.warn('Could not load existing session data for readonly mode:', error)
-          // Even without session data, show answers in readonly mode
-          setShowAnswers(true)
-        }
-      }
       
     } catch (error) {
       console.error('Error loading quiz data:', error)
@@ -190,14 +232,15 @@ function QuizScreen({
 
   const handleNext = async () => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1)
-      const nextAnswer = answers[currentQuestionIndex + 1]
+      const newIndex = currentQuestionIndex + 1
+      setCurrentQuestionIndex(newIndex)
+      const nextAnswer = answers[newIndex]
       setSelectedAnswerIndex(nextAnswer !== undefined ? nextAnswer : null)
       // In readonly mode, always show answers; otherwise show if answered
       if (isReadonly) {
         setShowAnswers(true)
       } else {
-        setShowAnswers(!!answers[currentQuestionIndex + 1])
+        setShowAnswers(!!answers[newIndex])
       }
     } else {
       // Quiz complete - handle level completion

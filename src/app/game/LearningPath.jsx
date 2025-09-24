@@ -117,37 +117,32 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
     }
   };
 
-  // Color palette for level icons with enhanced variety
-  const getLevelColor = (index, type) => {
+  // Color palette for level icons - 10 carefully selected colors for learning apps
+  const getLevelColor = (levelId, type) => {
     if (type === 'mini-boss' || type === 'boss') {
       return type; // Keep existing special level colors
     }
     
-    // Enhanced color rotation for standard levels
-    // Using a mix of DaisyUI semantic colors and Tailwind color classes
-    const colors = [
-      'bg-primary text-primary-content',        // Theme primary
-      'bg-secondary text-secondary-content',    // Theme secondary  
-      'bg-accent text-accent-content',          // Theme accent
-      'bg-info text-info-content',             // Light blue
-      'bg-violet-500 text-white',              // Violet
-      'bg-pink-500 text-white',                // Pink
-      'bg-indigo-500 text-white',              // Indigo
-      'bg-teal-500 text-white',                // Teal
-      'bg-cyan-500 text-white',                // Cyan
-      'bg-emerald-500 text-white',             // Emerald
-      'bg-lime-500 text-white',                // Lime
-      'bg-amber-500 text-white',               // Amber
-      'bg-orange-500 text-white',              // Orange
-      'bg-red-500 text-white',                 // Red
-      'bg-rose-500 text-white',                // Rose
-      'bg-fuchsia-500 text-white',             // Fuchsia
+    // 10 excellent colors for learning apps - vibrant but not overwhelming
+    const learningAppColors = [
+      'bg-blue-500 text-white',      // Trust, knowledge
+      'bg-green-500 text-white',     // Growth, success
+      'bg-purple-500 text-white',    // Creativity, wisdom
+      'bg-orange-500 text-white',    // Energy, enthusiasm
+      'bg-teal-500 text-white',      // Focus, balance
+      'bg-pink-500 text-white',      // Engagement, fun
+      'bg-indigo-500 text-white',    // Deep learning, concentration
+      'bg-emerald-500 text-white',   // Achievement, progress
+      'bg-amber-500 text-white',     // Attention, discovery
+      'bg-cyan-500 text-white'       // Clarity, understanding
     ];
     
-    return colors[index % colors.length];
+    // Use level ID to generate consistent random color for each level
+    const colorIndex = Math.abs(levelId.toString().split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % learningAppColors.length;
+    return learningAppColors[colorIndex];
   };
 
-  const getLevelStyles = (type, completed, locked, index = 0) => {
+  const getLevelStyles = (type, completed, locked, levelId) => {
     const baseStyles = "relative flex items-center justify-center rounded-full w-12 h-12";
     const interactiveStyles = "transition-all duration-300 hover:scale-105";
     
@@ -165,7 +160,7 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
       case 'boss':
         return `${baseStyles} ${interactiveStyles} bg-error text-error-content`;
       default: {
-        const levelColor = getLevelColor(index, type);
+        const levelColor = getLevelColor(levelId, type);
         return `${baseStyles} ${interactiveStyles} ${levelColor}`;
       }
     }
@@ -263,7 +258,7 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
                   >
                     <div className="flex items-center gap-4">
                       {/* Level icon - Each level gets a different color based on its position */}
-                      <div className={`${getLevelStyles(level.type, level.completed, level.locked, index)} flex-shrink-0`}>
+                      <div className={`${getLevelStyles(level.type, level.completed, level.locked, level.id)} flex-shrink-0`}>
                         {level.locked ? (
                           <Lock className="w-5 h-5" />
                         ) : level.completed ? (

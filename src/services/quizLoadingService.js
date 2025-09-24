@@ -21,11 +21,51 @@ export class QuizLoadingService {
   /**
    * Selects questions for a quiz session with proper limiting
    */
-  async selectQuestions(quizId, questionCount) {
+  async selectQuestions(quizId, questionCount, sessionId = null) {
     // Get all questions for the quiz
     const allQuestions = await database.getQuizQuestions(quizId)
     if (allQuestions.length === 0) {
       throw new Error('No questions found for this quiz')
+    }
+
+    // If we have a sessionId, try to use questions from existing session for consistency
+    if (sessionId) {
+      try {
+        const questionAttempts = await database.getQuestionAttempts(sessionId)
+        console.log('selectQuestions: Checking session for existing questions:', {
+          sessionId,
+          attemptsFound: questionAttempts ? questionAttempts.length : 0,
+          attempts: questionAttempts
+        })
+        
+        if (questionAttempts && questionAttempts.length > 0) {
+          // Get unique question IDs in the order they were attempted
+          const seenQuestionIds = new Set()
+          const questionIds = []
+          
+          for (const attempt of questionAttempts) {
+            if (!seenQuestionIds.has(attempt.question_id)) {
+              questionIds.push(attempt.question_id)
+              seenQuestionIds.add(attempt.question_id)
+            }
+          }
+          
+          // Map question IDs to actual question objects
+          const sessionQuestions = questionIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean)
+          
+          if (sessionQuestions.length > 0) {
+            console.log('Using existing session questions:', {
+              sessionId,
+              questionsFound: sessionQuestions.length,
+              questionIds,
+              sessionQuestions: sessionQuestions.map(q => ({ id: q.id, body: q.body?.substring(0, 50) + '...' }))
+            })
+            return sessionQuestions
+          }
+        }
+      } catch (error) {
+        console.warn('Could not load session questions, falling back to random selection:', error)
+      }
     }
 
     // For now, just randomly select the required number of questions
@@ -45,12 +85,12 @@ export class QuizLoadingService {
         throw new Error('Quiz not found')
       }
 
+      // Get or create quiz session first to check for existing questions
+      const sessionId = await database.getOrCreateQuizSession(userId, quiz.id, levelId)
+
       // Get the appropriate number of questions based on level type
       const questionCount = this.getQuestionCountForLevelType(levelType)
-      const questions = await this.selectQuestions(quizId, questionCount)
-
-      // Create or get existing quiz session
-      const sessionId = await this.createQuizSession(quiz, questions, userId, levelId)
+      const questions = await this.selectQuestions(quizId, questionCount, sessionId)
 
       return {
         quiz,
@@ -102,6 +142,14 @@ export class QuizLoadingService {
       // Match question attempts to current quiz questions by question_id
       const answers = {}
       
+      console.log('DEBUGGING loadQuizSessionData - mapping attempts to questions:', {
+        sessionId,
+        questionsCount: questions.length,
+        attemptsCount: questionAttempts.length,
+        questionIds: questions.map(q => q.id),
+        attemptQuestionIds: questionAttempts.map(a => a.question_id)
+      })
+      
       questions.forEach((question, questionIndex) => {
         console.log(`Looking for question ${questionIndex} with id: ${question.id}`)
         const attempt = questionAttempts.find(att => att.question_id === question.id)
@@ -134,30 +182,22 @@ export class QuizLoadingService {
       console.log('parseOptionsString: No options provided, returning empty array')
       return []
     }
-    
-    console.log('parseOptionsString v2: Input data:', options, 'Type:', typeof options, 'isArray:', Array.isArray(options))
-    
+        
     // FIRST: Check if it's already an array - this should handle the current issue
     if (Array.isArray(options)) {
-      console.log('parseOptionsString v2: Input is already an array, returning directly:', options)
       return options
     }
     
     // SECOND: If it's a string, try to parse it as JSON
     if (typeof options === 'string') {
-      console.log('parseOptionsString v2: Input is string, attempting JSON parse')
       try {
         const result = JSON.parse(options)
-        console.log('parseOptionsString v2: JSON parse succeeded:', result)
         if (Array.isArray(result)) {
           return result
         } else {
-          console.warn('parseOptionsString v2: JSON parsed but result is not an array:', result)
           return []
         }
       } catch (jsonError) {
-        console.error('parseOptionsString v2: JSON parse failed:', jsonError.message)
-        console.log('parseOptionsString v2: Attempting fallback string parsing for:', options)
         
         // Fallback for malformed array-like strings
         try {
@@ -170,17 +210,16 @@ export class QuizLoadingService {
             return option.replace(/^'|'$/g, '')
           })
           
-          console.log('parseOptionsString v2: Fallback parsing successful:', parsedOptions)
           return parsedOptions
         } catch (fallbackError) {
-          console.error('parseOptionsString v2: All parsing methods failed:', fallbackError)
+          console.error('parseOptionsString v2:  All parsing methods failed:', fallbackError)
           return []
         }
       }
     }
     
     // THIRD: Handle unexpected data types
-    console.error('parseOptionsString v2: Unexpected data type, returning empty array. Type:', typeof options, 'Value:', options)
+    console.error('parseOptionsString  v2: Unexpected data type, returning empty array. Type:', typeof options, 'Value:', options)
     return []
   }
 
@@ -189,30 +228,24 @@ export class QuizLoadingService {
    */
   getQuestionOptions(question) {
     if (!question) {
-      console.log('getQuestionOptions: No question provided')
       return []
     }
     
     if (!question.options) {
-      console.log('getQuestionOptions: Question has no options field', question)
       return []
     }
 
     try {
-      console.log('getQuestionOptions: Parsing options', question.options)
       const options = this.parseOptionsString(question.options)
       if (!Array.isArray(options)) {
-        console.log('getQuestionOptions: Options is not an array', options)
         return []
       }
       const processedOptions = options.map(option => {
         if (typeof option !== 'string') {
-          console.log('getQuestionOptions: Option is not a string', option)
           return String(option)
         }
         return option.replace(/\s*\[correct\]\s*$/, '')
       })
-      console.log('getQuestionOptions: Processed options', processedOptions)
       return processedOptions
     } catch (error) {
       console.error('getQuestionOptions: Error parsing options', error, question.options)
