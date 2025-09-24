@@ -32,11 +32,6 @@ export class QuizLoadingService {
     if (sessionId) {
       try {
         const questionAttempts = await database.getQuestionAttempts(sessionId)
-        console.log('selectQuestions: Checking session for existing questions:', {
-          sessionId,
-          attemptsFound: questionAttempts ? questionAttempts.length : 0,
-          attempts: questionAttempts
-        })
         
         if (questionAttempts && questionAttempts.length > 0) {
           // Get unique question IDs in the order they were attempted
@@ -54,12 +49,6 @@ export class QuizLoadingService {
           const sessionQuestions = questionIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean)
           
           if (sessionQuestions.length > 0) {
-            console.log('Using existing session questions:', {
-              sessionId,
-              questionsFound: sessionQuestions.length,
-              questionIds,
-              sessionQuestions: sessionQuestions.map(q => ({ id: q.id, body: q.body?.substring(0, 50) + '...' }))
-            })
             return sessionQuestions
           }
         }
@@ -124,44 +113,17 @@ export class QuizLoadingService {
         throw new Error('Quiz session not found')
       }
 
-      // Get question attempts for this session
       const questionAttempts = await database.getQuestionAttempts(sessionId)
       
-      console.log('Loading session data:', {
-        sessionId,
-        session,
-        questionAttempts: questionAttempts.length,
-        questions: questions.length,
-        attempts: questionAttempts.map(att => ({
-          question_id: att.question_id,
-          selected_answer_index: att.selected_answer_index
-        }))
-      })
-      
-      // Convert attempts to answers format expected by QuizScreen
-      // Match question attempts to current quiz questions by question_id
       const answers = {}
       
-      console.log('DEBUGGING loadQuizSessionData - mapping attempts to questions:', {
-        sessionId,
-        questionsCount: questions.length,
-        attemptsCount: questionAttempts.length,
-        questionIds: questions.map(q => q.id),
-        attemptQuestionIds: questionAttempts.map(a => a.question_id)
-      })
-      
       questions.forEach((question, questionIndex) => {
-        console.log(`Looking for question ${questionIndex} with id: ${question.id}`)
         const attempt = questionAttempts.find(att => att.question_id === question.id)
         if (attempt) {
           answers[questionIndex] = attempt.selected_answer_index
-          console.log(`✓ Mapped question ${questionIndex} (id: ${question.id}) to answer ${attempt.selected_answer_index}`)
-        } else {
-          console.log(`✗ No attempt found for question ${questionIndex} (id: ${question.id})`)
         }
       })
 
-      console.log('Final answers mapping:', answers)
 
       return {
         session,
@@ -179,7 +141,6 @@ export class QuizLoadingService {
    */
   parseOptionsString(options) {
     if (!options) {
-      console.log('parseOptionsString: No options provided, returning empty array')
       return []
     }
         
@@ -212,14 +173,11 @@ export class QuizLoadingService {
           
           return parsedOptions
         } catch (fallbackError) {
-          console.error('parseOptionsString v2:  All parsing methods failed:', fallbackError)
           return []
         }
       }
     }
     
-    // THIRD: Handle unexpected data types
-    console.error('parseOptionsString  v2: Unexpected data type, returning empty array. Type:', typeof options, 'Value:', options)
     return []
   }
 
@@ -258,23 +216,19 @@ export class QuizLoadingService {
    */
   getCorrectAnswerIndex(question) {
     if (!question) {
-      console.log('getCorrectAnswerIndex: No question provided')
       return -1
     }
     
     if (!question.options) {
-      console.log('getCorrectAnswerIndex: Question has no options field', question)
       return -1
     }
 
     try {
       const options = this.parseOptionsString(question.options)
       if (!Array.isArray(options)) {
-        console.log('getCorrectAnswerIndex: Options is not an array', options)
         return -1
       }
       const correctIndex = options.findIndex(option => String(option).includes('[correct]'))
-      console.log('getCorrectAnswerIndex: Correct index found', correctIndex, 'in options', options)
       return correctIndex
     } catch (error) {
       console.error('getCorrectAnswerIndex: Error parsing options', error, question.options)

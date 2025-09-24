@@ -242,46 +242,24 @@ class DatabaseManager {
       .and(session => session.quiz_id === quizId && session.level_id === levelId)
       .first()
     
-    console.log('getExistingQuizSession result:', {
-      userId,
-      quizId,
-      levelId,
-      foundSession: session ? session.id : null,
-      sessionDetails: session
-    })
-    
     return session
   }
 
   async getOrCreateQuizSession(userId, quizId, levelId) {
     try {
-      // Check if there's already a session for this user/quiz/level combination
       let existingSession = await this.getExistingQuizSession(userId, quizId, levelId)
       
-      console.log('getOrCreateQuizSession:', {
-        userId,
-        quizId, 
-        levelId,
-        existingSession: existingSession ? existingSession.id : 'none'
-      })
-      
       if (existingSession) {
-        console.log('Using existing session:', existingSession.id)
         return existingSession.id
       }
       
-      // Create new session if none exists
       const newSessionId = await this.createQuizSession(userId, quizId, levelId)
-      console.log('Created new session:', newSessionId)
       return newSessionId
     } catch (error) {
       console.error('Error in getOrCreateQuizSession:', error)
       
-      // If session creation fails, try to find existing session again
-      // This handles race conditions where multiple calls try to create at the same time
       const existingSession = await this.getExistingQuizSession(userId, quizId, levelId)
       if (existingSession) {
-        console.log('Found existing session after error:', existingSession.id)
         return existingSession.id
       }
       
@@ -309,19 +287,7 @@ class DatabaseManager {
       .equals(sessionId)
       .toArray()
     
-    // Sort by timestamp after fetching
     attempts.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-    
-    console.log('getQuestionAttempts result:', {
-      sessionId,
-      attemptsFound: attempts.length,
-      attempts: attempts.map(a => ({
-        question_id: a.question_id,
-        selected_answer_index: a.selected_answer_index,
-        is_correct: a.is_correct,
-        timestamp: a.timestamp
-      }))
-    })
     
     return attempts
   }

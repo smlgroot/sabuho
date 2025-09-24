@@ -43,15 +43,13 @@ function QuizScreen({
     
     setIsReadonly(isReadonlyMode)
     
-    loadQuizData(isReadonlyMode) // Pass the calculated value directly
+    loadQuizData(isReadonlyMode)
   }, [quizId, levelId, searchParams, propReadonly])
 
   // Additional effect to handle readonly mode after questions load
   useEffect(() => {
     if (isReadonly && questions.length > 0) {
-      // In readonly mode, set the selected answer from loaded session data
       const savedAnswer = answers[currentQuestionIndex]
-      console.log('Readonly mode useEffect: Setting answer for question', currentQuestionIndex, ':', savedAnswer, 'from answers:', answers)
       if (savedAnswer !== undefined) {
         setSelectedAnswerIndex(savedAnswer)
       }
@@ -64,9 +62,7 @@ function QuizScreen({
   }, [currentQuestionIndex])
 
   const loadQuizData = async (isReadonlyMode = false) => {
-    // Prevent concurrent loading attempts
     if (loadingRef.current) {
-      console.log('LoadQuizData already in progress, skipping...')
       return
     }
     
@@ -91,15 +87,6 @@ function QuizScreen({
       // Use quiz loading service to load quiz data
       const userId = 'default_user' // In a real app, get this from auth context
       
-      console.log('QuizScreen loadQuizData parameters:', {
-        quizId,
-        userId,
-        levelType,
-        levelId,
-        isReadonlyMode,
-        quizIdType: typeof quizId,
-        levelIdType: typeof levelId
-      })
       
       const result = await quizLoadingService.loadQuizData(quizId, userId, levelType, levelId)
       
@@ -108,46 +95,25 @@ function QuizScreen({
       let initialSelectedAnswer = null
       
       if (isReadonlyMode) {
-        console.log('READONLY MODE: Attempting to load session data', {
-          isReadonlyMode,
-          sessionId: result.sessionId,
-          questionsLength: result.questions.length
-        })
-        
         try {
           if (result.sessionId) {
-            console.log('READONLY MODE: Calling loadQuizSessionData...')
             const sessionData = await quizLoadingService.loadQuizSessionData(result.sessionId, result.questions)
-            console.log('READONLY MODE: Session data loaded:', sessionData)
             
             if (sessionData.answers && Object.keys(sessionData.answers).length > 0) {
-              console.log('Setting answers from session data:', sessionData.answers)
               initialAnswers = sessionData.answers
-              // Set the first answer as selected if available
               initialSelectedAnswer = sessionData.answers[0]
-            } else {
-              console.warn('READONLY MODE: No answers found in session data:', sessionData)
             }
-          } else {
-            console.warn('No session ID available for readonly mode')
           }
         } catch (error) {
           console.warn('Could not load existing session data for readonly mode:', error)
         }
       }
 
-      // Now set all state at once to avoid race conditions
-      console.log('READONLY MODE: Setting initial state:', {
-        initialAnswers,
-        initialSelectedAnswer,
-        isReadonlyMode
-      })
       
       setQuiz(result.quiz)
       setQuestions(result.questions)
       setAnswers(initialAnswers)
       if (initialSelectedAnswer !== null && initialSelectedAnswer !== undefined) {
-        console.log('READONLY MODE: Setting initial selected answer:', initialSelectedAnswer)
         setSelectedAnswerIndex(initialSelectedAnswer)
       }
       if (isReadonlyMode) {
@@ -204,14 +170,6 @@ function QuizScreen({
       // Create question attempt in database
       if (quizSession && currentQuestion) {
         try {
-          console.log('Creating question attempt:', {
-            sessionId: quizSession.id,
-            quizId,
-            questionId: currentQuestion.id,
-            selectedAnswerIndex,
-            isCorrect
-          })
-          
           await database.createQuestionAttempt(
             quizSession.id,
             quizId,
@@ -219,8 +177,6 @@ function QuizScreen({
             selectedAnswerIndex,
             isCorrect
           )
-          
-          console.log('Question attempt created successfully')
         } catch (error) {
           console.error('Error creating question attempt:', error)
         }
@@ -252,14 +208,7 @@ function QuizScreen({
     try {
       // Only mark level as completed if not in readonly mode
       if (levelId && currentLevel && !isReadonly) {
-        console.log(`Completing level: ${currentLevel.name} (${levelId})`)
-        
-        // Mark current level as completed and unlock next level
         await database.completeLevelAndUnlockNext(levelId, quizId)
-        
-        console.log('Level completed and next level unlocked successfully')
-      } else if (isReadonly) {
-        console.log(`Finished reviewing level: ${currentLevel?.name || 'Quiz'} (readonly mode)`)
       }
       
       // Handle closing based on modal vs route mode
@@ -296,18 +245,8 @@ function QuizScreen({
   }
 
   const currentQuestion = useMemo(() => {
-    const question = questions[currentQuestionIndex]
-    if (process.env.NODE_ENV === 'development' && question) {
-      console.log('Current question:', {
-        index: currentQuestionIndex,
-        hasExplanation: !!question.explanation,
-        explanation: question.explanation,
-        showAnswers,
-        isReadonly
-      })
-    }
-    return question
-  }, [questions, currentQuestionIndex, showAnswers, isReadonly])
+    return questions[currentQuestionIndex]
+  }, [questions, currentQuestionIndex])
   
   const questionOptions = useMemo(() => {
     if (!currentQuestion || questions.length === 0) {
@@ -506,12 +445,6 @@ function QuizScreen({
               </button>
             )}
             
-            {/* Debug: Show info about why info button might not appear */}
-            {process.env.NODE_ENV === 'development' && (showAnswers || isReadonly) && !currentQuestion?.explanation && (
-              <div className="btn btn-ghost btn-sm opacity-50 cursor-default text-xs">
-                No explanation available
-              </div>
-            )}
             
             {!showAnswers && !isReadonly && (
               <button
