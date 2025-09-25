@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Menu, ShoppingBag, Star, Settings, HelpCircle, LogOut, Moon, Sun, Languages } from "lucide-react";
+import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Menu, ShoppingBag, DollarSign, Settings, HelpCircle, LogOut, Moon, Sun, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { DomainTree } from "./components/domains/domain-tree";
 import { QuizList } from "./components/quizzes/quiz-list";
@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/admin/auth";
 import { UserMenu } from "../auth/components/user-menu";
 import { useStore } from "@/store/useStore";
 import { ProfileSidebar } from "./components/ProfileSidebar";
+import { CreatorOnboarding } from "./components/CreatorOnboarding";
 import { useNavigate } from 'react-router-dom';
 import {
   fetchDomains,
@@ -68,6 +69,13 @@ export default function AdminPage() {
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [activeView, setActiveView] = useState('learning-hub'); // 'learning-hub', 'domains', 'quizzes', 'shop'
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [onboardingData, setOnboardingData] = useState({
+    displayName: '',
+    bio: '',
+    interests: [],
+    goal: ''
+  });
   const hasLoadedData = useRef(false);
   
   // Quiz modal state
@@ -75,7 +83,7 @@ export default function AdminPage() {
   const [quizModalData, setQuizModalData] = useState({ quizId: null, levelId: null, readonly: false });
   const learningPathRef = useRef(null);
 
-  const { user } = useAuth();
+  const { user, userProfile, loadUserProfile } = useAuth();
 
 
   const loadDomains = useCallback(async () => {
@@ -330,6 +338,21 @@ export default function AdminPage() {
     return path;
   };
 
+  const handleOnboardingComplete = async () => {
+    // Force refresh user profile to get updated creator status
+    if (user) {
+      await loadUserProfile(user.id);
+    }
+    setActiveView('creator');
+    setCreatorOpen(true);
+    setOnboardingStep(0);
+  };
+
+  const handleOnboardingCancel = () => {
+    setActiveView('learning-hub');
+    setOnboardingStep(0);
+  };
+
   const MainSidebar = () => (
     <aside className="min-w-20 bg-base-200 text-base-content flex flex-col min-h-full border-r border-base-300">
       {/* Main Navigation Menu */}
@@ -381,25 +404,38 @@ export default function AdminPage() {
         <button 
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${creatorOpen ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
-            setCreatorOpen(!creatorOpen);
-            if (!creatorOpen) {
-              setActiveView('creator');
+            const isCreatorEnabled = userProfile?.terms_accepted && userProfile?.is_creator_enabled;
+            if (isCreatorEnabled) {
+              // Creator is enabled - normal toggle behavior
+              setCreatorOpen(!creatorOpen);
+              if (!creatorOpen) {
+                setActiveView('creator');
+                setProfileSidebarOpen(false);
+                if (!secondSidebarOpen) setSecondSidebarOpen(true);
+              }
+            } else {
+              // Creator not enabled - show onboarding
+              setActiveView('creator-onboarding');
+              setOnboardingStep(0);
               setProfileSidebarOpen(false);
               if (!secondSidebarOpen) setSecondSidebarOpen(true);
             }
           }}
         >
-          <Star className="h-6 w-6" />
+          <DollarSign className="h-6 w-6" />
           <span className="text-xs whitespace-nowrap">{t("Creator")}</span>
-          {creatorOpen ? (
-            <ChevronUp className="h-3 w-3" />
-          ) : (
-            <ChevronDown className="h-3 w-3" />
-          )}
+          {(() => {
+            const isCreatorEnabled = userProfile?.terms_accepted && userProfile?.is_creator_enabled;
+            return isCreatorEnabled && creatorOpen ? (
+              <ChevronUp className="h-3 w-3" />
+            ) : isCreatorEnabled && !creatorOpen ? (
+              <ChevronDown className="h-3 w-3" />
+            ) : null;
+          })()}
         </button>
         
-        {/* Domains - only show when creator is open */}
-        {creatorOpen && (
+        {/* Domains - only show when creator is enabled and open */}
+        {(userProfile?.terms_accepted && userProfile?.is_creator_enabled) && creatorOpen && (
           <button 
             className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={() => {
@@ -415,8 +451,8 @@ export default function AdminPage() {
           </button>
         )}
         
-        {/* Quizzes - only show when creator is open */}
-        {creatorOpen && (
+        {/* Quizzes - only show when creator is enabled and open */}
+        {(userProfile?.terms_accepted && userProfile?.is_creator_enabled) && creatorOpen && (
           <button 
             className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'quizzes' ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={() => {
@@ -466,7 +502,7 @@ export default function AdminPage() {
           </div>
           <div className="flex-1 p-6 flex items-center justify-center">
             <div className="text-center max-w-sm">
-              <Star className="h-16 w-16 text-accent mx-auto mb-6" />
+              <DollarSign className="h-16 w-16 text-accent mx-auto mb-6" />
               <h4 className="text-xl font-semibold mb-4">{t("Welcome to Quiz Creator")}</h4>
               <p className="text-base-content/70 mb-6 leading-relaxed">
                 {t("Create engaging quizzes with our intuitive builder. Add questions, set difficulty levels, and track student progress - all from one powerful interface.")}
@@ -479,6 +515,13 @@ export default function AdminPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {activeView === 'creator-onboarding' && (
+        <CreatorOnboarding
+          onComplete={handleOnboardingComplete}
+          onCancel={handleOnboardingCancel}
+        />
       )}
 
       {activeView === 'domains' && (

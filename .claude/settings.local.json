@@ -12,7 +12,8 @@
       "Bash(yarn add:*)",
       "Bash(yarn dev)",
       "Bash(tree:*)",
-      "Read(//Users/smlg/projects/me/sabuho-app/src/components/**)"
+      "Read(//Users/smlg/projects/me/sabuho-app/src/components/**)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

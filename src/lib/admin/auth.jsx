@@ -1,16 +1,27 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../supabase'
-import { upsertUserProfile } from '@/services/userProfileService'
+import { upsertUserProfile, getUserProfile } from '@/services/userProfileService'
 
 const AuthContext = createContext(undefined)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const location = useLocation()
+
+  const loadUserProfile = async (userId) => {
+    try {
+      await upsertUserProfile(userId)
+      const { data: profile } = await getUserProfile(userId)
+      setUserProfile(profile)
+    } catch (error) {
+      console.error('Failed to load user profile:', error)
+    }
+  }
 
   useEffect(() => {
     const getSession = async () => {
@@ -22,13 +33,7 @@ export function AuthProvider({ children }) {
       // Update user profile for existing sessions (non-blocking)
       if (session?.user) {
         // Make user profile update non-blocking to avoid interfering with auth flow
-        setTimeout(async () => {
-          try {
-            await upsertUserProfile(session.user.id)
-          } catch (error) {
-            console.error('Failed to update user profile on session load:', error)
-          }
-        }, 0)
+        setTimeout(() => loadUserProfile(session.user.id), 0)
       }
     }
 
@@ -43,18 +48,17 @@ export function AuthProvider({ children }) {
         // Update user profile on sign in (non-blocking)
         if (event === 'SIGNED_IN' && session?.user) {
           // Make user profile update non-blocking to avoid interfering with auth flow
-          setTimeout(async () => {
-            try {
-              await upsertUserProfile(session.user.id)
-            } catch (error) {
-              console.error('Failed to update user profile on sign in:', error)
-            }
-          }, 0)
+          setTimeout(() => loadUserProfile(session.user.id), 0)
           
           // Redirect to admin after successful login
           if (location.pathname === '/auth') {
             navigate('/admin')
           }
+        }
+        
+        // Clear user profile on sign out
+        if (event === 'SIGNED_OUT') {
+          setUserProfile(null)
         }
         
         // Don't redirect automatically after logout - let the component handle it
@@ -96,11 +100,13 @@ export function AuthProvider({ children }) {
 
   const value = {
     user,
+    userProfile,
     session,
     loading,
     signUp,
     signIn,
     signOut,
+    loadUserProfile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
