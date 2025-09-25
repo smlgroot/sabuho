@@ -23,8 +23,16 @@ export default function HomePage() {
 
   const handleHeaderButton = async () => {
     if (user) {
-      await signOut()
-      navigate('/')
+      try {
+        const { error } = await signOut();
+        if (error) {
+          console.error('Logout error:', error);
+        }
+        navigate('/');
+      } catch (err) {
+        console.error('Logout exception:', err)
+        navigate('/')
+      }
     } else {
       navigate('/auth')
     }

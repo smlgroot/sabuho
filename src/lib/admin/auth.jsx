@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { upsertUserProfile } from '@/services/userProfileService'
 
 const AuthContext = createContext(undefined)
 
@@ -17,19 +18,43 @@ export function AuthProvider({ children }) {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+      
+      // Update user profile for existing sessions (non-blocking)
+      if (session?.user) {
+        // Make user profile update non-blocking to avoid interfering with auth flow
+        setTimeout(async () => {
+          try {
+            await upsertUserProfile(session.user.id)
+          } catch (error) {
+            console.error('Failed to update user profile on session load:', error)
+          }
+        }, 0)
+      }
     }
 
     getSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
         
-        // Redirect to admin after successful login
-        if (event === 'SIGNED_IN' && session?.user && location.pathname === '/auth') {
-          navigate('/admin')
+        // Update user profile on sign in (non-blocking)
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Make user profile update non-blocking to avoid interfering with auth flow
+          setTimeout(async () => {
+            try {
+              await upsertUserProfile(session.user.id)
+            } catch (error) {
+              console.error('Failed to update user profile on sign in:', error)
+            }
+          }, 0)
+          
+          // Redirect to admin after successful login
+          if (location.pathname === '/auth') {
+            navigate('/admin')
+          }
         }
         
         // Don't redirect automatically after logout - let the component handle it
