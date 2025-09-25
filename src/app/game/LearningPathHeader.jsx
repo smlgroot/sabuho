@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import useGameStore from '../../store/useGameStore';
 import { 
   AlertTriangle, 
@@ -58,6 +59,7 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false, onAddMor
   // Get selected quiz from store for consistency
   const { selectedQuiz, setSelectedQuiz } = useGameStore();
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
 
   const handleQuizSelect = (quiz) => {
     setSelectedQuiz(quiz);
@@ -94,7 +96,7 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false, onAddMor
                   <span className="text-base font-medium text-base-content">{selectedQuiz.name}</span>
                 </div>
               ) : (
-                <span className="text-base font-normal text-base-content/70">Select a quiz</span>
+                <span className="text-base font-normal text-base-content/70">{t("Select a quiz")}</span>
               )}
               
               {/* Chevron at the end */}
@@ -115,7 +117,7 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false, onAddMor
                   <div className="mx-4 md:mx-0 bg-base-100 rounded-2xl shadow-2xl border border-base-200 animate-in slide-in-from-top duration-200">
                     {/* Header with close button */}
                     <div className="px-4 py-3 border-b border-base-200 flex items-center justify-between">
-                      <h3 className="font-semibold text-base-content">Choose Quiz</h3>
+                      <h3 className="font-semibold text-base-content">{t("Choose Quiz")}</h3>
                       <button
                         onClick={() => setIsOpen(false)}
                         className="btn btn-ghost btn-sm btn-circle hover:bg-base-200"
@@ -134,8 +136,8 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false, onAddMor
                         <div className="text-center py-8">
                           <HelpCircle className="w-12 h-12 text-base-content/40 mx-auto mb-3" />
                           <p className="text-base-content/70 text-sm mb-4">
-                            No quizzes available.<br/>
-                            Add a quiz code to get started!
+                            {t("No quizzes yet")}<br/>
+                            {t("Add a quiz code to get started!")}
                           </p>
                           
                           {/* Add More Quizzes Option - Always visible */}
@@ -153,7 +155,7 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false, onAddMor
                                 <Plus className="w-5 h-5" />
                               </div>
                               <span className="text-xs font-medium text-center text-base-content">
-                                Add More
+                                {t("Add More")}
                               </span>
                             </button>
                           </div>
@@ -201,7 +203,7 @@ function LearningPathHeader({ availableQuizzes = [], isLoading = false, onAddMor
                               <Plus className="w-5 h-5" />
                             </div>
                             <span className="text-xs font-medium text-center text-base-content">
-                              Add More
+                              {t("Add More")}
                             </span>
                           </button>
                         </div>

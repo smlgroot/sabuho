@@ -1,5 +1,6 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import LearningPathHeader from './LearningPathHeader';
 import { Star, Zap, Crown, Lock, CheckCircle, BookOpen, AlertTriangle, Plus } from 'lucide-react';
 import { database } from '../../lib/game/database';
@@ -9,6 +10,7 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
   // Get selected quiz from store for persistence
   const { selectedQuiz, setSelectedQuiz } = useGameStore();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   // State for levels and available quizzes
   const [levels, setLevels] = useState([]);
@@ -181,9 +183,9 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="text-center max-w-md">
         <BookOpen className="w-16 h-16 text-base-content/40 mx-auto mb-6" />
-        <h3 className="text-xl font-semibold text-base-content mb-2">No Quizzes Available</h3>
+        <h3 className="text-xl font-semibold text-base-content mb-2">{t("No Quizzes Available")}</h3>
         <p className="text-base-content/70 mb-6">
-          To start your learning journey, you need to add quizzes first. Get started by adding a quiz code or downloading your claimed quizzes.
+          {t("To start your learning journey, you need to add quizzes first...")}
         </p>
         
         <button 
@@ -191,12 +193,12 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
           onClick={() => navigate('/learning-hub/quizzes')}
         >
           <Plus className="w-4 h-4" />
-          Go to Quizzes
+          {t("Go to Quizzes")}
         </button>
         
         <div className="alert alert-info">
           <AlertTriangle className="w-5 h-5" />
-          <span className="text-sm">Use a valid quiz code to unlock learning paths and challenges.</span>
+          <span className="text-sm">{t("Use a valid quiz code to unlock learning paths and challenges.")}</span>
         </div>
       </div>
     </div>
@@ -207,13 +209,13 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="text-center max-w-md">
         <Star className="w-16 h-16 text-base-content/40 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-base-content mb-2">Select a Quiz to Begin</h3>
+        <h3 className="text-xl font-semibold text-base-content mb-2">{t("Select a Quiz to Begin")}</h3>
         <p className="text-base-content/70 mb-4">
-          Choose a quiz from the selector above to view your learning path and start your adventure.
+          {t("Choose a quiz from the selector above to view your learning path...")}
         </p>
         <div className="alert alert-warning">
           <AlertTriangle className="w-5 h-5" />
-          <span className="text-sm">Your learning journey awaits! Pick a subject to get started.</span>
+          <span className="text-sm">{t("Your learning journey awaits! Pick a subject to get started.")}</span>
         </div>
       </div>
     </div>
@@ -273,7 +275,7 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
                           {level.name}
                         </h3>
                         {level.completed && (
-                          <span className="text-xs text-base-content/50">Click to review</span>
+                          <span className="text-xs text-base-content/50">{t("Click to review")}</span>
                         )}
                       </div>
                     </div>

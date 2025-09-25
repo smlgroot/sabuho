@@ -1,9 +1,11 @@
 'use client'
 
 import { useAuth } from '@/lib/admin/auth'
+import { useTranslation } from 'react-i18next'
 
 export function Profile() {
   const { user, signOut } = useAuth()
+  const { t } = useTranslation()
 
   if (!user) {
     return null
@@ -17,15 +19,15 @@ export function Profile() {
     <div className="container mx-auto py-8 px-4">
       <div className="card max-w-2xl mx-auto bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title">Profile</h2>
+          <h2 className="card-title">{t('Profile')}</h2>
           <p className="text-base-content/70">
-            Manage your account information and settings
+            {t('Manage your account information and settings')}
           </p>
           
           <div className="space-y-6">
             <div className="form-control">
               <label className="label" htmlFor="email">
-                <span className="label-text">Email</span>
+                <span className="label-text">{t('Email')}</span>
               </label>
               <input
                 id="email"
@@ -36,14 +38,14 @@ export function Profile() {
               />
               <label className="label">
                 <span className="label-text-alt">
-                  Email cannot be changed. Contact support if you need to update your email.
+                  {t('Email cannot be changed. Contact support if you need to update your email.')}
                 </span>
               </label>
             </div>
             
             <div className="form-control">
               <label className="label" htmlFor="user-id">
-                <span className="label-text">User ID</span>
+                <span className="label-text">{t('User ID')}</span>
               </label>
               <input
                 id="user-id"
@@ -55,7 +57,7 @@ export function Profile() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Account Created</span>
+                <span className="label-text">{t('Account Created')}</span>
               </label>
               <input
                 value={new Date(user.created_at).toLocaleString()}
@@ -66,10 +68,10 @@ export function Profile() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Last Sign In</span>
+                <span className="label-text">{t('Last Sign In')}</span>
               </label>
               <input
-                value={user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never'}
+                value={user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : t('Never')}
                 disabled
                 className="input input-bordered bg-base-200"
               />
@@ -80,7 +82,7 @@ export function Profile() {
                 className="btn btn-outline w-full"
                 onClick={handleSignOut}
               >
-                Sign Out
+                {t('Sign Out')}
               </button>
             </div>
           </div>

@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '@/store/useStore'
 
 export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [thumbnailUrl, setThumbnailUrl] = useState('')
@@ -65,7 +67,7 @@ export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
     <div className="modal modal-open">
       <div className="modal-box relative max-w-md">
         <h3 className="font-bold text-lg mb-4">
-          {domain ? 'Edit Domain' : 'Create New Domain'}
+          {domain ? t('editDomain') : t('createNewDomain')}
         </h3>
         <button 
           className="btn btn-sm btn-circle absolute right-2 top-2"
@@ -77,52 +79,52 @@ export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="form-control">
             <label className="label" htmlFor="name">
-              <span className="label-text">Name</span>
+              <span className="label-text">{t('name')}</span>
             </label>
             <input
               id="name"
               className="input input-bordered"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Domain name"
+              placeholder={t('domainName')}
               required
             />
           </div>
           
           <div className="form-control">
             <label className="label" htmlFor="description">
-              <span className="label-text">Description</span>
+              <span className="label-text">{t('description')}</span>
             </label>
             <textarea
               id="description"
               className="textarea textarea-bordered"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description"
+              placeholder={t('optionalDescription')}
               rows={3}
             />
           </div>
           
           <div className="form-control">
             <label className="label" htmlFor="thumbnail">
-              <span className="label-text">Thumbnail URL</span>
+              <span className="label-text">{t('thumbnailURL')}</span>
             </label>
             <input
               id="thumbnail"
               className="input input-bordered"
               value={thumbnailUrl}
               onChange={(e) => setThumbnailUrl(e.target.value)}
-              placeholder="Optional thumbnail URL"
+              placeholder={t('optionalThumbnailURL')}
               type="url"
             />
           </div>
 
           <div className="modal-action">
             <button type="button" className="btn btn-outline" onClick={onClose}>
-              Cancel
+              {t('cancel')}
             </button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : domain ? 'Update' : 'Create'}
+              {loading ? t('saving') : domain ? t('update') : t('create')}
             </button>
           </div>
         </form>

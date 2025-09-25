@@ -5,11 +5,13 @@ import { useNavigate } from 'react-router-dom'
 import { Globe } from 'lucide-react'
 import { useState } from 'react'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { useTranslation } from 'react-i18next'
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth()
   const navigate = useNavigate()
   const [language, setLanguage] = useState('en')
+  const { t } = useTranslation()
 
   const handleMainButton = () => {
     if (user) {
@@ -37,7 +39,7 @@ export default function HomePage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="loading loading-spinner loading-lg"></div>
-          <p className="text-base-content/70 mt-2">Loading...</p>
+          <p className="text-base-content/70 mt-2">{t("Loading...")}</p>
         </div>
       </div>
     )
@@ -48,7 +50,7 @@ export default function HomePage() {
       <header className="navbar bg-base-100 shadow-sm">
         <div className="flex-1">
           <h1 className="btn btn-ghost normal-case text-xl font-black">
-            Sabuho Admin<span className="text-primary">.</span>
+{t("Sabuho Admin")}<span className="text-primary">.</span>
           </h1>
         </div>
         <div className="flex-none">
@@ -86,7 +88,7 @@ export default function HomePage() {
               onClick={handleHeaderButton}
               className="btn btn-primary"
             >
-              {user ? "Logout" : "Sign In"}
+{user ? t("Logout") : t("Sign In")}
             </button>
           </div>
         </div>
@@ -102,7 +104,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-lg sm:text-xl lg:text-2xl text-base-content/70 mb-12 font-light max-w-2xl mx-auto">
-                Manage your learning domains, quizzes, and educational content all in one place.
+{t("Manage your learning domains, quizzes, and educational content all in one place.")}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-8">
@@ -110,7 +112,7 @@ export default function HomePage() {
                   onClick={handleMainButton}
                   className="btn btn-primary btn-lg text-lg px-8 py-4 min-w-48 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
-                  {user ? "Go to Admin Panel" : "Login"}
+{user ? t("Go to Admin Panel") : t("Login")}
                 </button>
               </div>
             </div>

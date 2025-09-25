@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload, File, X } from 'lucide-react'
 
 export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
+  const { t } = useTranslation()
   const [file, setFile] = useState(null)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -119,7 +121,7 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
   return (
     <div className="modal modal-open">
       <div className="modal-box relative max-w-lg">
-        <h3 className="font-bold text-lg mb-4">Upload Resource</h3>
+        <h3 className="font-bold text-lg mb-4">{t('uploadResource')}</h3>
         <button 
           className="btn btn-sm btn-circle absolute right-2 top-2"
           onClick={onClose}
@@ -137,10 +139,10 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
             >
               <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground mb-2">
-                Drop your PDF file here, or click to browse
+                {t('dropYourPDFFileHereOrClickToBrowse')}
               </p>
               <p className="text-xs text-muted-foreground">
-                Supports PDF files up to 10MB
+                {t('supportsPDFFilesUpTo10MB')}
               </p>
               <input
                 ref={fileInputRef}
@@ -177,28 +179,28 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
             <>
               <div className="form-control">
                 <label className="label" htmlFor="name">
-                  <span className="label-text">Resource Name</span>
+                  <span className="label-text">{t('resourceName')}</span>
                 </label>
                 <input
                   id="name"
                   className="input input-bordered"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter resource name"
+                  placeholder={t('enterResourceName')}
                   required
                 />
               </div>
               
               <div className="form-control">
                 <label className="label" htmlFor="description">
-                  <span className="label-text">Description (Optional)</span>
+                  <span className="label-text">{t('descriptionOptional')}</span>
                 </label>
                 <textarea
                   id="description"
                   className="textarea textarea-bordered"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Enter resource description"
+                  placeholder={t('enterResourceDescription')}
                   rows={3}
                 />
               </div>
@@ -208,7 +210,7 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
           {uploading && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Uploading...</span>
+                <span>{t('uploading')}</span>
                 <span>{uploadProgress}%</span>
               </div>
               <progress className="progress progress-primary w-full" value={uploadProgress} max="100"></progress>
@@ -217,10 +219,10 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
 
           <div className="modal-action">
             <button type="button" className="btn btn-outline" onClick={onClose} disabled={uploading}>
-              Cancel
+              {t('cancel')}
             </button>
             <button type="submit" className="btn btn-primary" disabled={!file || !name || uploading}>
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? t('uploading') : t('upload')}
             </button>
           </div>
         </form>

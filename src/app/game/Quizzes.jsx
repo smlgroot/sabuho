@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { database } from '../../lib/game/database'
 import { quizClaimService } from '@/services/quizClaimService'
 import useGameStore from '../../store/useGameStore'
@@ -17,6 +18,7 @@ function Quizzes() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const  isAuthenticated  = !!user
+  const { t } = useTranslation()
 
 
   const loadQuizzes = async () => {
@@ -26,7 +28,7 @@ function Quizzes() {
       setQuizzes(savedQuizzes)
     } catch (err) {
       console.error('Error loading quizzes:', err)
-      setError('Failed to load quizzes')
+      setError(t('Failed to load quizzes'))
     } finally {
       setLoading(false)
     }
@@ -44,7 +46,7 @@ function Quizzes() {
 
     try {
       if (!code || code.trim().length < 4) {
-        setError('Please enter a valid code')
+        setError(t('Please enter a valid code'))
         return
       }
       
@@ -61,7 +63,7 @@ function Quizzes() {
       
     } catch (err) {
       console.error('Error claiming quiz:', err)
-      setError('Failed to verify code')
+      setError(t('Failed to verify code'))
     } finally {
       setClaiming(false)
     }
@@ -76,7 +78,7 @@ function Quizzes() {
 
   const checkClaimedQuizzes = async () => {
     if (!isAuthenticated) {
-      setError('Please log in to check for claimed quizzes')
+      setError(t('Please log in to check for claimed quizzes'))
       setSuccessMessage('')
       return
     }
@@ -143,7 +145,7 @@ function Quizzes() {
         className={`btn btn-primary ${size === 'default' ? 'w-full' : 'btn-sm'}`}
         onClick={openBottomSheet}
       >
-        Add Quiz
+        {t('Add Quiz')}
       </button>
       {isAuthenticated && (
         <button 
@@ -152,8 +154,8 @@ function Quizzes() {
           disabled={checkingClaimed}
         >
           {checkingClaimed 
-            ? (size === 'default' ? 'Checking Claimed Quizzes...' : 'Checking...') 
-            : (size === 'default' ? 'Check for Claimed Quizzes' : 'Check Claimed')
+            ? (size === 'default' ? t('Checking Claimed Quizzes...') : t('Checking...')) 
+            : (size === 'default' ? t('Check for Claimed Quizzes') : t('Check Claimed'))
           }
         </button>
       )}
@@ -164,10 +166,10 @@ function Quizzes() {
     <div className="text-center space-y-6">
       <div>
         <h2 className="text-2xl font-bold mb-2 text-base-content">
-          No quizzes yet<span className="text-primary">.</span>
+          {t('No quizzes yet')}<span className="text-primary">.</span>
         </h2>
         <p className="text-base-content/70">
-          Enter a quiz code to get started 🔑
+          {t('Enter a quiz code to get started 🔑')}
         </p>
       </div>
       <ActionButtons />
@@ -207,7 +209,7 @@ function Quizzes() {
       <dialog className={`modal ${showBottomSheet ? 'modal-open' : ''}`}>
         <div className="modal-box">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Add Quiz</h3>
+            <h3 className="text-lg font-semibold">{t('Add Quiz')}</h3>
             <button 
               className="btn btn-sm btn-circle btn-ghost"
               onClick={() => setShowBottomSheet(false)}
@@ -225,14 +227,14 @@ function Quizzes() {
           <form onSubmit={handleClaimQuiz} className="space-y-4">
             <div className="form-control">
               <label className="label" htmlFor="quiz-code-modal">
-                <span className="label-text font-semibold">Quiz code</span>
+                <span className="label-text font-semibold">{t('Quiz code')}</span>
               </label>
               <input
                 type="text"
                 id="quiz-code-modal"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="Enter your quiz code"
+                placeholder={t('Enter your quiz code')}
                 className="input input-bordered w-full tracking-widest"
                 autoFocus={showBottomSheet}
               />
@@ -251,7 +253,7 @@ function Quizzes() {
                 disabled={claiming}
                 className={`btn btn-primary ${claiming ? 'loading' : ''}`}
               >
-                {claiming ? 'Adding Quiz' : 'Add Quiz'}
+                {claiming ? t('Adding Quiz') : t('Add Quiz')}
               </button>
             </div>
           </form>

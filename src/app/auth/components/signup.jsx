@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/lib/admin/auth'
+import { useTranslation } from 'react-i18next'
 
 export function Signup({ onToggleMode }) {
   const [email, setEmail] = useState('')
@@ -11,6 +12,7 @@ export function Signup({ onToggleMode }) {
   const [error, setError] = useState(null)
   const [message, setMessage] = useState(null)
   const { signUp } = useAuth()
+  const { t } = useTranslation()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -19,13 +21,13 @@ export function Signup({ onToggleMode }) {
     setMessage(null)
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError(t('Passwords do not match'))
       setLoading(false)
       return
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      setError(t('Password must be at least 6 characters'))
       setLoading(false)
       return
     }
@@ -35,7 +37,7 @@ export function Signup({ onToggleMode }) {
     if (error) {
       setError(error.message)
     } else {
-      setMessage('Check your email for a confirmation link!')
+      setMessage(t('Check your email for a confirmation link!'))
     }
     
     setLoading(false)
@@ -44,20 +46,20 @@ export function Signup({ onToggleMode }) {
   return (
     <div className="card-body">
       <div className="text-center">
-        <h2 className="text-2xl font-bold">Create Account</h2>
+        <h2 className="text-2xl font-bold">{t('Create Account')}</h2>
         <p className="py-4 text-base-content/70">
-          Join Quiz Quest Admin
+          {t('Join Quiz Quest Admin')}
         </p>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Email</span>
+            <span className="label-text">{t('Email')}</span>
           </label>
           <input
             type="email"
-            placeholder="email@example.com"
+            placeholder={t('email@example.com')}
             className="input input-bordered w-full"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -67,11 +69,11 @@ export function Signup({ onToggleMode }) {
         
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Password</span>
+            <span className="label-text">{t('Password')}</span>
           </label>
           <input
             type="password"
-            placeholder="Create a password (min 6 chars)"
+            placeholder={t('Create a password (min 6 chars)')}
             className="input input-bordered w-full"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -81,11 +83,11 @@ export function Signup({ onToggleMode }) {
         
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Confirm Password</span>
+            <span className="label-text">{t('Confirm Password')}</span>
           </label>
           <input
             type="password"
-            placeholder="Confirm your password"
+            placeholder={t('Confirm your password')}
             className="input input-bordered w-full"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -116,23 +118,23 @@ export function Signup({ onToggleMode }) {
             {loading ? (
               <>
                 <span className="loading loading-spinner"></span>
-                Creating account...
+                {t('Creating account...')}
               </>
             ) : (
-              'Sign Up'
+              t('Sign Up')
             )}
           </button>
         </div>
         
         <div className="text-center mt-4">
           <p className="text-sm">
-            Already have an account?{' '}
+            {t('Already have an account?')}{' '}
             <button
               type="button"
               onClick={onToggleMode}
               className="link link-primary"
             >
-              Sign in
+              {t('Sign in')}
             </button>
           </p>
         </div>

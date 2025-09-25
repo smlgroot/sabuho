@@ -297,8 +297,8 @@ function QuizScreen({
     <button
       onClick={handleExitQuiz}
       className="btn btn-sm btn-circle btn-error btn-outline hover:btn-error hover:text-error-content transition-all duration-200"
-      aria-label="Exit quiz and return to learning hub"
-      title="Exit Quiz"
+      aria-label={t("Exit quiz and return to learning hub")}
+      title={t("Exit Quiz")}
     >
       <X className="w-5 h-5" />
     </button>
@@ -334,7 +334,7 @@ function QuizScreen({
                 {t('Question')} {currentQuestionIndex + 1} {t('of')} {questions.length}
               </span>
               <span className="text-sm text-base-content/70">
-                {Math.round(progress)}% Complete
+                {Math.round(progress)}% {t('Complete')}
               </span>
             </div>
             <progress 
@@ -404,7 +404,7 @@ function QuizScreen({
                                 ? 'badge-success' 
                                 : 'badge-error'
                             }`}>
-                              Your choice
+                              {t('Your choice')}
                             </div>
                           </div>
                         )}
@@ -543,7 +543,7 @@ function QuizScreen({
                       <div className="flex gap-2 justify-start">
                         {isCorrect && (
                           <div className="badge badge-success px-3">
-                            Correct Answer
+                            {t('Correct Answer')}
                           </div>
                         )}
                         {isSelected && (
@@ -552,7 +552,7 @@ function QuizScreen({
                               ? 'badge-success' 
                               : 'badge-error'
                           }`}>
-                            Your Choice
+                            {t('Your Choice')}
                           </div>
                         )}
                       </div>
@@ -615,8 +615,8 @@ function QuizScreen({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.876c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L4.044 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
                 <div>
-                  <h4 className="font-medium">Progress will be lost</h4>
-                  <p className="text-sm opacity-80">You'll need to restart the quiz from the beginning if you continue.</p>
+                  <h4 className="font-medium">{t('Progress will be lost')}</h4>
+                  <p className="text-sm opacity-80">{t("You'll need to restart the quiz from the beginning if you continue.")}</p>
                 </div>
               </div>
             </div>

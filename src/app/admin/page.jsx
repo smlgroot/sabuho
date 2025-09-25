@@ -142,7 +142,7 @@ export default function AdminPage() {
       if (selectedDomain?.id === domain.id) {
         setSelectedDomain(null);
       }
-      toast.success("Domain deleted successfully");
+      toast.success(t("Domain deleted successfully"));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to delete domain";
       setError(errorMessage);
@@ -162,7 +162,7 @@ export default function AdminPage() {
       }
       setDomainFormOpen(false);
       setEditingDomain(null);
-      toast.success(editingDomain ? "Domain updated successfully" : "Domain created successfully");
+      toast.success(editingDomain ? t("Domain updated successfully") : t("Domain created successfully"));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to save domain";
       setError(errorMessage);
@@ -176,7 +176,7 @@ export default function AdminPage() {
     name,
     description
   ) => {
-    if (!selectedDomain) throw new Error("No domain selected");
+    if (!selectedDomain) throw new Error(t("No domain selected"));
 
     try {
       const resource = await uploadResource(
@@ -187,7 +187,7 @@ export default function AdminPage() {
       );
       addResource(resource);
       setResourceUploadOpen(false);
-      toast.success("Resource uploaded successfully");
+      toast.success(t("Resource uploaded successfully"));
       return resource.id; // Return the resource ID
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to upload resource";
@@ -203,7 +203,7 @@ export default function AdminPage() {
       addQuestion(question);
       setQuestionFormOpen(false);
       setEditingQuestion(null);
-      toast.success("Question created successfully");
+      toast.success(t("Question created successfully"));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to create question";
       setError(errorMessage);
@@ -218,7 +218,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteQuestion = async (question) => {
-    if (confirm("Are you sure you want to delete this question?")) {
+    if (confirm(t("Are you sure you want to delete this question?"))) {
       try {
         // TODO: Implement deleteQuestion in lib/questions.ts
       } catch (err) {
@@ -268,14 +268,14 @@ export default function AdminPage() {
   };
 
   const handleDeleteQuiz = async (quizId) => {
-    if (!confirm('Are you sure you want to delete this quiz?')) return;
+    if (!confirm(t('Are you sure you want to delete this quiz?'))) return;
     try {
       await deleteQuizApi(quizId);
       deleteQuizFromStore(quizId);
       if (selectedQuiz?.id === quizId) {
         setSelectedQuiz(null);
       }
-      toast.success('Quiz deleted successfully');
+      toast.success(t('Quiz deleted successfully'));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete quiz';
       setError(errorMessage);
@@ -355,7 +355,7 @@ export default function AdminPage() {
           }}
         >
           <GraduationCap className="h-6 w-6" />
-          <span className="text-xs">Learning</span>
+          <span className="text-xs">{t("Learning")}</span>
         </button>
         
         {/* Shop */}
@@ -371,7 +371,7 @@ export default function AdminPage() {
           }}
         >
           <ShoppingBag className="h-6 w-6" />
-          <span className="text-xs">Shop</span>
+          <span className="text-xs">{t("Shop")}</span>
         </button>
         
         {/* Separator */}
@@ -390,7 +390,7 @@ export default function AdminPage() {
           }}
         >
           <Star className="h-6 w-6" />
-          <span className="text-xs">Creator</span>
+          <span className="text-xs">{t("Creator")}</span>
           {creatorOpen ? (
             <ChevronUp className="h-3 w-3" />
           ) : (
@@ -411,7 +411,7 @@ export default function AdminPage() {
             }}
           >
             <Folder className="h-6 w-6" />
-            <span className="text-xs">Domains</span>
+            <span className="text-xs">{t("Domains")}</span>
           </button>
         )}
         
@@ -427,7 +427,7 @@ export default function AdminPage() {
             }}
           >
             <FileText className="h-6 w-6" />
-            <span className="text-xs">Quizzes</span>
+            <span className="text-xs">{t("Quizzes")}</span>
           </button>
         )}
       </div>
@@ -462,20 +462,18 @@ export default function AdminPage() {
       {activeView === 'creator' && (
         <div className="flex flex-col h-full">
           <div className="p-4 border-b">
-            <h3 className="text-lg font-semibold">Quiz Creator</h3>
+            <h3 className="text-lg font-semibold">{t("Quiz Creator")}</h3>
           </div>
           <div className="flex-1 p-6 flex items-center justify-center">
             <div className="text-center max-w-sm">
               <Star className="h-16 w-16 text-accent mx-auto mb-6" />
-              <h4 className="text-xl font-semibold mb-4">Welcome to Quiz Creator</h4>
+              <h4 className="text-xl font-semibold mb-4">{t("Welcome to Quiz Creator")}</h4>
               <p className="text-base-content/70 mb-6 leading-relaxed">
-                As a quiz creator, you have the power to build engaging learning experiences. 
-                Create domains to organize your content, upload resources, craft questions, 
-                and design comprehensive quizzes to help learners master new skills.
+                {t("Create engaging quizzes with our intuitive builder. Add questions, set difficulty levels, and track student progress - all from one powerful interface.")}
               </p>
               <div className="bg-base-200 rounded-lg p-4">
                 <p className="text-sm text-base-content/60">
-                  💡 Start by creating domains to organize your content, then add resources and questions to build your quiz library.
+                  💡 {t("Get started by creating your first domain, then add quizzes and questions to build comprehensive learning experiences.")}
                 </p>
               </div>
             </div>
@@ -486,7 +484,7 @@ export default function AdminPage() {
       {activeView === 'domains' && (
         <div className="flex flex-col h-full">
           <div className="p-4 border-b">
-            <h3 className="text-lg font-semibold">Domains</h3>
+            <h3 className="text-lg font-semibold">{t("Domains")}</h3>
           </div>
           <div className="flex-1 p-4 overflow-y-auto">
             <DomainTree
@@ -507,7 +505,7 @@ export default function AdminPage() {
       {activeView === 'quizzes' && (
         <div className="flex flex-col h-full">
           <div className="p-4 border-b">
-            <h3 className="text-lg font-semibold">Quizzes</h3>
+            <h3 className="text-lg font-semibold">{t("Quizzes")}</h3>
           </div>
           <div className="flex-1 p-4 overflow-y-auto">
             <QuizList
@@ -534,7 +532,7 @@ export default function AdminPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading domains...</p>
+          <p>{t("Loading domains...")}</p>
         </div>
       </div>
     );
@@ -559,29 +557,29 @@ export default function AdminPage() {
             {activeView === 'learning-hub' && !selectedDomain && !selectedQuiz && !creatingQuiz ? (
               <div className="text-center py-20">
                 <h2 className="text-xl font-semibold mb-2">
-                  Learning Hub
+                  {t("Learning Hub")}
                 </h2>
                 <p className="text-muted-foreground mb-6">
-                  This is a placeholder for the Learning Hub feature.
+                  {t("Access your personalized learning dashboard")}
                 </p>
                 <div className="bg-base-200 rounded-lg p-8 max-w-md mx-auto">
                   <p className="text-sm text-gray-600">
-                    Coming soon: Interactive learning modules, progress tracking, and personalized study plans.
+                    {t("Organize your quiz topics and subjects")}
                   </p>
                 </div>
               </div>
             ) : activeView === 'shop' ? (
               <div className="text-center py-20">
                 <h2 className="text-xl font-semibold mb-2">
-                  Quiz Shop
+                  {t("Shop")}
                 </h2>
                 <p className="text-muted-foreground mb-6">
-                  This is a placeholder for the Quiz Shop feature.
+                  {t("Explore and purchase additional quiz content")}
                 </p>
                 <div className="bg-base-200 rounded-lg p-8 max-w-md mx-auto">
                   <ShoppingBag className="h-16 w-16 text-base-300 mx-auto mb-4" />
                   <p className="text-sm text-gray-600">
-                    Coming soon: unlock special question packs, and access exclusive learning materials.
+                    {t("Manage Domains")}
                   </p>
                 </div>
               </div>
@@ -598,7 +596,7 @@ export default function AdminPage() {
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
                   <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p>Creating quiz...</p>
+                  <p>{t("Creating quiz...")}</p>
                 </div>
               </div>
             ) : selectedQuiz ? (
@@ -610,19 +608,19 @@ export default function AdminPage() {
             ) : (
               <div className="text-center py-20">
                 <h2 className="text-xl font-semibold mb-2">
-                  Welcome to Quiz Quest Admin
+                  {t("Welcome to Quiz Quest Admin")}
                 </h2>
                 <p className="text-muted-foreground mb-6">
-                  Select a domain or quiz from the sidebar, or create a new one to get started.
+                  {t("Build custom quizzes and manage content")}
                 </p>
                 <button className="btn btn-primary" onClick={() => handleCreateDomain()}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Create a New Domain
+                  {t("Get Started")}
                 </button>
                 <div className="inline-block ml-3">
                   <button className="btn btn-outline" onClick={() => { setSelectedDomain(null); handleQuizCreate(); }} disabled={creatingQuiz}>
                     <Plus className="h-4 w-4 mr-2" />
-                    {creatingQuiz ? 'Creating...' : 'Create a New Quiz'}
+                    {creatingQuiz ? t('Creating...') : t('Open Quiz Creator')}
                   </button>
                 </div>
               </div>

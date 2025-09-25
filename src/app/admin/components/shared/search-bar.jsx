@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Search, X } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 
 export function SearchBar({ domains, onSelectDomain }) {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const { setSearchQuery: setGlobalSearchQuery, searchQuery: globalSearchQuery } = useStore()
@@ -56,45 +58,41 @@ export function SearchBar({ domains, onSelectDomain }) {
     <div className="relative w-full max-w-md">
       <div className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search domains..."
+        <input
+          className="input input-bordered pl-10 pr-10"
+          placeholder={t('searchDomains')}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value)
             setIsOpen(e.target.value.length > 0)
           }}
           onFocus={() => searchQuery.length > 0 && setIsOpen(true)}
-          className="pl-10 pr-10"
         />
         {searchQuery && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute right-1 top-1 h-8 w-8 p-0"
+          <button
+            className="btn btn-ghost btn-sm absolute right-1 top-1 h-8 w-8 p-0"
             onClick={clearSearch}
           >
             <X className="h-4 w-4" />
-          </Button>
+          </button>
         )}
       </div>
 
       {isOpen && searchQuery && (
         <div className="absolute top-full left-0 right-0 z-50 mt-1">
-          <Command className="border rounded-md shadow-lg bg-background">
-            <CommandList className="max-h-[300px] overflow-y-auto">
+          <div className="dropdown-content menu bg-base-100 rounded-box border shadow-lg max-h-[300px] overflow-y-auto z-[1] w-full p-2">
               {filteredDomains.length === 0 ? (
-                <CommandEmpty>No domains found.</CommandEmpty>
+                <div className="px-3 py-2 text-center text-base-content/70">{t('noDomainsFound')}</div>
               ) : (
-                <CommandGroup>
+                <div>
                   {filteredDomains.slice(0, 10).map((domain) => {
                     const typedDomain = domain
                     return (
-                      <CommandItem
-                        key={domain.id}
-                        value={domain.name}
-                        onSelect={() => handleSelectDomain(domain)}
-                        className="cursor-pointer"
-                      >
+                      <li key={domain.id}>
+                        <button
+                          onClick={() => handleSelectDomain(domain)}
+                          className="w-full text-left p-2 hover:bg-base-200 rounded cursor-pointer"
+                        >
                         <div className="flex flex-col gap-1 w-full">
                           <span className="font-medium">{domain.name}</span>
                           <span className="text-xs text-muted-foreground">
@@ -106,18 +104,18 @@ export function SearchBar({ domains, onSelectDomain }) {
                             </span>
                           )}
                         </div>
-                      </CommandItem>
+                        </button>
+                      </li>
                     )
                   })}
                   {filteredDomains.length > 10 && (
-                    <div className="px-3 py-2 text-xs text-muted-foreground">
+                    <div className="px-3 py-2 text-xs text-base-content/70">
                       +{filteredDomains.length - 10} more results
                     </div>
                   )}
-                </CommandGroup>
+                </div>
               )}
-            </CommandList>
-          </Command>
+          </div>
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/lib/admin/auth'
+import { useTranslation } from 'react-i18next'
 
 export function Login({ onToggleMode }) {
   const [email, setEmail] = useState('')
@@ -9,6 +10,7 @@ export function Login({ onToggleMode }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const { signIn } = useAuth()
+  const { t } = useTranslation()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -27,20 +29,20 @@ export function Login({ onToggleMode }) {
   return (
     <div className="card-body">
       <div className="text-center">
-        <h2 className="text-2xl font-bold">Welcome Back</h2>
+        <h2 className="text-2xl font-bold">{t('Welcome Back')}</h2>
         <p className="py-4 text-base-content/70">
-          Sign in to access Quiz Quest Admin
+          {t('Sign in to access Quiz Quest Admin')}
         </p>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Email</span>
+            <span className="label-text">{t('Email')}</span>
           </label>
           <input
             type="email"
-            placeholder="email@example.com"
+            placeholder={t('email@example.com')}
             className="input input-bordered w-full"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -50,11 +52,11 @@ export function Login({ onToggleMode }) {
         
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Password</span>
+            <span className="label-text">{t('Password')}</span>
           </label>
           <input
             type="password"
-            placeholder="Enter your password"
+            placeholder={t('Enter your password')}
             className="input input-bordered w-full"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -76,23 +78,23 @@ export function Login({ onToggleMode }) {
             {loading ? (
               <>
                 <span className="loading loading-spinner"></span>
-                Signing in...
+                {t('Signing in...')}
               </>
             ) : (
-              'Sign In'
+              t('Sign In')
             )}
           </button>
         </div>
         
         <div className="text-center mt-4">
           <p className="text-sm">
-            Don&apos;t have an account?{' '}
+            {t("Don't have an account?")}{' '}
             <button
               type="button"
               onClick={onToggleMode}
               className="link link-primary"
             >
-              Sign up
+              {t('Sign up')}
             </button>
           </p>
         </div>

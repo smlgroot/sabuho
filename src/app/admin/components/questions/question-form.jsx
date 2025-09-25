@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, Trash2 } from 'lucide-react'
 
 export function QuestionForm({ 
@@ -11,6 +12,7 @@ export function QuestionForm({
   question, 
   onSubmit 
 }) {
+  const { t } = useTranslation()
   const [body, setBody] = useState('')
   const [explanation, setExplanation] = useState('')
   const [resourceId, setResourceId] = useState('')
@@ -55,7 +57,7 @@ export function QuestionForm({
     if (!resourceId) return
     if (options.length < 2) return
     if (options.some(opt => !opt.trim())) {
-      alert('All options must have labels')
+      alert(t('allOptionsMustHaveLabels'))
       return
     }
 
@@ -89,7 +91,7 @@ export function QuestionForm({
     <div className="modal modal-open">
       <div className="modal-box relative max-w-2xl max-h-[90vh] overflow-y-auto">
         <h3 className="font-bold text-lg mb-4">
-          {question ? 'Edit Question' : 'Create New Question'}
+          {question ? t('editQuestion') : t('createNewQuestion')}
         </h3>
         <button 
           className="btn btn-sm btn-circle absolute right-2 top-2"
@@ -102,7 +104,7 @@ export function QuestionForm({
 
           <div className="form-control">
             <label className="label" htmlFor="resource">
-              <span className="label-text">Source Resource</span>
+              <span className="label-text">{t('sourceResource')}</span>
             </label>
             <select
               id="resource"
@@ -111,7 +113,7 @@ export function QuestionForm({
               className="select select-bordered w-full"
               required
             >
-              <option value="">Select a resource</option>
+              <option value="">{t('selectAResource')}</option>
               {resources.map((resource) => (
                 <option key={resource.id} value={resource.id}>
                   {resource.name}
@@ -122,14 +124,14 @@ export function QuestionForm({
 
           <div className="form-control">
             <label className="label" htmlFor="body">
-              <span className="label-text">Question</span>
+              <span className="label-text">{t('question')}</span>
             </label>
             <textarea
               id="body"
               className="textarea textarea-bordered"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Enter your question here..."
+              placeholder={t('enterYourQuestionHere')}
               rows={3}
               required
             />
@@ -137,14 +139,14 @@ export function QuestionForm({
           
           <div className="form-control">
             <label className="label" htmlFor="explanation">
-              <span className="label-text">Explanation (Optional)</span>
+              <span className="label-text">{t('explanationOptional')}</span>
             </label>
             <textarea
               id="explanation"
               className="textarea textarea-bordered"
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
-              placeholder="Explain the correct answer..."
+              placeholder={t('explainTheCorrectAnswer')}
               rows={2}
             />
           </div>
@@ -152,17 +154,17 @@ export function QuestionForm({
           <div className="card bg-base-100 border">
             <div className="card-body">
               <div className="flex flex-row items-center justify-between mb-4">
-                <h4 className="card-title text-base">Answer Options</h4>
+                <h4 className="card-title text-base">{t('answerOptions')}</h4>
                 <button type="button" className="btn btn-outline btn-sm" onClick={addOption}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Option
+                  {t('addOption')}
                 </button>
               </div>
               <div className="space-y-4">
               {options.map((option, index) => (
                 <div key={index} className="space-y-2 p-3 border rounded-lg">
                   <div className="flex items-center gap-2">
-                    <div className="badge badge-secondary">Option {index + 1}</div>
+                    <div className="badge badge-secondary">{t('option')} {index + 1}</div>
                     <div className="flex-1" />
                     {options.length > 2 && (
                       <button
@@ -179,7 +181,7 @@ export function QuestionForm({
                     className="input input-bordered"
                     value={option}
                     onChange={(e) => updateOption(index, e.target.value)}
-                    placeholder={`Option ${index + 1} text`}
+                    placeholder={`${t('option')} ${index + 1} ${t('text')}`}
                     required
                   />
                   
@@ -191,10 +193,10 @@ export function QuestionForm({
 
           <div className="modal-action">
             <button type="button" className="btn btn-outline" onClick={onClose}>
-              Cancel
+              {t('cancel')}
             </button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : question ? 'Update' : 'Create'}
+              {loading ? t('saving') : question ? t('update') : t('create')}
             </button>
           </div>
         </form>

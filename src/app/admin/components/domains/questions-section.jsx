@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, Search, ArrowUpDown, Filter, ChevronDown, Move, Folder, ChevronRight, FolderOpen } from 'lucide-react'
 import { fetchQuestionOptions, updateQuestion, createQuestion, deleteQuestion, addQuestionOption, updateQuestionOptions, removeQuestionOption, moveQuestionsToDomain } from '@/lib/admin/questions'
 import { QuestionCard } from '../questions/question-card'
@@ -10,6 +11,7 @@ export function QuestionsSection({
   onDomainUpdate, 
   availableDomains
 }) {
+  const { t } = useTranslation()
   const [expandedQuestions, setExpandedQuestions] = useState(new Set())
   const [questionOptions, setQuestionOptions] = useState({})
   const [loadingOptions, setLoadingOptions] = useState(new Set())
@@ -348,7 +350,7 @@ export function QuestionsSection({
     <div className="card bg-base-100 border">
       <div className="card-body">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <h4 className="card-title text-base">Questions</h4>
+          <h4 className="card-title text-base">{t('questions')}</h4>
           <div className="flex flex-wrap items-center gap-2">
             {selectedQuestions.size > 0 && (
               <>
@@ -357,16 +359,16 @@ export function QuestionsSection({
                   onClick={() => setMoveDialogOpen(true)}
                 >
                   <Move className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Move ({selectedQuestions.size})</span>
+                  <span className="hidden sm:inline">{t('move')} ({selectedQuestions.size})</span>
                   <span className="sm:hidden">({selectedQuestions.size})</span>
                 </button>
                 
                 {moveDialogOpen && (
                   <div className="modal modal-open">
                     <div className="modal-box relative">
-                      <h3 className="font-bold text-lg mb-2">Move Questions</h3>
+                      <h3 className="font-bold text-lg mb-2">{t('moveQuestions')}</h3>
                       <p className="text-sm text-base-content/70 mb-4">
-                        Move {selectedQuestions.size} selected question{selectedQuestions.size > 1 ? 's' : ''} to a different domain.
+                        {t('moveSelectedQuestionsToADifferentDomain', { count: selectedQuestions.size })}
                       </p>
                       <button 
                         className="btn btn-sm btn-circle absolute right-2 top-2"
@@ -388,7 +390,7 @@ export function QuestionsSection({
                         {availableDomains.filter(d => d.id !== domain.id).length === 0 && (
                           <div className="text-center py-8 text-base-content/70">
                             <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">No other domains available</p>
+                            <p className="text-sm">{t('noOtherDomainsAvailable')}</p>
                           </div>
                         )}
                       </div>
@@ -402,14 +404,14 @@ export function QuestionsSection({
                             setCollapsedDomainsInDialog(new Set())
                           }}
                         >
-                          Cancel
+                          {t('cancel')}
                         </button>
                         <button 
                           className="btn btn-primary"
                           onClick={handleMoveQuestions}
                           disabled={!targetDomainId || isMovingQuestions}
                         >
-                          {isMovingQuestions ? 'Moving...' : 'Move Questions'}
+                          {isMovingQuestions ? t('moving') : t('moveQuestions')}
                         </button>
                       </div>
                     </div>
@@ -419,7 +421,7 @@ export function QuestionsSection({
             )}
             <button className="btn btn-sm" onClick={handleCreateQuestion} disabled={isCreatingQuestion}>
               <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{isCreatingQuestion ? 'Creating...' : 'Add'}</span>
+              <span className="hidden sm:inline">{isCreatingQuestion ? t('creating') : t('add')}</span>
             </button>
           </div>
         </div>
@@ -431,7 +433,7 @@ export function QuestionsSection({
               <input
                 type="text"
                 className="input input-bordered pl-9 w-full"
-                placeholder="Search questions..."
+                placeholder={t('searchQuestions')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -441,8 +443,8 @@ export function QuestionsSection({
               onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
             >
               <ArrowUpDown className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{sortOrder === 'desc' ? 'Newest' : 'Oldest'}</span>
-              <span className="sm:hidden">{sortOrder === 'desc' ? 'New' : 'Old'}</span>
+              <span className="hidden sm:inline">{sortOrder === 'desc' ? t('newest') : t('oldest')}</span>
+              <span className="sm:hidden">{sortOrder === 'desc' ? t('new') : t('old')}</span>
             </button>
           </div>
           
@@ -455,11 +457,11 @@ export function QuestionsSection({
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    <span className="hidden sm:inline">Advanced Filters</span>
-                    <span className="sm:hidden">Filters</span>
+                    <span className="hidden sm:inline">{t('advancedFilters')}</span>
+                    <span className="sm:hidden">{t('filters')}</span>
                     {hasActiveFilters && (
                       <span className="badge badge-secondary ml-2 text-xs">
-                        {[dateFromFilter && 'Date', resourceIdFilter !== 'all' && 'Type'].filter(Boolean).length}
+                        {[dateFromFilter && t('date'), resourceIdFilter !== 'all' && t('type')].filter(Boolean).length}
                       </span>
                     )}
                   </span>
@@ -475,7 +477,7 @@ export function QuestionsSection({
                     setResourceIdFilter('all')
                   }}
                 >
-                  Clear All
+                  {t('clearAll')}
                 </button>
               )}
             </div>
@@ -484,61 +486,61 @@ export function QuestionsSection({
               <div className="space-y-4 pt-3 border-t border-border/40">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="space-y-2 lg:col-span-2">
-                    <label className="text-sm font-medium text-muted-foreground">Created Date Range</label>
+                    <label className="text-sm font-medium text-muted-foreground">{t('createdDateRange')}</label>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                       <div className="flex-1">
-                        <label htmlFor="date-from" className="sr-only">From date</label>
+                        <label htmlFor="date-from" className="sr-only">{t('fromDate')}</label>
                         <input
                           id="date-from"
                           type="date"
                           className="input input-bordered text-sm w-full"
                           value={dateFromFilter}
                           onChange={(e) => setDateFromFilter(e.target.value)}
-                          placeholder="From"
+                          placeholder={t('from')}
                         />
                       </div>
-                      <span className="text-muted-foreground text-sm self-center hidden sm:block">to</span>
+                      <span className="text-muted-foreground text-sm self-center hidden sm:block">{t('to')}</span>
                       <div className="flex-1">
-                        <label htmlFor="date-to" className="sr-only">To date</label>
+                        <label htmlFor="date-to" className="sr-only">{t('toDate')}</label>
                         <input
                           id="date-to"
                           type="date"
                           className="input input-bordered text-sm w-full"
                           value={dateToFilter}
                           onChange={(e) => setDateToFilter(e.target.value)}
-                          placeholder="To"
+                          placeholder={t('to')}
                         />
                       </div>
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Question Type</label>
+                    <label className="text-sm font-medium text-muted-foreground">{t('questionType')}</label>
                     <div className="dropdown w-full">
                       <button 
                         tabIndex={0}
                         className="btn btn-outline w-full justify-between text-sm"
                       >
                         <span className="truncate">
-                          {resourceIdFilter === 'all' ? 'All Questions' : 
-                           resourceIdFilter === 'manual' ? 'Manual' : 'Auto-generated'}
+                          {resourceIdFilter === 'all' ? t('allQuestions') : 
+                           resourceIdFilter === 'manual' ? t('manual') : t('autoGenerated')}
                         </span>
                         <ChevronDown className="h-4 w-4 ml-2 shrink-0" />
                       </button>
                       <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-full p-2 shadow">
                         <li>
                           <button onClick={() => setResourceIdFilter('all')} className={resourceIdFilter === 'all' ? 'active' : ''}>
-                            All Questions
+                            {t('allQuestions')}
                           </button>
                         </li>
                         <li>
                           <button onClick={() => setResourceIdFilter('manual')} className={resourceIdFilter === 'manual' ? 'active' : ''}>
-                            Manual Questions
+                            {t('manualQuestions')}
                           </button>
                         </li>
                         <li>
                           <button onClick={() => setResourceIdFilter('autogenerated')} className={resourceIdFilter === 'autogenerated' ? 'active' : ''}>
-                            Auto-generated Questions
+                            {t('autoGeneratedQuestions')}
                           </button>
                         </li>
                       </ul>
@@ -556,7 +558,7 @@ export function QuestionsSection({
                     }}
                     disabled={!hasActiveFilters}
                   >
-                    Reset Filters
+                    {t('resetFilters')}
                   </button>
                 </div>
               </div>
@@ -579,8 +581,8 @@ export function QuestionsSection({
                 />
                 <span className="text-sm font-medium">
                   {selectedQuestions.size > 0
-                    ? `${selectedQuestions.size} of ${filteredAndSortedQuestions.length} selected`
-                    : 'Select all'}
+                    ? t('selectedOfTotal', { selected: selectedQuestions.size, total: filteredAndSortedQuestions.length })
+                    : t('selectAll')}
                 </span>
               </div>
               {selectedQuestions.size > 0 && (
@@ -588,7 +590,7 @@ export function QuestionsSection({
                   className="btn btn-ghost btn-sm h-auto p-1 text-xs self-start sm:self-auto"
                   onClick={() => setSelectedQuestions(new Set())}
                 >
-                  Clear selection
+                  {t('clearSelection')}
                 </button>
               )}
             </div>
@@ -623,9 +625,9 @@ export function QuestionsSection({
             })}
           </div>
         ) : searchQuery ? (
-          <p className="text-muted-foreground text-sm">No questions match your search.</p>
+          <p className="text-muted-foreground text-sm">{t('noQuestionsMatchYourSearch')}</p>
         ) : (
-          <p className="text-muted-foreground text-sm">No questions created yet.</p>
+          <p className="text-muted-foreground text-sm">{t('noQuestionsCreatedYet')}</p>
         )}
       </div>
     </div>
