@@ -331,12 +331,12 @@ export default function AdminPage() {
   };
 
   const MainSidebar = () => (
-    <aside className="w-20 bg-base-200 text-base-content flex flex-col min-h-full border-r border-base-300">
+    <aside className="min-w-20 bg-base-200 text-base-content flex flex-col min-h-full border-r border-base-300">
       {/* Main Navigation Menu */}
       <div className="flex-1 flex flex-col items-center py-4 gap-2">
         {/* Sidebar Toggle */}
         <button 
-          className="btn btn-ghost p-3 h-auto w-16"
+          className="btn btn-ghost p-3 h-auto min-w-16"
           onClick={() => setSecondSidebarOpen(!secondSidebarOpen)}
         >
           <Menu className="h-6 w-6" />
@@ -344,7 +344,7 @@ export default function AdminPage() {
         
         {/* Learning Hub */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'learning-hub' ? 'btn-active bg-primary/10 text-primary' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'learning-hub' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
             setActiveView('learning-hub');
             setProfileSidebarOpen(false);
@@ -355,12 +355,12 @@ export default function AdminPage() {
           }}
         >
           <GraduationCap className="h-6 w-6" />
-          <span className="text-xs">{t("Learning")}</span>
+          <span className="text-xs whitespace-nowrap">{t("Learning")}</span>
         </button>
         
         {/* Shop */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'shop' ? 'btn-active bg-primary/10 text-primary' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'shop' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
             setActiveView('shop');
             setProfileSidebarOpen(false);
@@ -371,7 +371,7 @@ export default function AdminPage() {
           }}
         >
           <ShoppingBag className="h-6 w-6" />
-          <span className="text-xs">{t("Shop")}</span>
+          <span className="text-xs whitespace-nowrap">{t("Store")}</span>
         </button>
         
         {/* Separator */}
@@ -379,7 +379,7 @@ export default function AdminPage() {
         
         {/* Creator */}
         <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${creatorOpen ? 'btn-active bg-primary/10 text-primary' : ''}`}
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${creatorOpen ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
             setCreatorOpen(!creatorOpen);
             if (!creatorOpen) {
@@ -390,7 +390,7 @@ export default function AdminPage() {
           }}
         >
           <Star className="h-6 w-6" />
-          <span className="text-xs">{t("Creator")}</span>
+          <span className="text-xs whitespace-nowrap">{t("Creator")}</span>
           {creatorOpen ? (
             <ChevronUp className="h-3 w-3" />
           ) : (
@@ -401,7 +401,7 @@ export default function AdminPage() {
         {/* Domains - only show when creator is open */}
         {creatorOpen && (
           <button 
-            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
+            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={() => {
               setActiveView('domains');
               setProfileSidebarOpen(false);
@@ -411,14 +411,14 @@ export default function AdminPage() {
             }}
           >
             <Folder className="h-6 w-6" />
-            <span className="text-xs">{t("Domains")}</span>
+            <span className="text-xs whitespace-nowrap">{t("Domains")}</span>
           </button>
         )}
         
         {/* Quizzes - only show when creator is open */}
         {creatorOpen && (
           <button 
-            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'quizzes' ? 'btn-active bg-primary/10 text-primary' : ''}`}
+            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'quizzes' ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={() => {
               setActiveView('quizzes');
               setProfileSidebarOpen(false);
@@ -427,7 +427,7 @@ export default function AdminPage() {
             }}
           >
             <FileText className="h-6 w-6" />
-            <span className="text-xs">{t("Quizzes")}</span>
+            <span className="text-xs whitespace-nowrap">{t("Quizzes")}</span>
           </button>
         )}
       </div>
@@ -571,7 +571,7 @@ export default function AdminPage() {
             ) : activeView === 'shop' ? (
               <div className="text-center py-20">
                 <h2 className="text-xl font-semibold mb-2">
-                  {t("Shop")}
+                  {t("Store")}
                 </h2>
                 <p className="text-muted-foreground mb-6">
                   {t("Explore and purchase additional quiz content")}
