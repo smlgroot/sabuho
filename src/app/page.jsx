@@ -1,46 +1,46 @@
-'use client'
+"use client";
 
-import { useAuth } from '@/lib/admin/auth'
-import { useNavigate } from 'react-router-dom'
-import { Globe } from 'lucide-react'
-import { useState } from 'react'
-import { ThemeToggle } from '../components/ThemeToggle'
-import { useTranslation } from 'react-i18next'
+import { useAuth } from "@/lib/admin/auth";
+import { useNavigate } from "react-router-dom";
+import { Globe } from "lucide-react";
+import { useState } from "react";
+import { ThemeToggle } from "../components/ThemeToggle";
+import { useTranslation } from "react-i18next";
 
 export default function HomePage() {
-  const { user, loading, signOut } = useAuth()
-  const navigate = useNavigate()
-  const [language, setLanguage] = useState('en')
-  const { t } = useTranslation()
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [language, setLanguage] = useState("en");
+  const { t } = useTranslation();
 
   const handleMainButton = () => {
     if (user) {
-      navigate('/admin')
+      navigate("/admin");
     } else {
-      navigate('/auth')
+      navigate("/auth");
     }
-  }
+  };
 
   const handleHeaderButton = async () => {
     if (user) {
       try {
         const { error } = await signOut();
         if (error) {
-          console.error('Logout error:', error);
+          console.error("Logout error:", error);
         }
-        navigate('/');
+        navigate("/");
       } catch (err) {
-        console.error('Logout exception:', err)
-        navigate('/')
+        console.error("Logout exception:", err);
+        navigate("/");
       }
     } else {
-      navigate('/auth')
+      navigate("/auth");
     }
-  }
+  };
 
   const changeLanguage = (lng) => {
-    setLanguage(lng)
-  }
+    setLanguage(lng);
+  };
 
   if (loading) {
     return (
@@ -50,7 +50,7 @@ export default function HomePage() {
           <p className="text-base-content/70 mt-2">{t("Loading...")}</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -58,7 +58,7 @@ export default function HomePage() {
       <header className="navbar bg-base-100 shadow-sm">
         <div className="flex-1">
           <h1 className="btn btn-ghost normal-case text-xl font-black">
-{t("Sabuho Admin")}<span className="text-primary">.</span>
+            Sabuho<span className="text-primary">.</span>
           </h1>
         </div>
         <div className="flex-none">
@@ -67,41 +67,41 @@ export default function HomePage() {
             <div className="dropdown dropdown-end">
               <div tabIndex={0} role="button" className="btn btn-sm btn-ghost">
                 <Globe className="w-4 h-4" />
-                {language === 'es' ? 'ES' : 'EN'}
+                {language === "es" ? "ES" : "EN"}
               </div>
-              <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-40 p-2 shadow">
+              <ul
+                tabIndex={0}
+                className="dropdown-content menu bg-base-100 rounded-box z-[1] w-40 p-2 shadow"
+              >
                 <li>
-                  <button 
-                    onClick={() => changeLanguage('en')}
-                    className={language === 'en' ? 'active' : ''}
+                  <button
+                    onClick={() => changeLanguage("en")}
+                    className={language === "en" ? "active" : ""}
                   >
                     🇺🇸 English
                   </button>
                 </li>
                 <li>
-                  <button 
-                    onClick={() => changeLanguage('es')}
-                    className={language === 'es' ? 'active' : ''}
+                  <button
+                    onClick={() => changeLanguage("es")}
+                    className={language === "es" ? "active" : ""}
                   >
                     🇪🇸 Spanish
                   </button>
                 </li>
               </ul>
             </div>
-            
+
             {/* Theme Switch */}
             <ThemeToggle />
 
-            <button 
-              onClick={handleHeaderButton}
-              className="btn btn-primary"
-            >
-{user ? t("Logout") : t("Sign In")}
+            <button onClick={handleHeaderButton} className="btn btn-primary">
+              {user ? t("Logout") : t("Sign In")}
             </button>
           </div>
         </div>
       </header>
-      
+
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4">
         <div className="text-center max-w-4xl w-full">
           <div className="hero-content text-center">
@@ -112,7 +112,9 @@ export default function HomePage() {
               </h1>
 
               <p className="text-lg sm:text-xl lg:text-2xl text-base-content/70 mb-12 font-light max-w-2xl mx-auto">
-{t("Manage your learning domains, quizzes, and educational content all in one place.")}
+                {t(
+                  "Manage your learning domains, quizzes, and educational content all in one place."
+                )}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-8">
@@ -120,7 +122,7 @@ export default function HomePage() {
                   onClick={handleMainButton}
                   className="btn btn-primary btn-lg text-lg px-8 py-4 min-w-48 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
-{user ? t("Go to Admin Panel") : t("Login")}
+                  {user ? t("Go to Admin Panel") : t("Login")}
                 </button>
               </div>
             </div>
