@@ -1,23 +1,12 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 
-const useGameStore = create(
-  persist(
-    (set, get) => ({
-      loading: false,
-      selectedQuiz: null,
+const useGameStore = create((set, get) => ({
+  loading: false,
+  selectedQuiz: null,
 
-      setLoading: (loading) => set({ loading }),
+  setLoading: (loading) => set({ loading }),
 
-      setSelectedQuiz: (quiz) => set({ selectedQuiz: quiz }),
-    }),
-    {
-      name: 'game-storage',
-      partialize: (state) => ({
-        selectedQuiz: state.selectedQuiz
-      })
-    }
-  )
-)
+  setSelectedQuiz: (quiz) => set({ selectedQuiz: quiz }),
+}))
 
 export default useGameStore
