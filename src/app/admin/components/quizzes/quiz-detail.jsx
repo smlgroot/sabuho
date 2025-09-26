@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Code2, Plus, CheckCircle, XCircle, Copy } from 'lucide-react'
+import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Plus, CheckCircle, XCircle, Copy, TicketSlash } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
@@ -274,6 +274,9 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
 
   // Create new quiz code
   const createQuizCode = async () => {
+    // Load user credits before checking
+    await loadUserCredits()
+    
     if (userCredits < 1) {
       setShowCreditDialog(true)
       return
@@ -327,12 +330,6 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
   useEffect(() => {
     if (quiz?.id) {
       loadQuizCodes()
-    }
-  }, [quiz?.id])
-
-  useEffect(() => {
-    if (quiz?.id) {
-      loadUserCredits()
     }
   }, [quiz?.id])
 
@@ -462,7 +459,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
         className={`tab ${activeTab === 'codes' ? 'tab-active' : ''}`}
         onClick={() => setActiveTab('codes')}
       >
-        <Code2 className="h-4 w-4 mr-2" />
+        <TicketSlash className="h-4 w-4 mr-2" />
         Codes
         <span className="badge badge-secondary ml-2 text-xs px-2">
           {quizCodes.length}
@@ -557,8 +554,11 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
               <button className="btn btn-outline btn-sm" onClick={deselectAll}>Deselect All</button>
               <button 
                 className="btn btn-primary btn-sm"
-                onClick={() => setShowCodeDialog(true)}
-                disabled={!quiz?.id || isLoadingCredits}
+                onClick={async () => {
+                  await loadUserCredits()
+                  setShowCodeDialog(true)
+                }}
+                disabled={!quiz?.id}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add Code
@@ -603,13 +603,6 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
               Quiz Codes
               {isLoadingCodes && (<span className="w-2 h-2 bg-primary rounded-full animate-pulse" />)}
             </h2>
-            <div className="flex items-center gap-2">
-              {isLoadingCredits ? (
-                <div className="text-sm text-muted-foreground">Loading credits...</div>
-              ) : (
-                <div className="text-sm text-muted-foreground">Credits: {userCredits}</div>
-              )}
-            </div>
           </div>
           
           {isLoadingCodes ? (
@@ -643,9 +636,9 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
                           </td>
                           <td>
                             {isClaimed ? (
-                              <span className="badge badge-success">Claimed</span>
+                              <span className="badge badge-success px-2">Claimed</span>
                             ) : (
-                              <span className="badge badge-outline">Available</span>
+                              <span className="badge badge-outline px-2">Available</span>
                             )}
                           </td>
                           <td className="text-sm text-muted-foreground">
@@ -666,12 +659,15 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground border rounded-md">
-              <Code2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <TicketSlash className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No codes created yet.</p>
               <button 
                 className="btn btn-primary btn-sm mt-3"
-                onClick={() => setShowCodeDialog(true)}
-                disabled={!quiz?.id || isLoadingCredits}
+                onClick={async () => {
+                  await loadUserCredits()
+                  setShowCodeDialog(true)
+                }}
+                disabled={!quiz?.id}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Create First Code
