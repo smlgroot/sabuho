@@ -31,7 +31,7 @@ export function Login({ onToggleMode }) {
       <div className="text-center">
         <h2 className="text-2xl font-bold">{t('Welcome Back')}</h2>
         <p className="py-4 text-base-content/70">
-          {t('Sign in to access Quiz Quest Admin')}
+          {t('Sign in to access Sabuho')}
         </p>
       </div>
       

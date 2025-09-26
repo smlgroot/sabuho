@@ -9,7 +9,7 @@ const varelaRound = Varela_Round({
 });
 
 export const metadata = {
-  title: "Quiz Quest",
+  title: "Sabuho",
   description: "Master any subject through interactive quizzes and comprehensive learning tools",
 };
 

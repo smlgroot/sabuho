@@ -660,7 +660,7 @@ export default function AdminPage() {
             ) : (
               <div className="text-center py-20">
                 <h2 className="text-xl font-semibold mb-2">
-                  {t("Welcome to Quiz Quest Admin")}
+                  {t("Welcome to Sabuho")}
                 </h2>
                 <p className="text-muted-foreground mb-6">
                   {t("Build custom quizzes and manage content")}

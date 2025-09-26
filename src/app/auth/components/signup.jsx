@@ -48,7 +48,7 @@ export function Signup({ onToggleMode }) {
       <div className="text-center">
         <h2 className="text-2xl font-bold">{t('Create Account')}</h2>
         <p className="py-4 text-base-content/70">
-          {t('Join Quiz Quest Admin')}
+          {t('Join Sabuho')}
         </p>
       </div>
       

@@ -128,7 +128,7 @@ const resources = {
       "Success": "Éxito",
       
       // Landing Page & Meta
-      "Quiz Quest": "Quest de Cuestionarios",
+      "Sabuho": "Sabuho",
       "Master any subject through interactive quizzes and comprehensive learning tools": "Domina cualquier materia a través de cuestionarios interactivos y herramientas de aprendizaje integrales",
       "Manage your learning domains, quizzes, and educational content all in one place.": "Gestiona tus dominios de aprendizaje, cuestionarios y contenido educativo en un solo lugar.",
       "Go to Admin Panel": "Ir al Panel de Administración",
@@ -137,12 +137,12 @@ const resources = {
       
       // Authentication - Extended
       "Welcome Back": "Bienvenido de Vuelta",
-      "Sign in to access Quiz Quest Admin": "Inicia sesión para acceder al Administrador de Quiz Quest",
+      "Sign in to access Sabuho": "Inicia sesión para acceder al Administrador de Sabuho",
       "Signing in...": "Iniciando sesión...",
       "Sign up": "Regístrate",
       "Password must be at least 6 characters": "La contraseña debe tener al menos 6 caracteres",
       "Check your email for a confirmation link!": "¡Revisa tu correo electrónico para obtener un enlace de confirmación!",
-      "Join Quiz Quest Admin": "Únete al Administrador de Quiz Quest",
+      "Join Sabuho": "Únete al Administrador de Sabuho",
       "Create a password (min 6 chars)": "Crea una contraseña (mín. 6 caracteres)",
       "Confirm Password": "Confirmar Contraseña",
       "Creating account...": "Creando cuenta...",
@@ -198,7 +198,6 @@ const resources = {
       "Explore and purchase additional quiz content": "Explora y compra contenido de cuestionarios adicional",
       "Build custom quizzes and manage content": "Construye cuestionarios personalizados y gestiona contenido",
       "Organize your quiz topics and subjects": "Organiza tus temas y materias de cuestionarios",
-      "Welcome to Quiz Quest Admin": "Bienvenido al Administrador de Quiz Quest",
       "View Learning Hub": "Ver Centro de Aprendizaje",
       "Open Quiz Creator": "Abrir Creador de Cuestionarios",
       "Manage Domains": "Gestionar Dominios",

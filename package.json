@@ -1,5 +1,6 @@
 {
-  "name": "quiz-quest-admin",
+  "name": "sabuho",
+  "description": "Master any subject through interactive quizzes and comprehensive learning tools",
   "version": "0.1.0",
   "private": true,
   "type": "module",
