@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Code2, Plus, CheckCircle, XCircle } from 'lucide-react'
+import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Code2, Plus, CheckCircle, XCircle, Copy } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
@@ -17,6 +17,8 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
   const [isLoadingCredits, setIsLoadingCredits] = useState(false)
   const [showCreditDialog, setShowCreditDialog] = useState(false)
   const [showCodeDialog, setShowCodeDialog] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [generatedCode, setGeneratedCode] = useState('')
   const [isCreatingCode, setIsCreatingCode] = useState(false)
   const [toast, setToast] = useState(null)
   const inputRef = useRef(null)
@@ -310,8 +312,9 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
       await loadQuizCodes()
       setShowCodeDialog(false)
       
-      // Show success toast
-      showToast(`Quiz code "${code}" created successfully!`)
+      // Show success dialog with generated code
+      setGeneratedCode(code)
+      setShowSuccessDialog(true)
     } catch (error) {
       console.error('Failed to create quiz code:', error)
       showToast('Failed to create quiz code. Please try again.', 'error')
@@ -320,12 +323,12 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
     }
   }
 
-  // Load data when quiz changes or tab changes to codes
+  // Load data when quiz changes
   useEffect(() => {
-    if (quiz?.id && activeTab === 'codes') {
+    if (quiz?.id) {
       loadQuizCodes()
     }
-  }, [quiz?.id, activeTab])
+  }, [quiz?.id])
 
   useEffect(() => {
     if (quiz?.id) {
@@ -461,11 +464,9 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
       >
         <Code2 className="h-4 w-4 mr-2" />
         Codes
-        {quizCodes.length > 0 && (
-          <span className="badge badge-secondary ml-2 text-xs px-2">
-            {quizCodes.length}
-          </span>
-        )}
+        <span className="badge badge-secondary ml-2 text-xs px-2">
+          {quizCodes.length}
+        </span>
       </button>
     </div>
   )
@@ -747,6 +748,60 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setShowCodeDialog(false)} />
+        </div>
+      )}
+
+      {/* Success Dialog with Generated Code */}
+      {showSuccessDialog && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-success" />
+              Code Created Successfully!
+            </h3>
+            <div className="space-y-4 mb-6">
+              <div className="alert alert-success">
+                <div>
+                  <p className="font-medium">Your quiz code has been generated:</p>
+                </div>
+              </div>
+              <div className="bg-base-200 rounded-lg p-4 border-2 border-dashed border-base-300">
+                <div className="flex items-center justify-between">
+                  <code className="text-lg font-mono font-bold tracking-wider">
+                    {generatedCode}
+                  </code>
+                  <button 
+                    className="btn btn-sm btn-outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedCode)
+                      showToast('Code copied to clipboard!', 'success')
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-1" />
+                    Copy
+                  </button>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Share this code with users so they can redeem access to your quiz.
+              </p>
+            </div>
+            <div className="modal-action">
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  setShowSuccessDialog(false)
+                  setGeneratedCode('')
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => {
+            setShowSuccessDialog(false)
+            setGeneratedCode('')
+          }} />
         </div>
       )}
 
