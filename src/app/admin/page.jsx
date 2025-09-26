@@ -358,7 +358,7 @@ export default function AdminPage() {
       {/* App Logo */}
       <div className="p-4 border-b border-base-300">
         <img 
-          src="/sabuho_logo_2.png" 
+          src="/sabuho_logo_3.png" 
           alt="Sabuho" 
           className="w-12 h-12 mx-auto object-contain"
         />
