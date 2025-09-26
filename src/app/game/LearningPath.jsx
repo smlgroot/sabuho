@@ -25,7 +25,6 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
   const [levels, setLevels] = useState([]);
   const [availableQuizzes, setAvailableQuizzes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isHydrated, setIsHydrated] = useState(false);
 
   // Load quizzes from local database
   const loadQuizzes = async () => {
@@ -253,8 +252,8 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
 
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="flex justify-center py-16">
-            <div className="loading loading-spinner loading-lg"></div>
+          <div className="flex justify-center items-center min-h-96">
+            <span className="loading loading-spinner loading-lg"></span>
           </div>
         ) : availableQuizzes.length === 0 ? (
           <NoQuizzesPlaceholder />
