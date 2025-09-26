@@ -130,7 +130,6 @@ const resources = {
       // Landing Page & Meta
       "Quiz Quest": "Quest de Cuestionarios",
       "Master any subject through interactive quizzes and comprehensive learning tools": "Domina cualquier materia a través de cuestionarios interactivos y herramientas de aprendizaje integrales",
-      "Sabuho Admin": "Administrador de Sabuho",
       "Manage your learning domains, quizzes, and educational content all in one place.": "Gestiona tus dominios de aprendizaje, cuestionarios y contenido educativo en un solo lugar.",
       "Go to Admin Panel": "Ir al Panel de Administración",
       "Page not found": "Página no encontrada",
