@@ -355,6 +355,15 @@ export default function AdminPage() {
 
   const MainSidebar = () => (
     <aside className="min-w-20 bg-base-200 text-base-content flex flex-col min-h-full border-r border-base-300">
+      {/* App Logo */}
+      <div className="p-4 border-b border-base-300">
+        <img 
+          src="/sabuho_logo_2.png" 
+          alt="Sabuho" 
+          className="w-12 h-12 mx-auto object-contain"
+        />
+      </div>
+      
       {/* Main Navigation Menu */}
       <div className="flex-1 flex flex-col items-center py-4 gap-2">
         {/* Sidebar Toggle */}
