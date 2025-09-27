@@ -10,4 +10,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  css: {
+    postcss: './postcss.config.mjs',
+  },
+  build: {
+    assetsInlineLimit: 0,
+  },
 })
