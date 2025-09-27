@@ -10,7 +10,7 @@ import NotFoundPage from '@/app/not-found'
 function App() {
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-base-100 text-base-content font-sans antialiased" style={{ fontFamily: 'var(--font-varela-round)' }}>
+      <div className="min-h-screen bg-base-100 text-base-content font-sans antialiased subpixel-antialiased" style={{ fontFamily: 'var(--font-varela-round)' }}>
         <AuthProvider>
           <Routes>
             <Route path="/" element={<HomePage />} />
