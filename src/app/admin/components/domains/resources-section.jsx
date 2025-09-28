@@ -46,7 +46,7 @@ export function ResourcesSection({ domain, onUploadResource, onDomainUpdate }) {
           <h4 className="card-title text-base">{t("Resources")}</h4>
           <button className="btn btn-sm" onClick={onUploadResource}>
             <Upload className="h-4 w-4 mr-2" />
-            Upload
+            {t("Upload")}
           </button>
         </div>
         {domain.resources && domain.resources.length > 0 ? (

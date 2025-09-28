@@ -1,8 +1,10 @@
 'use client'
 
 import { HelpCircle, FileText } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCount }) {
+  const { t } = useTranslation()
   return (
     <div className="tabs tabs-box mb-6">
       <button 
@@ -10,7 +12,7 @@ export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCo
         onClick={() => onTabChange('questions')}
       >
         <HelpCircle className="h-4 w-4 mr-2" />
-        Questions
+        {t('Questions')}
         {questionsCount > 0 && (
           <span className="badge badge-secondary ml-2 text-xs px-2">
             {questionsCount}
@@ -22,7 +24,7 @@ export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCo
         onClick={() => onTabChange('resources')}
       >
         <FileText className="h-4 w-4 mr-2" />
-        Resources
+        {t('Resources')}
         {resourcesCount > 0 && (
           <span className="badge badge-secondary ml-2 text-xs px-2">
             {resourcesCount}

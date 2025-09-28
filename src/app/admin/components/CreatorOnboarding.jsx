@@ -126,7 +126,7 @@ export function CreatorOnboarding({ onComplete, onCancel }) {
               </div>
               <div>
                 <label className="label">
-                  <span className="label-text">{t("Bio")} ({t("optional")})</span>
+                  <span className="label-text">{t("Bio (optional)")}</span>
                 </label>
                 <textarea
                   placeholder={t("Tell learners about your expertise...")}

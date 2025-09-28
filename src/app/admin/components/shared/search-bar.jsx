@@ -60,7 +60,7 @@ export function SearchBar({ domains, onSelectDomain }) {
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <input
           className="input input-bordered pl-10 pr-10"
-          placeholder={t('searchDomains')}
+          placeholder={t('Search domains...')}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value)
@@ -82,7 +82,7 @@ export function SearchBar({ domains, onSelectDomain }) {
         <div className="absolute top-full left-0 right-0 z-50 mt-1">
           <div className="dropdown-content menu bg-base-100 rounded-box border shadow-lg max-h-[300px] overflow-y-auto z-[1] w-full p-2">
               {filteredDomains.length === 0 ? (
-                <div className="px-3 py-2 text-center text-base-content/70">{t('noDomainsFound')}</div>
+                <div className="px-3 py-2 text-center text-base-content/70">{t('No domains found.')}</div>
               ) : (
                 <div>
                   {filteredDomains.slice(0, 10).map((domain) => {

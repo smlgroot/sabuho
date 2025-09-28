@@ -177,7 +177,7 @@ export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDom
                 'cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors'
               } ${isUpdatingDomain ? 'opacity-50' : ''}`}
               onClick={() => handleDomainEditStart('name')}
-              title="Click to edit domain name"
+              title={t("Click to edit domain name")}
             >
               {localDomain.name}
             </h1>
@@ -197,7 +197,7 @@ export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDom
               onBlur={handleDomainEditSave}
               className="text-muted-foreground mt-2 w-full bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               disabled={isUpdatingDomain}
-              placeholder="Add description..."
+              placeholder={t("Add description...")}
               rows={2}
             />
           ) : (
@@ -206,9 +206,9 @@ export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDom
                 'cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors'
               } ${isUpdatingDomain ? 'opacity-50' : ''} ${!localDomain.description ? 'italic' : ''}`}
               onClick={() => handleDomainEditStart('description')}
-              title="Click to edit description"
+              title={t("Click to edit description")}
             >
-              {localDomain.description || 'Click to add description...'}
+              {localDomain.description || t('Click to add description...')}
             </p>
           )}
           <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">

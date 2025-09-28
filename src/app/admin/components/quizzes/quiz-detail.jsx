@@ -168,7 +168,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
     }
     
     if (field === 'name' && !newValue) {
-      alert('Please enter a quiz name')
+      alert(t('Please enter a quiz name'))
       return
     }
     
@@ -450,7 +450,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
         onClick={() => setActiveTab('domains')}
       >
         <Hash className="h-4 w-4 mr-2" />
-        Domains
+        {t('Domains')}
         {selected.length > 0 && (
           <span className="badge badge-secondary ml-2 text-xs px-2">
             {selected.length}
@@ -462,7 +462,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
         onClick={() => setActiveTab('codes')}
       >
         <TicketSlash className="h-4 w-4 mr-2" />
-        Codes
+        {t('Codes')}
         <span className="badge badge-secondary ml-2 text-xs px-2">
           {quizCodes.length}
         </span>
@@ -548,12 +548,12 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-medium flex items-center gap-2">
-              Select Domains
+              {t('Select Domains')}
               {isDomainListSaving && (<span className="w-2 h-2 bg-primary rounded-full animate-pulse" />)}
             </h2>
             <div className="flex gap-2">
-              <button className="btn btn-outline btn-sm" onClick={selectAll}>Select All</button>
-              <button className="btn btn-outline btn-sm" onClick={deselectAll}>Deselect All</button>
+              <button className="btn btn-outline btn-sm" onClick={selectAll}>{t('Select All')}</button>
+              <button className="btn btn-outline btn-sm" onClick={deselectAll}>{t('Deselect All')}</button>
               <button 
                 className="btn btn-primary btn-sm"
                 onClick={async () => {
@@ -563,7 +563,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
                 disabled={!quiz?.id}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Add Code
+                {t('Add Code')}
               </button>
             </div>
           </div>
@@ -571,7 +571,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
             <input
               type="text"
               className="input input-bordered flex-1"
-              placeholder="Search domains..."
+              placeholder={t('Search domains...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -620,10 +620,10 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
                 <table className="table table-zebra w-full">
                   <thead>
                     <tr>
-                      <th>Code</th>
-                      <th>Status</th>
-                      <th>Created</th>
-                      <th>Claimed By</th>
+                      <th>{t('Code')}</th>
+                      <th>{t('Status')}</th>
+                      <th>{t('Created')}</th>
+                      <th>{t('Claimed By')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -672,7 +672,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
                 disabled={!quiz?.id}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Create First Code
+                {t('Create First Code')}
               </button>
             </div>
           )}
@@ -739,7 +739,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
                     Creating...
                   </>
                 ) : (
-                  'Create Code'
+                  t('Create Code')
                 )}
               </button>
             </div>
@@ -754,7 +754,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
           <div className="modal-box">
             <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-success" />
-              Code Created Successfully!
+              {t('Code Created Successfully!')}
             </h3>
             <div className="space-y-4 mb-6">
               <div className="alert alert-success">
@@ -771,7 +771,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
                     className="btn btn-sm btn-outline"
                     onClick={() => {
                       navigator.clipboard.writeText(generatedCode)
-                      showToast('Code copied to clipboard!', 'success')
+                      showToast(t('Code copied to clipboard!'), 'success')
                     }}
                   >
                     <Copy className="h-4 w-4 mr-1" />

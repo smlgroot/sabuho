@@ -130,10 +130,26 @@ export default function AdminPage() {
     }
   }, [user?.id, loadDomains, loadQuizzes]);
 
-  const handleCreateDomain = (parentId) => {
-    setParentDomainId(parentId);
-    setEditingDomain(null);
-    setDomainFormOpen(true);
+  const handleCreateDomain = async (parentId) => {
+    try {
+      const domainData = {
+        name: 'New Domain',
+        description: null,
+        thumbnail_url: null,
+        parent_id: parentId || null,
+        question_count: 0
+      };
+
+      const created = await createDomain(domainData);
+      addDomain(created);
+      setSelectedDomain(created);
+      
+      toast.success(t("Domain created successfully"));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create domain";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    }
   };
 
   const handleEditDomain = (domain) => {

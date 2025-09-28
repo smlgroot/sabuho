@@ -334,7 +334,107 @@ const resources = {
       "quiz": "cuestionario",
       "quizzes": "cuestionarios",
       "No new claimed quizzes found to download": "No se encontraron cuestionarios reclamados nuevos para descargar",
-      "Successfully downloaded {{count}} claimed quiz{{plural}}!": "¡Se descargaron exitosamente {{count}} {{word}}!"
+      "Successfully downloaded {{count}} claimed quiz{{plural}}!": "¡Se descargaron exitosamente {{count}} {{word}}!",
+      
+      // Creator Onboarding
+      "Creator Onboarding": "Incorporación de Creador",
+      "Become a Quiz Creator": "Conviértete en Creador de Cuestionarios",
+      "Transform your knowledge into income by creating educational domains and quizzes that learners can purchase.": "Transforma tu conocimiento en ingresos creando dominios educativos y cuestionarios que los estudiantes puedan comprar.",
+      "Create domains to organize your content": "Crea dominios para organizar tu contenido",
+      "Build engaging quizzes with questions": "Construye cuestionarios atractivos con preguntas",
+      "Generate quiz codes to sell": "Genera códigos de cuestionarios para vender",
+      "Earn revenue from learners": "Obtén ingresos de los estudiantes",
+      "Tell Us About You": "Cuéntanos Sobre Ti",
+      "Let's set up your creator profile so learners can get to know you.": "Configuremos tu perfil de creador para que los estudiantes puedan conocerte.",
+      "Display Name": "Nombre Mostrado",
+      "What should learners call you?": "¿Cómo deberían llamarte los estudiantes?",
+      "Bio": "Biografía",
+      "Bio (optional)": "Biografía (opcional)",
+      "No Questions Created Yet": "Aún no se han creado preguntas",
+      "No Questions Match Your Search": "Ninguna pregunta coincide con tu búsqueda",
+      "Clear All": "Limpiar Todo",
+      "Reset Filters": "Restablecer Filtros",
+      "All Questions": "Todas las Preguntas",
+      "Manual Questions": "Preguntas Manuales",
+      "Auto Generated Questions": "Preguntas Generadas Automáticamente",
+      "From Date": "Fecha Desde",
+      "To Date": "Fecha Hasta",
+      "Clear Selection": "Limpiar Selección",
+      "Tell learners about your expertise...": "Cuéntales a los estudiantes sobre tu experiencia...",
+      "Terms & Conditions": "Términos y Condiciones",
+      "Please review and accept our terms to become a creator.": "Por favor revisa y acepta nuestros términos para convertirte en creador.",
+      "Creator Agreement": "Acuerdo de Creador",
+      "By becoming a creator, you agree to:": "Al convertirte en creador, aceptas:",
+      "Create original, educational content": "Crear contenido original y educativo",
+      "Respect intellectual property rights": "Respetar los derechos de propiedad intelectual",
+      "Maintain appropriate content standards": "Mantener estándares de contenido apropiados",
+      "Follow platform guidelines and policies": "Seguir las pautas y políticas de la plataforma",
+      "Revenue & Payments": "Ingresos y Pagos",
+      "You understand that quiz code sales are subject to our revenue sharing model and payment terms as outlined in our full Creator Terms of Service.": "Entiendes que las ventas de códigos de cuestionarios están sujetas a nuestro modelo de reparto de ingresos y términos de pago como se describe en nuestros Términos de Servicio de Creador completos.",
+      "Content Ownership": "Propiedad del Contenido",
+      "You retain ownership of your original content while granting us license to distribute it through our platform.": "Conservas la propiedad de tu contenido original mientras nos otorgas licencia para distribuirlo a través de nuestra plataforma.",
+      "I have read and agree to the": "He leído y acepto los",
+      "Creator Terms of Service": "Términos de Servicio de Creador",
+      "Privacy Policy": "Política de Privacidad",
+      "Activating...": "Activando...",
+      "Activate": "Activar",
+      "Step": "Paso",
+      "Creator account activated successfully!": "¡Cuenta de creador activada exitosamente!",
+      "Failed to complete onboarding. Please try again.": "Error al completar la incorporación. Por favor intenta de nuevo.",
+      
+      // Domain Detail
+      "Add description...": "Agregar descripción...",
+      "Click to add description...": "Haz clic para agregar descripción...",
+      "Click to edit domain name": "Haz clic para editar el nombre del dominio",
+      "Click to edit description": "Haz clic para editar la descripción",
+      
+      // Proper User Text (converted from camelCase)
+      "Add Option": "Agregar Opción",
+      
+      // Quiz Detail Components
+      "Select Domains": "Seleccionar Dominios",
+      "Select All": "Seleccionar Todo",
+      "Deselect All": "Deseleccionar Todo",
+      "Add Code": "Agregar Código",
+      "Code": "Código",
+      "Status": "Estado",
+      "Created": "Creado",
+      "Claimed By": "Reclamado Por",
+      "Create First Code": "Crear Primer Código",
+      "Create Code": "Crear Código",
+      "Code Created Successfully!": "¡Código Creado Exitosamente!",
+      "Code copied to clipboard!": "¡Código copiado al portapapeles!",
+      
+      // Tab Labels
+      "Questions": "Preguntas",
+      "Codes": "Códigos",
+      
+      // Form Validation
+      "Please enter a quiz name": "Por favor ingresa un nombre para el cuestionario",
+      
+      // Questions Section - Missing translations
+      "move": "mover",
+      "moveQuestions": "Mover Preguntas",
+      "noOtherDomainsAvailable": "No hay otros dominios disponibles",
+      "cancel": "cancelar",
+      "moving": "moviendo",
+      "creating": "creando",
+      "add": "agregar",
+      "newest": "más recientes",
+      "oldest": "más antiguos",
+      "new": "nuevo",
+      "old": "antiguo",
+      "filters": "filtros",
+      "Date": "Fecha",
+      "Type": "Tipo",
+      "manual": "manual",
+      "autoGenerated": "generado automáticamente",
+      "selectAll": "seleccionar todo",
+      
+      // Fixed camelCase to proper text
+      "Manual": "Manual",
+      "Auto Generated": "Generado Automáticamente",
+      "{{selected}} of {{total}} selected": "{{selected}} de {{total}} seleccionados"
     }
   }
 };

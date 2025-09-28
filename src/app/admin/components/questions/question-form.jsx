@@ -57,7 +57,7 @@ export function QuestionForm({
     if (!resourceId) return
     if (options.length < 2) return
     if (options.some(opt => !opt.trim())) {
-      alert(t('allOptionsMustHaveLabels'))
+      alert(t('All options must have labels'))
       return
     }
 
@@ -91,7 +91,7 @@ export function QuestionForm({
     <div className="modal modal-open">
       <div className="modal-box relative max-w-2xl max-h-[90vh] overflow-y-auto">
         <h3 className="font-bold text-lg mb-4">
-          {question ? t('editQuestion') : t('createNewQuestion')}
+          {question ? t('Edit Question') : t('Create New Question')}
         </h3>
         <button 
           className="btn btn-sm btn-circle absolute right-2 top-2"
@@ -104,7 +104,7 @@ export function QuestionForm({
 
           <div className="form-control">
             <label className="label" htmlFor="resource">
-              <span className="label-text">{t('sourceResource')}</span>
+              <span className="label-text">{t('Source Resource')}</span>
             </label>
             <select
               id="resource"
@@ -113,7 +113,7 @@ export function QuestionForm({
               className="select select-bordered w-full"
               required
             >
-              <option value="">{t('selectAResource')}</option>
+              <option value="">{t('Select a resource')}</option>
               {resources.map((resource) => (
                 <option key={resource.id} value={resource.id}>
                   {resource.name}
@@ -131,7 +131,7 @@ export function QuestionForm({
               className="textarea textarea-bordered"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder={t('enterYourQuestionHere')}
+              placeholder={t('Enter your question here...')}
               rows={3}
               required
             />
@@ -139,14 +139,14 @@ export function QuestionForm({
           
           <div className="form-control">
             <label className="label" htmlFor="explanation">
-              <span className="label-text">{t('explanationOptional')}</span>
+              <span className="label-text">{t('Explanation (optional)')}</span>
             </label>
             <textarea
               id="explanation"
               className="textarea textarea-bordered"
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
-              placeholder={t('explainTheCorrectAnswer')}
+              placeholder={t('Explain the correct answer...')}
               rows={2}
             />
           </div>
@@ -154,10 +154,10 @@ export function QuestionForm({
           <div className="card bg-base-100 border">
             <div className="card-body">
               <div className="flex flex-row items-center justify-between mb-4">
-                <h4 className="card-title text-base">{t('answerOptions')}</h4>
+                <h4 className="card-title text-base">{t('Answer Options')}</h4>
                 <button type="button" className="btn btn-outline btn-sm" onClick={addOption}>
                   <Plus className="h-4 w-4 mr-2" />
-                  {t('addOption')}
+                  {t('Add Option')}
                 </button>
               </div>
               <div className="space-y-4">

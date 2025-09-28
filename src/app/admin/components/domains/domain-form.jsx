@@ -67,7 +67,7 @@ export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
     <div className="modal modal-open">
       <div className="modal-box relative max-w-md">
         <h3 className="font-bold text-lg mb-4">
-          {domain ? t('editDomain') : t('createNewDomain')}
+          {domain ? t('Edit Domain') : t('Create New Domain')}
         </h3>
         <button 
           className="btn btn-sm btn-circle absolute right-2 top-2"
@@ -86,7 +86,7 @@ export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
               className="input input-bordered"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={t('domainName')}
+              placeholder={t('Domain name')}
               required
             />
           </div>
@@ -100,21 +100,21 @@ export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
               className="textarea textarea-bordered"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('optionalDescription')}
+              placeholder={t('Optional description')}
               rows={3}
             />
           </div>
           
           <div className="form-control">
             <label className="label" htmlFor="thumbnail">
-              <span className="label-text">{t('thumbnailURL')}</span>
+              <span className="label-text">{t('Thumbnail URL')}</span>
             </label>
             <input
               id="thumbnail"
               className="input input-bordered"
               value={thumbnailUrl}
               onChange={(e) => setThumbnailUrl(e.target.value)}
-              placeholder={t('optionalThumbnailURL')}
+              placeholder={t('Optional thumbnail URL')}
               type="url"
             />
           </div>
