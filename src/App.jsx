@@ -5,6 +5,7 @@ import { ThemeProvider } from './components/ThemeProvider'
 import HomePage from '@/app/page'
 import AdminPage from '@/app/admin/page'
 import AuthPage from '@/app/auth/page'
+import ConfirmEmailPage from '@/app/auth/confirm-email/page'
 import NotFoundPage from '@/app/not-found'
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/auth/confirm-email" element={<ConfirmEmailPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
