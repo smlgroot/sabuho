@@ -91,7 +91,7 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
             <div key={quiz.id} className="w-full min-w-0">
               <div className="flex items-center group relative min-w-0">
                 <button
-                  className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${selectedQuiz?.id === quiz.id ? 'btn-active btn-primary' : ''}`}
+                  className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${selectedQuiz?.id === quiz.id ? 'btn-active bg-primary/10 text-primary' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onEditQuiz(quiz);

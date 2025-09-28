@@ -33,7 +33,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
             <div className="w-4 h-4 mr-1 flex-shrink-0" />
           )}
           <button
-            className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${isSelected ? 'btn-active btn-primary' : ''}`}
+            className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${isSelected ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               onSelectDomain(domain);

@@ -69,7 +69,7 @@ export function ProfileSidebar({ onClose }) {
               <button
                 onClick={() => handleLanguageChange('en')}
                 className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                  i18n.language === 'en' ? 'border-primary bg-primary/5' : 'border-base-300 hover:bg-base-200'
+                  i18n.language === 'en' ? 'border-primary bg-primary/10' : 'border-base-300 hover:bg-base-200'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -83,7 +83,7 @@ export function ProfileSidebar({ onClose }) {
               <button
                 onClick={() => handleLanguageChange('es')}
                 className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                  i18n.language === 'es' ? 'border-primary bg-primary/5' : 'border-base-300 hover:bg-base-200'
+                  i18n.language === 'es' ? 'border-primary bg-primary/10' : 'border-base-300 hover:bg-base-200'
                 }`}
               >
                 <div className="flex items-center gap-3">
