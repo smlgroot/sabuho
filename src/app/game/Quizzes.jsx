@@ -98,9 +98,13 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
       if (result.downloadedCount > 0) {
         // Refresh the quiz list after downloading
         await loadQuizzes()
-        setSuccessMessage(`Successfully downloaded ${result.downloadedCount} claimed quiz${result.downloadedCount !== 1 ? 'es' : ''}!`)
+        setSuccessMessage(t('Successfully downloaded {{count}} claimed quiz{{plural}}!', { 
+          count: result.downloadedCount, 
+          plural: result.downloadedCount !== 1 ? 'zes' : '',
+          word: result.downloadedCount === 1 ? t('quiz') : t('quizzes')
+        }))
       } else {
-        setSuccessMessage('No new claimed quizzes found to download')
+        setSuccessMessage(t('No new claimed quizzes found to download'))
       }
       
     } catch (err) {

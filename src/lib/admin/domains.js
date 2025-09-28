@@ -8,8 +8,6 @@ export async function fetchDomains() {
     throw new Error('User must be authenticated to fetch domains')
   }
 
-  console.log('Authenticated user:', session.user.id)
-
   const { data, error } = await supabase
     .from('domains')
     .select(`
@@ -25,7 +23,6 @@ export async function fetchDomains() {
     throw new Error(`Failed to fetch domains: ${error.message}`)
   }
 
-  console.log('Fetched domains:', data?.length || 0)
   return buildDomainTree(data || [])
 }
 

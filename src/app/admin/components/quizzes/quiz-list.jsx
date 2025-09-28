@@ -15,7 +15,6 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
 
   // Load user credits
   const loadUserCredits = async () => {
-    console.log('QuizList loadUserCredits called from:', new Error().stack)
     setIsLoadingCredits(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -76,7 +75,7 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
         }}
       >
         <Plus className="h-4 w-4 mr-2" />
-        Add Quiz
+        {t("Add Quiz")}
       </button>
       
       {/* Quizzes List */}

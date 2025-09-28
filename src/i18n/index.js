@@ -5,6 +5,13 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 // Translation resources - only Spanish translations needed
 // English text will be used as keys and displayed when no translation exists
 const resources = {
+  en: {
+    translation: {
+      "Successfully downloaded {{count}} claimed quiz{{plural}}!": "Successfully downloaded {{count}} claimed {{word}}!",
+      "quiz": "quiz",
+      "quizzes": "quizzes"
+    }
+  },
   es: {
     translation: {
       "Learning Hub": "Centro de Aprendizaje",
@@ -240,6 +247,7 @@ const resources = {
       "Question Type": "Tipo de Pregunta",
       "No questions match your search.": "Ninguna pregunta coincide con tu búsqueda.",
       "No questions created yet.": "Aún no se han creado preguntas.",
+      "questions": "Preguntas",
       
       // Additional Common Actions & States
       "Create": "Crear",
@@ -262,7 +270,6 @@ const resources = {
       "Delete this question?": "¿Eliminar esta pregunta?",
       "Click to edit options": "Haz clic para editar opciones",
       "Enter quiz name": "Ingresa el nombre del cuestionario",
-      "Saving...": "Guardando...",
       "No domains available. Create a domain first.": "No hay dominios disponibles. Crea un dominio primero.",
       "Loading codes...": "Cargando códigos...",
       "Quiz Codes": "Códigos de Cuestionario",
@@ -278,13 +285,14 @@ const resources = {
       "Credits": "Créditos",
       "Click the button above to create your first quiz": "Haz clic en el botón de arriba para crear tu primer cuestionario",
       "More options": "Más opciones",
+      "Add Subdomain": "Agregar Subdominio",
+      "Add Domain": "Agregar Dominio",
+      "No domains yet": "Aún no hay dominios",
       "Delete Domain": "Eliminar Dominio",
       "Resources": "Recursos",
       "No resources uploaded yet.": "Aún no se han subido recursos.",
-      "No domains available. Create a domain first.": "No hay dominios disponibles. Crea un dominio primero.",
       "Click the button above to create your first domain": "Haz clic en el botón de arriba para crear tu primer dominio",
       "No image": "Sin imagen",
-      "Description": "Descripción",
       "Topics": "Temas",
       "Pages": "Páginas",
       "Unparsable Content": "Contenido No Analizable",
@@ -300,6 +308,8 @@ const resources = {
       "No new quizzes were downloaded": "No se descargaron cuestionarios nuevos",
       "Failed to claim quiz": "Error al reclamar cuestionario",
       "Failed to check claimed quizzes": "Error al verificar cuestionarios reclamados",
+      "Check Claimed": "Verificar Reclamados",
+      "Select a quiz from the sidebar to view details and start learning": "Selecciona un cuestionario desde la barra lateral para ver detalles y comenzar a aprender",
       "Unknown": "Desconocido",
       
       // Level Names
@@ -317,7 +327,14 @@ const resources = {
       "Void Emperor": "Emperador del Vacío",
       "Titan of Knowledge": "Titán del Conocimiento",
       "Master of Mysteries": "Maestro de Misterios",
-      "Final Challenge": "Desafío Final"
+      "Final Challenge": "Desafío Final",
+      
+      // Quiz download messages
+      "Successfully downloaded": "Descargado exitosamente",
+      "quiz": "cuestionario",
+      "quizzes": "cuestionarios",
+      "No new claimed quizzes found to download": "No se encontraron cuestionarios reclamados nuevos para descargar",
+      "Successfully downloaded {{count}} claimed quiz{{plural}}!": "¡Se descargaron exitosamente {{count}} {{word}}!"
     }
   }
 };

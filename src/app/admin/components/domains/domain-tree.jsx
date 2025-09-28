@@ -85,7 +85,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
                   }}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Subdomain
+                  {t("Add Subdomain")}
                 </button>
               </li>
               <li><hr className="divider my-1" /></li>
@@ -97,7 +97,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
                   }}
                 >
                   <Edit className="h-4 w-4 mr-2" />
-                  Edit Domain
+                  {t("Edit Domain")}
                 </button>
               </li>
               <li>
@@ -109,7 +109,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
                   className="text-error hover:bg-error hover:text-white"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Domain
+                  {t("Delete Domain")}
                 </button>
               </li>
             </ul>
@@ -132,6 +132,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
 }
 
 export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain }) {
+  const { t } = useTranslation()
   return (
     <div className="space-y-4">
       {/* Add Domain Button */}
@@ -140,7 +141,7 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
         onClick={() => onCreateDomain()}
       >
         <Plus className="h-4 w-4 mr-2" />
-        Add Domain
+        {t("Add Domain")}
       </button>
       
       {/* Domains List */}
@@ -148,7 +149,7 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
         {domains.length === 0 ? (
           <div className="alert alert-info">
             <div className="text-center w-full">
-              <p>No domains yet</p>
+              <p>{t("No domains yet")}</p>
               <p className="text-sm opacity-70 mt-1">{t("Click the button above to create your first domain")}</p>
             </div>
           </div>

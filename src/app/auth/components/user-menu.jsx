@@ -19,9 +19,9 @@ export function UserMenu({ onProfileClick, profileSidebarOpen }) {
           profileSidebarOpen ? 'btn-active bg-primary/10 text-primary' : ''
         }`}
       >
-        <div className="avatar placeholder">
-          <div className="bg-primary text-primary-content rounded-full w-8 h-8 flex items-center justify-center">
-            <span className="text-sm">{getUserInitials(user.email || 'U')}</span>
+        <div className="avatar avatar-placeholder">
+          <div className="bg-primary text-primary-content w-8 rounded-full">
+            <span className="text-xs">{getUserInitials(user.email || 'U')}</span>
           </div>
         </div>
       </button>

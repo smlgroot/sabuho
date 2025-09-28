@@ -37,7 +37,6 @@ const LEVEL_CONFIGS = {
 
 class QuizClaimService {
   async claimQuiz(code) {
-    console.log('Claiming quiz with code:', code)
     try {
       // 1. Check if code already exists in local database
       const existingCode = await database.checkCodeExists(code)
@@ -56,7 +55,6 @@ class QuizClaimService {
         .eq('code', code.trim())
         .single()
 
-      console.log('Quiz code lookup result:', { data: quizCode, error: codeError })
 
       if (codeError) {
         throw new Error('Invalid code or code not found')
@@ -67,7 +65,6 @@ class QuizClaimService {
       }
 
       const quizId = quizCode.quiz_id
-      console.log('Found quiz_id from code:', quizId)
 
       // 3. Check if this code has already been claimed by the current user
       try {
@@ -163,11 +160,7 @@ class QuizClaimService {
           
           if (userQuizCodeError) {
             console.warn('Failed to save user_quiz_codes record:', userQuizCodeError)
-          } else {
-            console.log('Successfully saved user_quiz_codes record')
           }
-        } else {
-          console.log('User not authenticated, skipping user_quiz_codes record')
         }
       } catch (userQuizCodeError) {
         console.warn('Error saving user_quiz_codes record:', userQuizCodeError)
@@ -191,13 +184,11 @@ class QuizClaimService {
   }
 
   async loadQuiz(quizId) {
-    console.log('Loading quiz:', quizId)
     const { data: quizzes, error } = await supabase
       .from('quizzes')
       .select('*')
       .eq('id', quizId)
 
-    console.log('Raw query result:', { data: quizzes, error, count: quizzes?.length })
 
     if (error) {
       throw new Error(`Failed to fetch quiz: ${error.message}`)
@@ -262,7 +253,6 @@ class QuizClaimService {
         return []
       }
 
-      console.log(`Loading domains for quiz ${quiz.id}:`, domainIds)
 
       const { data: domains, error } = await supabase
         .from('domains')
@@ -328,7 +318,6 @@ class QuizClaimService {
         return []
       }
 
-      console.log(`Loading questions for quiz ${quiz.id} from domains:`, domainIds)
 
       const { data: questions, error } = await supabase
         .from('questions')
@@ -345,9 +334,6 @@ class QuizClaimService {
         quiz_id: quiz.id
       }))
 
-      console.log(`Loaded ${questionsWithQuizId.length} questions for quiz ${quiz.id}`)
-      console.log('Sample question from Supabase:', questionsWithQuizId[0])
-      console.log('Options field:', questionsWithQuizId[0]?.options)
 
       return questionsWithQuizId
     } catch (e) {
@@ -606,7 +592,6 @@ class QuizClaimService {
 
   async checkAndDownloadClaimedQuizzes() {
     try {
-      console.log('Checking for claimed quizzes...')
       
       // 1. Get current authenticated user
       const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -615,7 +600,6 @@ class QuizClaimService {
         throw new Error('User not authenticated')
       }
 
-      console.log('Checking claimed quizzes for user:', user.id)
 
       // 2. Get all quiz codes claimed by this user from Supabase
       const { data: userQuizCodes, error: claimedError } = await supabase
@@ -631,7 +615,6 @@ class QuizClaimService {
         throw new Error(`Failed to fetch claimed quizzes: ${claimedError.message}`)
       }
 
-      console.log('Found claimed quizzes:', userQuizCodes)
 
       if (!userQuizCodes || userQuizCodes.length === 0) {
         return {
@@ -653,12 +636,9 @@ class QuizClaimService {
             quizId,
             code: userQuizCode.quiz_codes.code
           })
-        } else {
-          console.log(`Quiz ${quizId} already exists locally, skipping`)
         }
       }
 
-      console.log('Quizzes to download:', quizzesToDownload)
 
       if (quizzesToDownload.length === 0) {
         return {
@@ -674,7 +654,6 @@ class QuizClaimService {
 
       for (const { quizId, code } of quizzesToDownload) {
         try {
-          console.log(`Downloading quiz ${quizId} with code ${code}`)
           
           // Load the quiz data
           const quiz = await this.loadQuiz(quizId)
@@ -724,7 +703,6 @@ class QuizClaimService {
           }
 
           downloadedCount++
-          console.log(`Successfully downloaded quiz: ${quiz.name}`)
           
         } catch (error) {
           console.error(`Failed to download quiz ${quizId}:`, error)
@@ -741,7 +719,10 @@ class QuizClaimService {
         downloadedCount,
         errors: errors.length > 0 ? errors : null,
         message: downloadedCount > 0 
-          ? `Successfully downloaded ${downloadedCount} quiz${downloadedCount !== 1 ? 'es' : ''}`
+          ? i18n.t('Successfully downloaded {{count}} quiz{{plural}}!', { 
+            count: downloadedCount, 
+            plural: downloadedCount !== 1 ? 'es' : '' 
+          })
           : i18n.t('No new quizzes were downloaded')
       }
 
