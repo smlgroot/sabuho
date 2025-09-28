@@ -6,7 +6,7 @@ import { quizClaimService } from '@/services/quizClaimService'
 import useGameStore from '../../store/useGameStore'
 import { useAuth } from '@/lib/admin/auth'
 
-function Quizzes() {
+function Quizzes({ onQuizSelect, selectedQuiz }) {
   const [quizzes, setQuizzes] = useState([])
   const [loading, setLoading] = useState(true)
   const [code, setCode] = useState('')
@@ -187,8 +187,8 @@ function Quizzes() {
           <div key={quiz.id} className="w-full min-w-0">
             <div className="flex items-center group relative min-w-0">
               <button
-                className="btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0"
-                onClick={() => navigate(`/quiz/${quiz.id}`)}
+                className={`btn flex-1 justify-start pr-8 text-left min-w-0 ${selectedQuiz && selectedQuiz.id === quiz.id ? 'btn-active bg-primary/10 text-primary' : 'btn-ghost'}`}
+                onClick={() => onQuizSelect ? onQuizSelect(quiz) : navigate(`/quiz/${quiz.id}`)}
               >
                 <span className="flex-1 truncate min-w-0">{quiz.name}</span>
               </button>

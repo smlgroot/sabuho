@@ -198,7 +198,7 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
 
         <button
           className="btn btn-primary w-full mb-6"
-          onClick={() => navigate("/learning-hub/quizzes")}
+          onClick={onNavigateToShop}
         >
           <Plus className="w-4 h-4" />
           {t("Go to Quizzes")}

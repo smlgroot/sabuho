@@ -30,6 +30,7 @@ import { fetchQuizzes, createQuiz as createQuizApi, updateQuiz as updateQuizApi,
 import LearningPath from '../game/LearningPath';
 import Quizzes from '../game/Quizzes';
 import QuizScreen from '../game/QuizScreen';
+import UserQuizDetail from '../game/QuizDetail';
 
 export default function AdminPage() {
   const {
@@ -82,6 +83,9 @@ export default function AdminPage() {
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [quizModalData, setQuizModalData] = useState({ quizId: null, levelId: null, readonly: false });
   const learningPathRef = useRef(null);
+  
+  // User quiz detail state
+  const [selectedUserQuiz, setSelectedUserQuiz] = useState(null);
 
   const { user, userProfile, loadUserProfile } = useAuth();
 
@@ -314,6 +318,17 @@ export default function AdminPage() {
     }, 300);
   };
 
+  // Handle user quiz selection (from shop/store)
+  const handleUserQuizSelect = (quiz) => {
+    setSelectedUserQuiz(quiz);
+  };
+
+  // Handle back from user quiz detail
+  const handleUserQuizBack = () => {
+    setSelectedUserQuiz(null);
+  };
+
+
   const getBreadcrumbPath = (domainId) => {
     const path = [];
 
@@ -382,6 +397,7 @@ export default function AdminPage() {
             setProfileSidebarOpen(false);
             setSelectedDomain(null);
             setSelectedQuiz(null);
+            setSelectedUserQuiz(null);
             setCreatingQuiz(false);
             if (!secondSidebarOpen) setSecondSidebarOpen(true);
           }}
@@ -398,6 +414,7 @@ export default function AdminPage() {
             setProfileSidebarOpen(false);
             setSelectedDomain(null);
             setSelectedQuiz(null);
+            setSelectedUserQuiz(null);
             setCreatingQuiz(false);
             if (!secondSidebarOpen) setSecondSidebarOpen(true);
           }}
@@ -420,6 +437,7 @@ export default function AdminPage() {
               if (!creatorOpen) {
                 setActiveView('creator');
                 setProfileSidebarOpen(false);
+                setSelectedUserQuiz(null);
                 if (!secondSidebarOpen) setSecondSidebarOpen(true);
               }
             } else {
@@ -427,6 +445,7 @@ export default function AdminPage() {
               setActiveView('creator-onboarding');
               setOnboardingStep(0);
               setProfileSidebarOpen(false);
+              setSelectedUserQuiz(null);
               if (!secondSidebarOpen) setSecondSidebarOpen(true);
             }
           }}
@@ -451,6 +470,7 @@ export default function AdminPage() {
               setActiveView('domains');
               setProfileSidebarOpen(false);
               setSelectedQuiz(null);
+              setSelectedUserQuiz(null);
               setCreatingQuiz(false);
               if (!secondSidebarOpen) setSecondSidebarOpen(true);
             }}
@@ -468,6 +488,7 @@ export default function AdminPage() {
               setActiveView('quizzes');
               setProfileSidebarOpen(false);
               setSelectedDomain(null);
+              setSelectedUserQuiz(null);
               if (!secondSidebarOpen) setSecondSidebarOpen(true);
             }}
           >
@@ -501,7 +522,7 @@ export default function AdminPage() {
       )}
       
       {activeView === 'shop' && (
-        <Quizzes />
+        <Quizzes onQuizSelect={handleUserQuizSelect} selectedQuiz={selectedUserQuiz} />
       )}
 
       {activeView === 'creator' && (
@@ -621,20 +642,27 @@ export default function AdminPage() {
                 </div>
               </div>
             ) : activeView === 'shop' ? (
-              <div className="text-center py-20">
-                <h2 className="text-xl font-semibold mb-2">
-                  {t("Store")}
-                </h2>
-                <p className="text-muted-foreground mb-6">
-                  {t("Explore and purchase additional quiz content")}
-                </p>
-                <div className="bg-base-200 rounded-lg p-8 max-w-md mx-auto">
-                  <ShoppingBag className="h-16 w-16 text-base-300 mx-auto mb-4" />
-                  <p className="text-sm text-gray-600">
-                    {t("Manage Domains")}
+              selectedUserQuiz ? (
+                <UserQuizDetail 
+                  quiz={selectedUserQuiz}
+                  onBack={handleUserQuizBack}
+                />
+              ) : (
+                <div className="text-center py-20">
+                  <h2 className="text-xl font-semibold mb-2">
+                    {t("Store")}
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    {t("Explore and purchase additional quiz content")}
                   </p>
+                  <div className="bg-base-200 rounded-lg p-8 max-w-md mx-auto">
+                    <ShoppingBag className="h-16 w-16 text-base-300 mx-auto mb-4" />
+                    <p className="text-sm text-gray-600">
+                      {t("Select a quiz from the sidebar to view details and start learning")}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )
             ) : selectedDomain ? (
               <DomainDetail
                 domain={selectedDomain}
