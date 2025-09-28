@@ -3,8 +3,10 @@
 import { Plus, MoreHorizontal, FolderOpen, Folder, Edit, Trash2, ChevronRight, ChevronDown } from 'lucide-react'
 // DaisyUI components used directly
 import { useStore } from '@/store/useStore'
+import { useTranslation } from 'react-i18next'
 
 function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain }) {
+  const { t } = useTranslation()
   const { selectedDomain, toggleDomainCollapsed, isDomainCollapsed } = useStore()
   const isSelected = selectedDomain?.id === domain.id
   const hasChildren = domain.children && domain.children.length > 0
@@ -72,7 +74,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
               className="btn btn-ghost btn-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
             >
               <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">More options</span>
+              <span className="sr-only">{t("More options")}</span>
             </button>
             <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-48 p-2 shadow">
               <li>
@@ -147,7 +149,7 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
           <div className="alert alert-info">
             <div className="text-center w-full">
               <p>No domains yet</p>
-              <p className="text-sm opacity-70 mt-1">Click the button above to create your first domain</p>
+              <p className="text-sm opacity-70 mt-1">{t("Click the button above to create your first domain")}</p>
             </div>
           </div>
         ) : (

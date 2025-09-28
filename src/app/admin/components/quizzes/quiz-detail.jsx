@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Plus, CheckCircle, XCircle, Copy, TicketSlash } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useTranslation } from 'react-i18next'
 
 export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
+  const { t } = useTranslation()
   const [editingField, setEditingField] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDomainListSaving, setIsDomainListSaving] = useState(false)
@@ -500,7 +502,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
             }}
             disabled={isSaving}
             className="text-3xl font-bold bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
-            placeholder="Enter quiz name"
+            placeholder={t("Enter quiz name")}
           />
         ) : (
           <h1
@@ -579,7 +581,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
               <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-md z-10">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm text-muted-foreground">Saving...</span>
+                  <span className="text-sm text-muted-foreground">{t("Saving...")}</span>
                 </div>
               </div>
             )}
@@ -588,7 +590,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No domains available. Create a domain first.</p>
+                <p className="text-sm">{t("No domains available. Create a domain first.")}</p>
               </div>
             )}
           </div>
@@ -600,7 +602,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-medium flex items-center gap-2">
-              Quiz Codes
+              {t("Quiz Codes")}
               {isLoadingCodes && (<span className="w-2 h-2 bg-primary rounded-full animate-pulse" />)}
             </h2>
           </div>
@@ -609,7 +611,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
             <div className="border rounded-md p-8 text-center">
               <div className="flex items-center justify-center gap-2">
                 <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm text-muted-foreground">Loading codes...</span>
+                <span className="text-sm text-muted-foreground">{t("Loading codes...")}</span>
               </div>
             </div>
           ) : quizCodes.length > 0 ? (
@@ -636,9 +638,9 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
                           </td>
                           <td>
                             {isClaimed ? (
-                              <span className="badge badge-success px-2">Claimed</span>
+                              <span className="badge badge-success px-2">{t("Claimed")}</span>
                             ) : (
-                              <span className="badge badge-outline px-2">Available</span>
+                              <span className="badge badge-outline px-2">{t("Available")}</span>
                             )}
                           </td>
                           <td className="text-sm text-muted-foreground">
@@ -660,7 +662,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
           ) : (
             <div className="text-center py-8 text-muted-foreground border rounded-md">
               <TicketSlash className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No codes created yet.</p>
+              <p className="text-sm">{t("No codes created yet.")}</p>
               <button 
                 className="btn btn-primary btn-sm mt-3"
                 onClick={async () => {
@@ -681,10 +683,9 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
       {showCreditDialog && (
         <div className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">Insufficient Credits</h3>
+            <h3 className="font-bold text-lg mb-4">{t("Insufficient Credits")}</h3>
             <p className="text-muted-foreground mb-6">
-              You need credits to create quiz codes. You currently have {userCredits} credit(s).
-              Please purchase more credits to continue.
+              {t("You need credits to create quiz codes. You currently have")} {userCredits} {t("credit(s). Please purchase more credits to continue.")}
             </p>
             <div className="modal-action">
               <button 
@@ -694,7 +695,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
                 Cancel
               </button>
               <button className="btn btn-primary">
-                Buy Credits
+                {t("Buy Credits")}
               </button>
             </div>
           </div>
@@ -706,7 +707,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
       {showCodeDialog && (
         <div className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">Create Quiz Code</h3>
+            <h3 className="font-bold text-lg mb-4">{t("Create Quiz Code")}</h3>
             <div className="space-y-4 mb-6">
               <div className="alert alert-info">
                 <div>
@@ -758,7 +759,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
             <div className="space-y-4 mb-6">
               <div className="alert alert-success">
                 <div>
-                  <p className="font-medium">Your quiz code has been generated:</p>
+                  <p className="font-medium">{t("Your quiz code has been generated:")}</p>
                 </div>
               </div>
               <div className="bg-base-200 rounded-lg p-4 border-2 border-dashed border-base-300">

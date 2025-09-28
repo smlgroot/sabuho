@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { database } from '../lib/game/database'
+import i18n from '../i18n'
 
 const LevelType = {
   NORMAL: 'normal',
@@ -43,7 +44,7 @@ class QuizClaimService {
       if (existingCode) {
         return {
           success: false,
-          error: 'This quiz code has already been added to your library',
+          error: i18n.t('This quiz code has already been added to your library'),
           isDuplicate: true
         }
       }
@@ -84,7 +85,7 @@ class QuizClaimService {
           } else if (existingClaim) {
             return {
               success: false,
-              error: 'You have already claimed this specific quiz code',
+              error: i18n.t('You have already claimed this specific quiz code'),
               isDuplicate: true
             }
           }
@@ -98,7 +99,7 @@ class QuizClaimService {
       if (existingQuiz) {
         return {
           success: false,
-          error: 'This quiz is already in your library',
+          error: i18n.t('This quiz is already in your library'),
           isDuplicate: true,
           existingQuiz
         }
@@ -180,7 +181,7 @@ class QuizClaimService {
       }
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+      const errorMessage = error instanceof Error ? error.message : i18n.t('An unknown error occurred')
       
       return {
         success: false,
@@ -542,21 +543,21 @@ class QuizClaimService {
 
       return {
         [LevelType.NORMAL]: normalNames.length > 0 ? normalNames : [
-          "Forest Camp", "River Rapids", "Sky Peak", "Moonlit Meadow", "Secret Grove"
+          i18n.t("Forest Camp"), i18n.t("River Rapids"), i18n.t("Sky Peak"), i18n.t("Moonlit Meadow"), i18n.t("Secret Grove")
         ],
         [LevelType.MINI_BOSS]: miniBossNames.length > 0 ? miniBossNames : [
-          "Shadow Guardian", "Storm Sentinel", "Crystal Warden", "Fire Keeper", "Ice Monarch"
+          i18n.t("Shadow Guardian"), i18n.t("Storm Sentinel"), i18n.t("Crystal Warden"), i18n.t("Fire Keeper"), i18n.t("Ice Monarch")
         ],
         [LevelType.BOSS]: bossNames.length > 0 ? bossNames : [
-          "Ancient Dragon", "Void Emperor", "Titan of Knowledge", "Master of Mysteries", "Final Challenge"
+          i18n.t("Ancient Dragon"), i18n.t("Void Emperor"), i18n.t("Titan of Knowledge"), i18n.t("Master of Mysteries"), i18n.t("Final Challenge")
         ]
       }
     } catch (e) {
       console.warn('Failed to load level names from database, using defaults:', e)
       return {
-        [LevelType.NORMAL]: ["Forest Camp", "River Rapids", "Sky Peak", "Moonlit Meadow", "Secret Grove"],
-        [LevelType.MINI_BOSS]: ["Shadow Guardian", "Storm Sentinel", "Crystal Warden", "Fire Keeper", "Ice Monarch"],
-        [LevelType.BOSS]: ["Ancient Dragon", "Void Emperor", "Titan of Knowledge", "Master of Mysteries", "Final Challenge"]
+        [LevelType.NORMAL]: [i18n.t("Forest Camp"), i18n.t("River Rapids"), i18n.t("Sky Peak"), i18n.t("Moonlit Meadow"), i18n.t("Secret Grove")],
+        [LevelType.MINI_BOSS]: [i18n.t("Shadow Guardian"), i18n.t("Storm Sentinel"), i18n.t("Crystal Warden"), i18n.t("Fire Keeper"), i18n.t("Ice Monarch")],
+        [LevelType.BOSS]: [i18n.t("Ancient Dragon"), i18n.t("Void Emperor"), i18n.t("Titan of Knowledge"), i18n.t("Master of Mysteries"), i18n.t("Final Challenge")]
       }
     }
   }
@@ -636,7 +637,7 @@ class QuizClaimService {
         return {
           success: true,
           downloadedCount: 0,
-          message: 'No claimed quizzes found'
+          message: i18n.t('No claimed quizzes found')
         }
       }
 
@@ -663,7 +664,7 @@ class QuizClaimService {
         return {
           success: true,
           downloadedCount: 0,
-          message: 'All claimed quizzes are already downloaded'
+          message: i18n.t('All claimed quizzes are already downloaded')
         }
       }
 
@@ -741,11 +742,11 @@ class QuizClaimService {
         errors: errors.length > 0 ? errors : null,
         message: downloadedCount > 0 
           ? `Successfully downloaded ${downloadedCount} quiz${downloadedCount !== 1 ? 'es' : ''}`
-          : 'No new quizzes were downloaded'
+          : i18n.t('No new quizzes were downloaded')
       }
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+      const errorMessage = error instanceof Error ? error.message : i18n.t('An unknown error occurred')
       console.error('Error checking and downloading claimed quizzes:', error)
       
       return {

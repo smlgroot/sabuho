@@ -6,8 +6,10 @@ import { updateDomain, fetchDomains } from '@/lib/admin/domains'
 import { QuestionsSection } from './questions-section'
 import { ResourcesSection } from './resources-section'
 import { DomainTabs } from './domain-tabs'
+import { useTranslation } from 'react-i18next'
 
 export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDomainUpdate }) {
+  const { t } = useTranslation()
   const [localDomain, setLocalDomain] = useState(domain)
   const [activeTab, setActiveTab] = useState('questions')
   const [availableDomains, setAvailableDomains] = useState([])
@@ -154,7 +156,7 @@ export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDom
           />
         ) : (
           <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-            <span className="text-gray-400 text-xs">No image</span>
+            <span className="text-gray-400 text-xs">{t("No image")}</span>
           </div>
         )}
         <div className="flex-1">

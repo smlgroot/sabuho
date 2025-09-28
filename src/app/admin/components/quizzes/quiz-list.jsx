@@ -5,8 +5,10 @@ import { Plus, MoreHorizontal, FileText, Edit, Trash2, Coins } from 'lucide-reac
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
+  const { t } = useTranslation()
   const { selectedQuiz, setSelectedQuiz, setSelectedDomain } = useStore()
   const [userCredits, setUserCredits] = useState(0)
   const [isLoadingCredits, setIsLoadingCredits] = useState(false)
@@ -52,7 +54,7 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                 <Coins className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="font-semibold">Credits</h3>
+              <h3 className="font-semibold">{t("Credits")}</h3>
             </div>
             <div className="text-right">
               {isLoadingCredits ? (
@@ -83,7 +85,7 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
           <div className="alert alert-info">
             <div className="text-center w-full">
               <p>No quizzes yet</p>
-              <p className="text-sm opacity-70 mt-1">Click the button above to create your first quiz</p>
+              <p className="text-sm opacity-70 mt-1">{t("Click the button above to create your first quiz")}</p>
             </div>
           </div>
         ) : (
@@ -107,7 +109,7 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
                     className="btn btn-ghost btn-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
                   >
                     <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">More options</span>
+                    <span className="sr-only">{t("More options")}</span>
                   </button>
                   <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-48 p-2 shadow">
                     <li>

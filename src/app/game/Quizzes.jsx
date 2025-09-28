@@ -53,7 +53,7 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
       const result = await quizClaimService.claimQuiz(code.trim())
       
       if (!result.success) {
-        setError(result.error || 'Failed to claim quiz')
+        setError(result.error || t('Failed to claim quiz'))
         return
       }
 
@@ -91,7 +91,7 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
       const result = await quizClaimService.checkAndDownloadClaimedQuizzes()
       
       if (!result.success) {
-        setError(result.error || 'Failed to check claimed quizzes')
+        setError(result.error || t('Failed to check claimed quizzes'))
         return
       }
 
@@ -112,7 +112,7 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Unknown'
+    if (!dateString) return t('Unknown')
     return new Date(dateString).toLocaleDateString()
   }
 

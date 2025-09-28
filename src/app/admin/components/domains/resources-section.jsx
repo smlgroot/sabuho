@@ -4,8 +4,10 @@ import { useState, useCallback } from 'react'
 import { Upload } from 'lucide-react'
 import { checkResourceStatus } from '@/lib/admin/resources'
 import { ResourceCard } from '../resources/resource-card'
+import { useTranslation } from 'react-i18next'
 
 export function ResourcesSection({ domain, onUploadResource, onDomainUpdate }) {
+  const { t } = useTranslation()
   const [checkingResourceStatus, setCheckingResourceStatus] = useState(new Set())
 
   const handleResourceStatusCheck = useCallback(async (resourceId) => {
@@ -41,7 +43,7 @@ export function ResourcesSection({ domain, onUploadResource, onDomainUpdate }) {
     <div className="card bg-base-100 border">
       <div className="card-body">
         <div className="flex flex-row items-center justify-between mb-4">
-          <h4 className="card-title text-base">Resources</h4>
+          <h4 className="card-title text-base">{t("Resources")}</h4>
           <button className="btn btn-sm" onClick={onUploadResource}>
             <Upload className="h-4 w-4 mr-2" />
             Upload
@@ -59,7 +61,7 @@ export function ResourcesSection({ domain, onUploadResource, onDomainUpdate }) {
             ))}
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">No resources uploaded yet.</p>
+          <p className="text-muted-foreground text-sm">{t("No resources uploaded yet.")}</p>
         )}
       </div>
     </div>

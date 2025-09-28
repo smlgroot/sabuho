@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function QuestionCard({
   question,
@@ -13,6 +14,7 @@ export function QuestionCard({
   onQuestionDelete,
   onOptionsUpdate
 }) {
+  const { t } = useTranslation()
   const [editingField, setEditingField] = useState(null)
   const [editValues, setEditValues] = useState({
     body: question.body,
@@ -182,7 +184,7 @@ export function QuestionCard({
       {isExpanded && (
         <div className="mt-3 ml-8 space-y-3">
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <h4 className="text-xs font-medium text-blue-800 mb-1">Explanation:</h4>
+            <h4 className="text-xs font-medium text-blue-800 mb-1">{t("Explanation:")}</h4>
             {editingField === 'explanation' ? (
               <textarea
                 ref={textareaRef}
@@ -197,7 +199,7 @@ export function QuestionCard({
                 onBlur={handleEditSave}
                 className="w-full text-xs bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 disabled={isUpdating}
-                placeholder="Add explanation..."
+                placeholder={t("Add explanation...")}
                 rows={3}
               />
             ) : (
@@ -206,18 +208,18 @@ export function QuestionCard({
                   'cursor-pointer hover:bg-blue-100 rounded px-1 py-0.5 transition-colors'
                 } ${isUpdating ? 'opacity-50' : ''} ${!question.explanation ? 'italic text-blue-500' : ''}`}
                 onClick={() => handleEditStart('explanation')}
-                title="Click to edit explanation"
+                title={t("Click to edit explanation")}
               >
-                {question.explanation || 'Click to add explanation...'}
+                {question.explanation || t('Click to add explanation...')}
               </p>
             )}
           </div>
           
           <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
             <div className="flex items-center justify-between mb-1">
-              <h4 className="text-xs font-medium text-gray-800">Options:</h4>
+              <h4 className="text-xs font-medium text-gray-800">{t("Options:")}</h4>
               {editingField === 'options' && (
-                <span className="text-xs text-gray-500 italic">Cmd/Ctrl + Enter to mark line as correct</span>
+                <span className="text-xs text-gray-500 italic">{t("Cmd/Ctrl + Enter to mark line as correct")}</span>
               )}
             </div>
             {editingField === 'options' ? (
@@ -274,7 +276,7 @@ export function QuestionCard({
                   'cursor-pointer hover:bg-gray-100 rounded px-1 py-0.5 transition-colors'
                 } ${isUpdating ? 'opacity-50' : ''} ${!options?.length ? 'italic text-gray-500' : ''}`}
                 onClick={() => handleEditStart('options')}
-                title="Click to edit options"
+                title={t("Click to edit options")}
               >
                 {options?.length ? (
                   <div className="space-y-2">
@@ -306,7 +308,7 @@ export function QuestionCard({
           <div className="flex justify-end pt-3 border-t border-gray-200 mt-3">
             {showDeleteConfirm ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-600">Delete this question?</span>
+                <span className="text-xs text-gray-600">{t("Delete this question?")}</span>
                 <button
                   className="btn btn-error btn-sm h-7 px-2 text-xs"
                   onClick={handleDeleteConfirm}

@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { RefreshCw, CheckCircle, XCircle, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function ResourceCard({ resource, onStatusCheck, isCheckingStatus }) {
+  const { t } = useTranslation()
   const [isExpanded, setIsExpanded] = useState(false)
   const status = resource.status || 'processing'
 
@@ -104,19 +106,19 @@ export function ResourceCard({ resource, onStatusCheck, isCheckingStatus }) {
           <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
             {resource.description && (
               <div>
-                <p className="text-xs font-medium text-gray-700 mb-1">Description</p>
+                <p className="text-xs font-medium text-gray-700 mb-1">{t("Description")}</p>
                 <p className="text-xs text-gray-600 leading-relaxed break-words">{resource.description}</p>
               </div>
             )}
             
             {resource.topic_page_range && resource.topic_page_range.topics && (
               <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Topics ({resource.topic_page_range.topics.length})</p>
+                <p className="text-xs font-medium text-gray-700 mb-2">{t("Topics")} ({resource.topic_page_range.topics.length})</p>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {resource.topic_page_range.topics.map((topic, index) => (
                     <div key={index} className="text-xs bg-white p-2 rounded border">
                       <div className="font-medium text-gray-800 break-words">{topic.name}</div>
-                      <div className="text-gray-500 mt-1">Pages {topic.start}-{topic.end}</div>
+                      <div className="text-gray-500 mt-1">{t("Pages")} {topic.start}-{topic.end}</div>
                     </div>
                   ))}
                 </div>
@@ -125,7 +127,7 @@ export function ResourceCard({ resource, onStatusCheck, isCheckingStatus }) {
             
             {resource.unparsable && (
               <div>
-                <p className="text-xs font-medium text-red-700 mb-1">Unparsable Content</p>
+                <p className="text-xs font-medium text-red-700 mb-1">{t("Unparsable Content")}</p>
                 <div className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200 max-h-32 overflow-y-auto break-words">
                   {resource.unparsable}
                 </div>

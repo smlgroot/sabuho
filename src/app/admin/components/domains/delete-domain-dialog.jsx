@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { AlertTriangle, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function DeleteDomainDialog({ isOpen, onClose, domain, onConfirm }) {
+  const { t } = useTranslation()
   const [loading, setLoading] = useState(false)
 
   const handleConfirm = async () => {
@@ -34,7 +36,7 @@ export function DeleteDomainDialog({ isOpen, onClose, domain, onConfirm }) {
             <AlertTriangle className="h-5 w-5 text-error" />
           </div>
           <div>
-            <h3 className="font-bold text-lg">Delete Domain</h3>
+            <h3 className="font-bold text-lg">{t("Delete Domain")}</h3>
             <p className="text-sm opacity-60">
               This action cannot be undone.
             </p>
