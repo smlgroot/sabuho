@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { MoreVertical, FileText } from 'lucide-react'
 import { database } from '../../lib/game/database'
 import { quizClaimService } from '@/services/quizClaimService'
 import useGameStore from '../../store/useGameStore'
@@ -130,6 +131,12 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
 
   const AlertMessages = () => (
     <>
+      {checkingClaimed && (
+        <div className="alert alert-info mb-6">
+          <span className="loading loading-spinner loading-sm"></span>
+          <span>{t('Checking for claimed quizzes...')}</span>
+        </div>
+      )}
       {error && (
         <div className="alert alert-error mb-6">
           <span>{error}</span>
@@ -143,28 +150,83 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
     </>
   )
 
-  const ActionButtons = ({ size = 'default' }) => (
-    <div className={`flex gap-2 ${size === 'default' ? 'flex-col space-y-3' : ''}`}>
-      <button 
-        className={`btn btn-primary ${size === 'default' ? 'w-full' : 'btn-sm'}`}
-        onClick={openBottomSheet}
-      >
-        {t('Add Quiz')}
-      </button>
-      {isAuthenticated && (
+  const ActionButtons = ({ size = 'default' }) => {
+    if (size === 'default') {
+      return (
+        <div className="flex flex-col gap-3">
+          <button 
+            className="btn btn-primary w-full"
+            onClick={openBottomSheet}
+          >
+            {t('Add Quiz')}
+          </button>
+          
+          <div className="divider text-xs opacity-50">{t('or')}</div>
+          
+          <div className="flex flex-col gap-2">
+            {isAuthenticated && (
+              <button 
+                className={`btn btn-outline w-full ${checkingClaimed ? 'loading' : ''}`}
+                onClick={checkClaimedQuizzes}
+                disabled={checkingClaimed}
+              >
+                {checkingClaimed ? t('Checking Claimed Quizzes...') : t('Check for Claimed Quizzes')}
+              </button>
+            )}
+            <button 
+              className="btn btn-outline w-full"
+              onClick={() => {
+                // TODO: Implement check for updates functionality
+                console.log('Check for updates clicked')
+              }}
+            >
+              {t('Check for Updates')}
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex gap-2 items-center">
         <button 
-          className={`btn btn-outline ${size === 'default' ? 'w-full' : 'btn-sm'} ${checkingClaimed ? 'loading' : ''}`}
-          onClick={checkClaimedQuizzes}
-          disabled={checkingClaimed}
+          className="btn btn-primary btn-sm"
+          onClick={openBottomSheet}
         >
-          {checkingClaimed 
-            ? (size === 'default' ? t('Checking Claimed Quizzes...') : t('Checking...')) 
-            : (size === 'default' ? t('Check for Claimed Quizzes') : t('Check Claimed'))
-          }
+          {t('Add Quiz')}
         </button>
-      )}
-    </div>
-  )
+        
+        <div className="dropdown dropdown-end">
+          <div tabIndex={0} role="button" className="btn btn-outline btn-sm">
+            <MoreVertical className="w-4 h-4" />
+          </div>
+          <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+            {isAuthenticated && (
+              <li>
+                <button 
+                  className={checkingClaimed ? 'loading' : ''}
+                  onClick={checkClaimedQuizzes}
+                  disabled={checkingClaimed}
+                >
+                  {checkingClaimed ? t('Checking Claimed Quizzes...') : t('Check for Claimed Quizzes')}
+                </button>
+              </li>
+            )}
+            <li>
+              <button 
+                onClick={() => {
+                  // TODO: Implement check for updates functionality
+                  console.log('Check for updates clicked')
+                }}
+              >
+                {t('Check for Updates')}
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    )
+  }
 
   const EmptyState = () => (
     <div className="text-center space-y-6">
@@ -194,7 +256,10 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
                 className={`btn flex-1 justify-start pr-8 text-left min-w-0 ${selectedQuiz && selectedQuiz.id === quiz.id ? 'btn-active bg-primary/10 text-primary' : 'btn-ghost'}`}
                 onClick={() => onQuizSelect ? onQuizSelect(quiz) : navigate(`/quiz/${quiz.id}`)}
               >
-                <span className="flex-1 truncate min-w-0">{quiz.name}</span>
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileText className="w-4 h-4 text-primary shrink-0" />
+                  <span className="flex-1 truncate min-w-0">{quiz.name}</span>
+                </div>
               </button>
             </div>
           </div>
