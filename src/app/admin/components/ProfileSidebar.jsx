@@ -4,6 +4,7 @@ import { X, Moon, Sun, Languages, User, HelpCircle, LogOut } from "lucide-react"
 import { toast } from "sonner";
 import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from 'react-router-dom';
+import { usePlausible } from "@/components/PlausibleProvider";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { useThemeContext } from "../../../components/ThemeProvider";
 
@@ -12,8 +13,10 @@ export function ProfileSidebar({ onClose }) {
   const { isDark } = useThemeContext();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { trackEvent } = usePlausible();
 
   const handleSignOut = async () => {
+    trackEvent('logout_clicked', { props: { source: 'profile_sidebar' } });
     try {
       const { error } = await signOut();
       if (error) {
@@ -29,6 +32,7 @@ export function ProfileSidebar({ onClose }) {
   };
 
   const handleLanguageChange = (language) => {
+    trackEvent('language_changed', { props: { language: language, source: 'profile_sidebar' } });
     i18n.changeLanguage(language);
   };
 

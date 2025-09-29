@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/lib/admin/auth'
 import { useTranslation } from 'react-i18next'
+import { usePlausible } from '@/components/PlausibleProvider'
 
 export function Signup({ onToggleMode }) {
   const [email, setEmail] = useState('')
@@ -13,6 +14,7 @@ export function Signup({ onToggleMode }) {
   const [message, setMessage] = useState(null)
   const { signUp } = useAuth()
   const { t } = useTranslation()
+  const { trackEvent } = usePlausible()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -20,14 +22,18 @@ export function Signup({ onToggleMode }) {
     setError(null)
     setMessage(null)
 
+    trackEvent('signup_attempt')
+
     if (password !== confirmPassword) {
       setError(t('Passwords do not match'))
+      trackEvent('signup_failed', { props: { error_type: 'password_mismatch' } })
       setLoading(false)
       return
     }
 
     if (password.length < 6) {
       setError(t('Password must be at least 6 characters'))
+      trackEvent('signup_failed', { props: { error_type: 'password_too_short' } })
       setLoading(false)
       return
     }
@@ -36,8 +42,10 @@ export function Signup({ onToggleMode }) {
     
     if (error) {
       setError(error.message)
+      trackEvent('signup_failed', { props: { error_type: 'auth_error' } })
     } else {
       setMessage(t('Check your email for a confirmation link!'))
+      trackEvent('signup_success')
     }
     
     setLoading(false)
@@ -131,7 +139,10 @@ export function Signup({ onToggleMode }) {
             {t('Already have an account?')}{' '}
             <button
               type="button"
-              onClick={onToggleMode}
+              onClick={() => {
+                trackEvent('login_link_clicked', { props: { source: 'signup_page' } })
+                onToggleMode()
+              }}
               className="link link-primary"
             >
               {t('Sign in')}

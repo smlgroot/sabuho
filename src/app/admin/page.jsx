@@ -18,6 +18,7 @@ import { useStore } from "@/store/useStore";
 import { ProfileSidebar } from "./components/ProfileSidebar";
 import { CreatorOnboarding } from "./components/CreatorOnboarding";
 import { useNavigate } from 'react-router-dom';
+import { usePlausible } from "@/components/PlausibleProvider";
 import {
   fetchDomains,
   createDomain,
@@ -88,6 +89,7 @@ export default function AdminPage() {
   const [selectedUserQuiz, setSelectedUserQuiz] = useState(null);
 
   const { user, userProfile, loadUserProfile } = useAuth();
+  const { trackEvent } = usePlausible();
 
 
   const loadDomains = useCallback(async () => {
@@ -400,7 +402,10 @@ export default function AdminPage() {
         {/* Sidebar Toggle */}
         <button 
           className="btn btn-ghost p-3 h-auto min-w-16"
-          onClick={() => setSecondSidebarOpen(!secondSidebarOpen)}
+          onClick={() => {
+            trackEvent('sidebar_toggle_clicked', { props: { action: secondSidebarOpen ? 'close' : 'open' } });
+            setSecondSidebarOpen(!secondSidebarOpen);
+          }}
         >
           <Menu className="h-6 w-6" />
         </button>
@@ -409,6 +414,7 @@ export default function AdminPage() {
         <button 
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'learning-hub' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
+            trackEvent('main_sidebar_navigation', { props: { section: 'learning-hub', previous_view: activeView } });
             setActiveView('learning-hub');
             setProfileSidebarOpen(false);
             setSelectedDomain(null);
@@ -426,6 +432,7 @@ export default function AdminPage() {
         <button 
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'shop' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
+            trackEvent('main_sidebar_navigation', { props: { section: 'shop', previous_view: activeView } });
             setActiveView('shop');
             setProfileSidebarOpen(false);
             setSelectedDomain(null);
@@ -449,6 +456,7 @@ export default function AdminPage() {
             const isCreatorEnabled = userProfile?.terms_accepted && userProfile?.is_creator_enabled;
             if (isCreatorEnabled) {
               // Creator is enabled - normal toggle behavior
+              trackEvent('main_sidebar_navigation', { props: { section: 'creator', action: creatorOpen ? 'collapse' : 'expand', previous_view: activeView } });
               setCreatorOpen(!creatorOpen);
               if (!creatorOpen) {
                 setActiveView('creator');
@@ -458,6 +466,7 @@ export default function AdminPage() {
               }
             } else {
               // Creator not enabled - show onboarding
+              trackEvent('creator_onboarding_started', { props: { source: 'main_sidebar' } });
               setActiveView('creator-onboarding');
               setOnboardingStep(0);
               setProfileSidebarOpen(false);
@@ -483,6 +492,7 @@ export default function AdminPage() {
           <button 
             className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={() => {
+              trackEvent('main_sidebar_navigation', { props: { section: 'domains', previous_view: activeView } });
               setActiveView('domains');
               setProfileSidebarOpen(false);
               setSelectedQuiz(null);
@@ -501,6 +511,7 @@ export default function AdminPage() {
           <button 
             className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'quizzes' ? 'btn-active bg-primary/10 text-primary' : ''}`}
             onClick={() => {
+              trackEvent('main_sidebar_navigation', { props: { section: 'quizzes', previous_view: activeView } });
               setActiveView('quizzes');
               setProfileSidebarOpen(false);
               setSelectedDomain(null);

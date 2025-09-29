@@ -6,23 +6,28 @@ import { Globe } from "lucide-react";
 import { useState } from "react";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { useTranslation } from "react-i18next";
+import { usePlausible } from "@/components/PlausibleProvider";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [language, setLanguage] = useState("en");
   const { t } = useTranslation();
+  const { trackEvent } = usePlausible();
 
   const handleMainButton = () => {
     if (user) {
+      trackEvent('admin_access_clicked', { props: { source: 'homepage' } });
       navigate("/admin");
     } else {
+      trackEvent('login_clicked', { props: { source: 'homepage' } });
       navigate("/auth");
     }
   };
 
   const handleHeaderButton = async () => {
     if (user) {
+      trackEvent('logout_clicked', { props: { source: 'homepage' } });
       try {
         const { error } = await signOut();
         if (error) {
@@ -34,11 +39,13 @@ export default function HomePage() {
         navigate("/");
       }
     } else {
+      trackEvent('signin_clicked', { props: { source: 'homepage_header' } });
       navigate("/auth");
     }
   };
 
   const changeLanguage = (lng) => {
+    trackEvent('language_changed', { props: { language: lng, source: 'homepage' } });
     setLanguage(lng);
   };
 

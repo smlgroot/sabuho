@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/lib/admin/auth'
 import { useTranslation } from 'react-i18next'
+import { usePlausible } from '@/components/PlausibleProvider'
 
 export function Login({ onToggleMode }) {
   const [email, setEmail] = useState('')
@@ -11,16 +12,22 @@ export function Login({ onToggleMode }) {
   const [error, setError] = useState(null)
   const { signIn } = useAuth()
   const { t } = useTranslation()
+  const { trackEvent } = usePlausible()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
+    trackEvent('login_attempt')
+
     const { error } = await signIn(email, password)
     
     if (error) {
       setError(error.message)
+      trackEvent('login_failed', { props: { error_type: 'auth_error' } })
+    } else {
+      trackEvent('login_success')
     }
     
     setLoading(false)
@@ -91,7 +98,10 @@ export function Login({ onToggleMode }) {
             {t("Don't have an account?")}{' '}
             <button
               type="button"
-              onClick={onToggleMode}
+              onClick={() => {
+                trackEvent('signup_link_clicked', { props: { source: 'login_page' } })
+                onToggleMode()
+              }}
               className="link link-primary"
             >
               {t('Sign up')}
