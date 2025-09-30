@@ -1,6 +1,6 @@
 'use client'
 
-import { Plus, MoreHorizontal, FileText, Edit, Trash2, Coins } from 'lucide-react'
+import { Plus, FileText, Coins } from 'lucide-react'
 // DaisyUI components used directly
 import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
@@ -92,7 +92,7 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
             <div key={quiz.id} className="w-full min-w-0">
               <div className="flex items-center group relative min-w-0">
                 <button
-                  className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${selectedQuiz?.id === quiz.id ? 'btn-active bg-primary/10 text-primary' : ''}`}
+                  className={`btn btn-ghost flex-1 justify-start text-left min-w-0 ${selectedQuiz?.id === quiz.id ? 'btn-active bg-primary/10 text-primary' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onEditQuiz(quiz);
@@ -101,41 +101,6 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
                   <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
                   <span className="flex-1 truncate min-w-0">{quiz.name}</span>
                 </button>
-
-                <div className="dropdown dropdown-end flex-shrink-0">
-                  <button
-                    tabIndex={0}
-                    className="btn btn-ghost btn-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">{t("More options")}</span>
-                  </button>
-                  <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-48 p-2 shadow">
-                    <li>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onEditQuiz(quiz)
-                        }}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Quiz
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onDeleteQuiz(quiz)
-                        }}
-                        className="text-error hover:bg-error hover:text-white"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Quiz
-                      </button>
-                    </li>
-                  </ul>
-                </div>
               </div>
             </div>
           ))

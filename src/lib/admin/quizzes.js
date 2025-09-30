@@ -66,10 +66,36 @@ export async function updateQuiz(id, payload) {
 }
 
 export async function deleteQuiz(id) {
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    throw new Error('User must be authenticated to delete quizzes')
+  }
+
+  // First check if the quiz exists and user owns it
+  const { data: quiz, error: fetchError } = await supabase
+    .from('quizzes')
+    .select('id, author_id')
+    .eq('id', id)
+    .single()
+
+  if (fetchError) {
+    throw new Error(`Failed to find quiz: ${fetchError.message}`)
+  }
+
+  if (!quiz) {
+    throw new Error('Quiz not found')
+  }
+
+  if (quiz.author_id !== user.id) {
+    throw new Error('You can only delete your own quizzes')
+  }
+
+  // Now delete the quiz
   const { error } = await supabase
     .from('quizzes')
     .delete()
     .eq('id', id)
+    .eq('author_id', user.id) // Extra safety check
 
   if (error) {
     throw new Error(`Failed to delete quiz: ${error.message}`)

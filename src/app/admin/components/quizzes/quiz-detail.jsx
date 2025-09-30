@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Plus, CheckCircle, XCircle, Copy, TicketSlash } from 'lucide-react'
+import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Plus, CheckCircle, XCircle, Copy, TicketSlash, Trash2, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useTranslation } from 'react-i18next'
 
-export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
+export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   const { t } = useTranslation()
   const [editingField, setEditingField] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -23,6 +23,8 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
   const [generatedCode, setGeneratedCode] = useState('')
   const [isCreatingCode, setIsCreatingCode] = useState(false)
   const [toast, setToast] = useState(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const inputRef = useRef(null)
   const textareaRef = useRef(null)
 
@@ -168,7 +170,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
     }
     
     if (field === 'name' && !newValue) {
-      alert(t('Please enter a quiz name'))
+      showToast(t('Please enter a quiz name'), 'error')
       return
     }
     
@@ -325,6 +327,28 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
       showToast('Failed to create quiz code. Please try again.', 'error')
     } finally {
       setIsCreatingCode(false)
+    }
+  }
+
+  // Handle quiz deletion
+  const handleDeleteQuiz = async () => {
+    if (!quiz?.id || !onDelete) {
+      console.error('Cannot delete quiz: missing quiz ID or onDelete handler', { quiz: quiz?.id, onDelete: !!onDelete })
+      return
+    }
+    
+    console.log('Starting quiz deletion:', quiz.id)
+    setIsDeleting(true)
+    try {
+      await onDelete(quiz.id)
+      setShowDeleteDialog(false)
+      showToast(t('Quiz deleted successfully'), 'success')
+      console.log('Quiz deleted successfully')
+    } catch (error) {
+      console.error('Failed to delete quiz:', error)
+      showToast(error.message || t('Failed to delete quiz. Please try again.'), 'error')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -679,6 +703,37 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
         </div>
       )}
 
+      {/* Danger Zone */}
+      <div className="mt-8 pt-6 border-t border-error/30">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-error flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            {t("Danger Zone")}
+          </h3>
+          
+          <div className="card border border-error bg-error/5">
+            <div className="card-body">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold text-error">{t("Delete Quiz")}</h4>
+                  <p className="text-sm text-base-content/70 mt-1">
+                    {t("This will make the quiz unavailable for all users.")}
+                  </p>
+                </div>
+                <button 
+                  className="btn btn-error"
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={!quiz?.id}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t("Delete")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Credit Dialog */}
       {showCreditDialog && (
         <div className="modal modal-open">
@@ -799,6 +854,61 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate }) {
             setShowSuccessDialog(false)
             setGeneratedCode('')
           }} />
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-error" />
+              {t('Delete Quiz')}
+            </h3>
+            <div className="space-y-4 mb-6">
+              <div className="bg-error/10 border border-error rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-error">{t("This action cannot be undone!")}</p>
+                    <p className="text-sm text-base-content/70 mt-1">{t("Deleting this quiz will make it unavailable for all users who have access to it.")}</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-base-content/70">
+                {t('Are you sure you want to delete "')}
+                <span className="font-semibold">{quiz?.name}</span>
+                {t('"? This will permanently remove the quiz and all associated data.')}
+              </p>
+            </div>
+            <div className="modal-action">
+              <button 
+                className="btn btn-outline"
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={isDeleting}
+              >
+                {t("Cancel")}
+              </button>
+              <button 
+                className="btn btn-error"
+                onClick={handleDeleteQuiz}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    {t("Deleting...")}
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('Delete Quiz')}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => !isDeleting && setShowDeleteDialog(false)} />
         </div>
       )}
 
