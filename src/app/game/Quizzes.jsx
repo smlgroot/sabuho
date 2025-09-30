@@ -16,6 +16,7 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
   const [claiming, setClaiming] = useState(false)
   const [showBottomSheet, setShowBottomSheet] = useState(false)
   const [checkingClaimed, setCheckingClaimed] = useState(false)
+  const [checkingUpdates, setCheckingUpdates] = useState(false)
   const navigate = useNavigate()
   const { user } = useAuth()
   const  isAuthenticated  = !!user
@@ -90,7 +91,7 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
 
     try {
       const result = await quizClaimService.checkAndDownloadClaimedQuizzes()
-      
+
       if (!result.success) {
         setError(result.error || t('Failed to check claimed quizzes'))
         return
@@ -99,20 +100,43 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
       if (result.downloadedCount > 0) {
         // Refresh the quiz list after downloading
         await loadQuizzes()
-        setSuccessMessage(t('Successfully downloaded {{count}} claimed quiz{{plural}}!', { 
-          count: result.downloadedCount, 
+        setSuccessMessage(t('Successfully downloaded {{count}} claimed quiz{{plural}}!', {
+          count: result.downloadedCount,
           plural: result.downloadedCount !== 1 ? 'zes' : '',
           word: result.downloadedCount === 1 ? t('quiz') : t('quizzes')
         }))
       } else {
         setSuccessMessage(t('No new claimed quizzes found to download'))
       }
-      
+
     } catch (err) {
       console.error('Error checking claimed quizzes:', err)
       setError('Failed to check claimed quizzes')
     } finally {
       setCheckingClaimed(false)
+    }
+  }
+
+  const checkForUpdates = async () => {
+    setCheckingUpdates(true)
+    setError('')
+    setSuccessMessage('')
+
+    try {
+      const result = await quizClaimService.checkForUpdates()
+
+      if (!result.success) {
+        setError(result.error || t('Failed to check for updates'))
+        return
+      }
+
+      setSuccessMessage(result.message)
+
+    } catch (err) {
+      console.error('Error checking for updates:', err)
+      setError(t('Failed to check for updates'))
+    } finally {
+      setCheckingUpdates(false)
     }
   }
 
@@ -137,14 +161,34 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
           <span>{t('Checking for claimed quizzes...')}</span>
         </div>
       )}
+      {checkingUpdates && (
+        <div className="alert alert-info mb-6">
+          <span className="loading loading-spinner loading-sm"></span>
+          <span>{t('Checking for updates...')}</span>
+        </div>
+      )}
       {error && (
-        <div className="alert alert-error mb-6">
+        <div role="alert" className="alert alert-error mb-6">
           <span>{error}</span>
+          <button
+            className="btn btn-sm btn-circle btn-ghost"
+            onClick={() => setError('')}
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
       )}
       {successMessage && (
-        <div className="alert alert-success mb-6">
+        <div role="alert" className="alert alert-success mb-6">
           <span>{successMessage}</span>
+          <button
+            className="btn btn-sm btn-circle btn-ghost"
+            onClick={() => setSuccessMessage('')}
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
       )}
     </>
@@ -176,13 +220,11 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
               )}
               {showUpdateButton && (
                 <button
-                  className="btn btn-outline w-full"
-                  onClick={() => {
-                    // TODO: Implement check for updates functionality
-                    console.log('Check for updates clicked')
-                  }}
+                  className={`btn btn-outline w-full ${checkingUpdates ? 'loading' : ''}`}
+                  onClick={checkForUpdates}
+                  disabled={checkingUpdates}
                 >
-                  {t('Check for Updates')}
+                  {checkingUpdates ? t('Checking for Updates...') : t('Check for Updates')}
                 </button>
               )}
             </div>
@@ -217,12 +259,11 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
             {showUpdateButton && (
               <li>
                 <button
-                  onClick={() => {
-                    // TODO: Implement check for updates functionality
-                    console.log('Check for updates clicked')
-                  }}
+                  className={checkingUpdates ? 'loading' : ''}
+                  onClick={checkForUpdates}
+                  disabled={checkingUpdates}
                 >
-                  {t('Check for Updates')}
+                  {checkingUpdates ? t('Checking for Updates...') : t('Check for Updates')}
                 </button>
               </li>
             )}

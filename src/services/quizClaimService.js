@@ -592,10 +592,10 @@ class QuizClaimService {
 
   async checkAndDownloadClaimedQuizzes() {
     try {
-      
+
       // 1. Get current authenticated user
       const { data: { user }, error: userError } = await supabase.auth.getUser()
-      
+
       if (userError || !user) {
         throw new Error('User not authenticated')
       }
@@ -626,11 +626,11 @@ class QuizClaimService {
 
       // 3. Check which quizzes are not yet in local database
       const quizzesToDownload = []
-      
+
       for (const userQuizCode of userQuizCodes) {
         const quizId = userQuizCode.quiz_id
         const existingQuiz = await database.checkQuizExists(quizId)
-        
+
         if (!existingQuiz) {
           quizzesToDownload.push({
             quizId,
@@ -654,13 +654,13 @@ class QuizClaimService {
 
       for (const { quizId, code } of quizzesToDownload) {
         try {
-          
+
           // Load the quiz data
           const quiz = await this.loadQuiz(quizId)
-          
+
           // Load domains referenced by the quiz
           const domains = await this.loadDomainsFromQuiz(quiz)
-          
+
           // Load questions for this quiz
           const questions = await this.loadQuestionsForQuiz(quiz)
 
@@ -669,7 +669,7 @@ class QuizClaimService {
           for (const domain of domains) {
             await database.saveDomain(domain)
           }
-          
+
           // Save the quiz
           await database.saveQuiz(quiz)
 
@@ -703,7 +703,7 @@ class QuizClaimService {
           }
 
           downloadedCount++
-          
+
         } catch (error) {
           console.error(`Failed to download quiz ${quizId}:`, error)
           errors.push(`Failed to download quiz with code ${code}: ${error.message}`)
@@ -718,10 +718,10 @@ class QuizClaimService {
         success: true,
         downloadedCount,
         errors: errors.length > 0 ? errors : null,
-        message: downloadedCount > 0 
-          ? i18n.t('Successfully downloaded {{count}} quiz{{plural}}!', { 
-            count: downloadedCount, 
-            plural: downloadedCount !== 1 ? 'es' : '' 
+        message: downloadedCount > 0
+          ? i18n.t('Successfully downloaded {{count}} quiz{{plural}}!', {
+            count: downloadedCount,
+            plural: downloadedCount !== 1 ? 'es' : ''
           })
           : i18n.t('No new quizzes were downloaded')
       }
@@ -729,11 +729,101 @@ class QuizClaimService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : i18n.t('An unknown error occurred')
       console.error('Error checking and downloading claimed quizzes:', error)
-      
+
       return {
         success: false,
         error: errorMessage,
         downloadedCount: 0
+      }
+    }
+  }
+
+  async checkForUpdates() {
+    try {
+      // 1. Get all local quizzes
+      const localQuizzes = await database.getQuizzes()
+
+      if (!localQuizzes || localQuizzes.length === 0) {
+        return {
+          success: true,
+          newDomainsCount: 0,
+          newQuestionsCount: 0,
+          message: i18n.t('No local quizzes to check for updates')
+        }
+      }
+
+      let totalNewDomains = 0
+      let totalNewQuestions = 0
+
+      // 2. For each local quiz, check for new domains and questions
+      for (const localQuiz of localQuizzes) {
+        try {
+          // Fetch fresh quiz data from Supabase
+          const remoteQuiz = await this.loadQuiz(localQuiz.id)
+
+          // Load remote domains
+          const remoteDomains = await this.loadDomainsFromQuiz(remoteQuiz)
+
+          // 3. Compare remote domains with local domains
+          const localDomainIds = new Set(
+            (await database.db.domains.toArray()).map(d => d.id)
+          )
+
+          const newDomains = remoteDomains.filter(d => !localDomainIds.has(d.id))
+
+          if (newDomains.length > 0) {
+            // Save new domains
+            for (const domain of newDomains) {
+              await database.saveDomain(domain)
+            }
+            totalNewDomains += newDomains.length
+          }
+
+          // 4. Load remote questions
+          const remoteQuestions = await this.loadQuestionsForQuiz(remoteQuiz)
+
+          // 5. Compare remote questions with local questions
+          const localQuestionIds = new Set(
+            (await database.db.questions.toArray()).map(q => q.id)
+          )
+
+          const newQuestions = remoteQuestions.filter(q => !localQuestionIds.has(q.id))
+
+          if (newQuestions.length > 0) {
+            // Save new questions
+            await database.saveQuestions(newQuestions)
+            totalNewQuestions += newQuestions.length
+          }
+
+        } catch (error) {
+          console.error(`Failed to check updates for quiz ${localQuiz.id}:`, error)
+          // Continue checking other quizzes even if one fails
+        }
+      }
+
+      return {
+        success: true,
+        newDomainsCount: totalNewDomains,
+        newQuestionsCount: totalNewQuestions,
+        message: totalNewDomains > 0 || totalNewQuestions > 0
+          ? i18n.t('Found {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}', {
+              domainCount: totalNewDomains,
+              domainPlural: totalNewDomains !== 1 ? 's' : '',
+              questionCount: totalNewQuestions,
+              questionPlural: totalNewQuestions !== 1 ? 's' : ''
+            })
+          : i18n.t('No updates found. Everything is up to date!')
+      }
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : i18n.t('An unknown error occurred')
+      console.error('Error checking for updates:', error)
+
+      return {
+        success: false,
+        error: errorMessage,
+        newDomainsCount: 0,
+        newQuestionsCount: 0
       }
     }
   }
