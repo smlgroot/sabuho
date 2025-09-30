@@ -11,9 +11,53 @@ import {
   BookOpen,
   AlertTriangle,
   Plus,
+  Calculator,
+  Globe,
+  Palette,
+  Music,
+  Beaker,
+  Brain,
+  Trophy,
+  HelpCircle,
+  X,
 } from "lucide-react";
 import { database } from "../../lib/game/database";
 import useGameStore from "../../store/useGameStore";
+
+// Default icon mapping for quizzes (fallback when no specific icon is available)
+const getQuizIcon = (quiz) => {
+  const name = quiz.name?.toLowerCase() || '';
+
+  if (name.includes('math') || name.includes('calculation')) return Calculator;
+  if (name.includes('geography') || name.includes('world')) return Globe;
+  if (name.includes('literature') || name.includes('book')) return BookOpen;
+  if (name.includes('art') || name.includes('design')) return Palette;
+  if (name.includes('music') || name.includes('sound')) return Music;
+  if (name.includes('science') || name.includes('chemistry')) return Beaker;
+  if (name.includes('brain') || name.includes('logic')) return Brain;
+  if (name.includes('trivia') || name.includes('general')) return Trophy;
+
+  return HelpCircle;
+};
+
+// Generate color scheme based on quiz ID using DaisyUI theme-aware classes
+const getQuizColor = (quiz) => {
+  const colors = [
+    'text-primary bg-primary/10',
+    'text-secondary bg-secondary/10',
+    'text-accent bg-accent/10',
+    'text-info bg-info/10',
+    'text-success bg-success/10',
+    'text-warning bg-warning/10',
+    'text-error bg-error/10',
+    'text-neutral bg-neutral/10',
+    'text-base-content bg-base-300',
+    'text-primary bg-primary/20'
+  ];
+
+  const colorIndex = quiz.id ? Math.abs(quiz.id) % colors.length : 0;
+  return colors[colorIndex];
+};
 
 const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
   // Get selected quiz from store for persistence
@@ -25,6 +69,7 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
   const [levels, setLevels] = useState([]);
   const [availableQuizzes, setAvailableQuizzes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isQuizListOpen, setIsQuizListOpen] = useState(false);
 
   // Load quizzes from local database
   const loadQuizzes = async () => {
@@ -241,100 +286,168 @@ const LearningPath = forwardRef(({ onNavigateToShop, onLevelClick }, ref) => {
 
   return (
     <div className="flex flex-col h-full bg-base-100">
-      {/* Second Sticky Header - Quiz Selector */}
+      {/* Quiz Selector Header - Always visible */}
       <div className="flex-shrink-0 bg-base-100 border-b border-base-200 p-4">
         <LearningPathHeader
-          availableQuizzes={availableQuizzes}
-          isLoading={isLoading}
-          onAddMore={onNavigateToShop}
+          onToggleQuizList={() => setIsQuizListOpen(!isQuizListOpen)}
+          isQuizListOpen={isQuizListOpen}
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          <div className="flex justify-center items-center min-h-96">
-            <span className="loading loading-spinner loading-lg"></span>
+      {isQuizListOpen ? (
+        /* Quizzes List Section */
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Add More Button at top */}
+          <div className="flex-shrink-0 p-4 border-b border-base-200">
+            <button
+              className="btn btn-primary btn-sm w-full"
+              onClick={onNavigateToShop}
+            >
+              <Plus className="w-4 h-4" />
+              {t("Add More")}
+            </button>
           </div>
-        ) : availableQuizzes.length === 0 ? (
-          <NoQuizzesPlaceholder />
-        ) : !selectedQuiz ? (
-          <NoQuizSelectedPlaceholder />
-        ) : (
-          <div className="flex justify-center h-full">
-            <div className="max-w-lg w-full px-4">
-              {/* Level nodes */}
-              <div className="relative space-y-1 py-4">
-                {/* Vertical connecting line - aligned with center of icons */}
-                <div
-                  className="absolute top-4 bottom-4 w-1 bg-base-300"
-                  style={{ left: "calc(1rem + 1.5rem)" }}
-                ></div>
-                {levels.map((level, index) => (
-                  <div key={level.id} className="relative">
-                    {/* Level card with icon and name */}
-                    <div
-                      className={`relative z-10 p-4 rounded-lg ${
-                        level.locked
-                          ? "opacity-60 cursor-not-allowed"
-                          : "cursor-pointer hover:bg-primary/20 transition-all duration-200"
-                      }`}
-                      onClick={() => handleLevelClick(level)}
-                    >
-                      <div className="flex items-center gap-4">
-                        {/* Level icon - Each level gets a different color based on its position */}
-                        <div
-                          className={`${getLevelStyles(
-                            level.type,
-                            level.completed,
-                            level.locked,
-                            level.id
-                          )} flex-shrink-0`}
-                        >
-                          {level.locked ? (
-                            <Lock className="w-5 h-5" />
-                          ) : level.completed ? (
-                            <CheckCircle className="w-6 h-6" />
-                          ) : (
-                            getLevelIcon(level.type)
-                          )}
-                        </div>
 
-                        {/* Level info */}
-                        <div className="flex-1">
-                          <h3
-                            className={`text-lg font-semibold ${
-                              level.locked
-                                ? "text-base-content/50"
-                                : "text-base-content"
-                            }`}
+          {/* Close button in header */}
+          <div className="flex-shrink-0 px-4 py-3 border-b border-base-200 flex items-center justify-between">
+            <h3 className="text-lg font-semibold">{t("Your Quizzes")}</h3>
+            <button
+              className="btn btn-sm btn-ghost btn-circle"
+              onClick={() => setIsQuizListOpen(false)}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Quiz List */}
+          <div className="flex-1 overflow-y-auto">
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <span className="loading loading-spinner loading-lg"></span>
+              </div>
+            ) : availableQuizzes.length === 0 ? (
+              <NoQuizzesPlaceholder />
+            ) : (
+              <div className="p-4 space-y-2">
+                {availableQuizzes.map((quiz) => {
+                    const QuizIcon = getQuizIcon(quiz);
+                    const quizColor = getQuizColor(quiz);
+                    const isSelected = quiz.id === selectedQuiz?.id;
+
+                    return (
+                      <button
+                        key={quiz.id}
+                        onClick={() => {
+                          setSelectedQuiz(quiz);
+                          setIsQuizListOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
+                          isSelected
+                            ? 'bg-primary/20 border-2 border-primary'
+                            : 'bg-base-200/50 hover:bg-base-200'
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${quizColor}`}>
+                          <QuizIcon className="w-5 h-5" />
+                        </div>
+                        <span className="text-sm font-medium text-left text-base-content">
+                          {quiz.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Learning Path Levels */
+        <div className="flex-1 overflow-y-auto">
+          {isLoading ? (
+            <div className="flex justify-center items-center min-h-96">
+              <span className="loading loading-spinner loading-lg"></span>
+            </div>
+          ) : availableQuizzes.length === 0 ? (
+            <NoQuizzesPlaceholder />
+          ) : !selectedQuiz ? (
+            <NoQuizSelectedPlaceholder />
+          ) : (
+            /* Level nodes */
+            <div className="flex justify-center h-full">
+              <div className="max-w-lg w-full px-4">
+                <div className="relative space-y-1 py-4">
+                  {/* Vertical connecting line - aligned with center of icons */}
+                  <div
+                    className="absolute top-4 bottom-4 w-1 bg-base-300"
+                    style={{ left: "calc(1rem + 1.5rem)" }}
+                  ></div>
+                  {levels.map((level, index) => (
+                    <div key={level.id} className="relative">
+                      {/* Level card with icon and name */}
+                      <div
+                        className={`relative z-10 p-4 rounded-lg ${
+                          level.locked
+                            ? "opacity-60 cursor-not-allowed"
+                            : "cursor-pointer hover:bg-primary/20 transition-all duration-200"
+                        }`}
+                        onClick={() => handleLevelClick(level)}
+                      >
+                        <div className="flex items-center gap-4">
+                          {/* Level icon - Each level gets a different color based on its position */}
+                          <div
+                            className={`${getLevelStyles(
+                              level.type,
+                              level.completed,
+                              level.locked,
+                              level.id
+                            )} flex-shrink-0`}
                           >
-                            {level.name}
-                          </h3>
-                          {level.completed && (
-                            <span className="text-xs text-base-content/50">
-                              {t("Click to review")}
-                            </span>
-                          )}
+                            {level.locked ? (
+                              <Lock className="w-5 h-5" />
+                            ) : level.completed ? (
+                              <CheckCircle className="w-6 h-6" />
+                            ) : (
+                              getLevelIcon(level.type)
+                            )}
+                          </div>
+
+                          {/* Level info */}
+                          <div className="flex-1">
+                            <h3
+                              className={`text-lg font-semibold ${
+                                level.locked
+                                  ? "text-base-content/50"
+                                  : "text-base-content"
+                              }`}
+                            >
+                              {level.name}
+                            </h3>
+                            {level.completed && (
+                              <span className="text-xs text-base-content/50">
+                                {t("Click to review")}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Progress indicator for the connecting line - aligned with center of icons */}
-                    {index < levels.length - 1 && (
-                      <div
-                        className={`absolute top-full w-1 h-6 z-0 ${
-                          level.completed ? "bg-success" : "bg-base-300"
-                        }`}
-                        style={{ left: "calc(1rem + 1.5rem)" }}
-                      ></div>
-                    )}
-                  </div>
-                ))}
+                      {/* Progress indicator for the connecting line - aligned with center of icons */}
+                      {index < levels.length - 1 && (
+                        <div
+                          className={`absolute top-full w-1 h-6 z-0 ${
+                            level.completed ? "bg-success" : "bg-base-300"
+                          }`}
+                          style={{ left: "calc(1rem + 1.5rem)" }}
+                        ></div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 });

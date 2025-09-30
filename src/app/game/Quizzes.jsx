@@ -150,52 +150,54 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
     </>
   )
 
-  const ActionButtons = ({ size = 'default' }) => {
-    if (size === 'default') {
-      return (
-        <div className="flex flex-col gap-3">
-          <button 
-            className="btn btn-primary w-full"
-            onClick={openBottomSheet}
-          >
-            {t('Add Quiz')}
-          </button>
-          
-          <div className="divider text-xs opacity-50">{t('or')}</div>
-          
-          <div className="flex flex-col gap-2">
-            {isAuthenticated && (
-              <button 
-                className={`btn btn-outline w-full ${checkingClaimed ? 'loading' : ''}`}
-                onClick={checkClaimedQuizzes}
-                disabled={checkingClaimed}
-              >
-                {checkingClaimed ? t('Checking Claimed Quizzes...') : t('Check for Claimed Quizzes')}
-              </button>
-            )}
-            <button 
-              className="btn btn-outline w-full"
-              onClick={() => {
-                // TODO: Implement check for updates functionality
-                console.log('Check for updates clicked')
-              }}
-            >
-              {t('Check for Updates')}
-            </button>
-          </div>
-        </div>
-      )
-    }
+  const ActionButtons = ({ size = 'default', showUpdateButton = true }) => (
+    size === 'default' ? (
+      <div className="flex flex-col gap-3">
+        <button
+          className="btn btn-primary w-full"
+          onClick={openBottomSheet}
+        >
+          {t('Add Quiz')}
+        </button>
 
-    return (
+        {(isAuthenticated || showUpdateButton) && (
+          <>
+            <div className="divider text-xs opacity-50">{t('or')}</div>
+
+            <div className="flex flex-col gap-2">
+              {isAuthenticated && (
+                <button
+                  className={`btn btn-outline w-full ${checkingClaimed ? 'loading' : ''}`}
+                  onClick={checkClaimedQuizzes}
+                  disabled={checkingClaimed}
+                >
+                  {checkingClaimed ? t('Checking Claimed Quizzes...') : t('Check for Claimed Quizzes')}
+                </button>
+              )}
+              {showUpdateButton && (
+                <button
+                  className="btn btn-outline w-full"
+                  onClick={() => {
+                    // TODO: Implement check for updates functionality
+                    console.log('Check for updates clicked')
+                  }}
+                >
+                  {t('Check for Updates')}
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    ) : (
       <div className="flex gap-2 items-center">
-        <button 
+        <button
           className="btn btn-primary btn-sm"
           onClick={openBottomSheet}
         >
           {t('Add Quiz')}
         </button>
-        
+
         <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn btn-outline btn-sm">
             <MoreVertical className="w-4 h-4" />
@@ -203,7 +205,7 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
           <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
             {isAuthenticated && (
               <li>
-                <button 
+                <button
                   className={checkingClaimed ? 'loading' : ''}
                   onClick={checkClaimedQuizzes}
                   disabled={checkingClaimed}
@@ -212,21 +214,23 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
                 </button>
               </li>
             )}
-            <li>
-              <button 
-                onClick={() => {
-                  // TODO: Implement check for updates functionality
-                  console.log('Check for updates clicked')
-                }}
-              >
-                {t('Check for Updates')}
-              </button>
-            </li>
+            {showUpdateButton && (
+              <li>
+                <button
+                  onClick={() => {
+                    // TODO: Implement check for updates functionality
+                    console.log('Check for updates clicked')
+                  }}
+                >
+                  {t('Check for Updates')}
+                </button>
+              </li>
+            )}
           </ul>
         </div>
       </div>
     )
-  }
+  )
 
   const EmptyState = () => (
     <div className="text-center space-y-6">
@@ -238,7 +242,7 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
           {t('Enter a quiz code to get started 🔑')}
         </p>
       </div>
-      <ActionButtons />
+      <ActionButtons showUpdateButton={false} />
     </div>
   )
 

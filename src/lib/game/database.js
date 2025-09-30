@@ -46,6 +46,10 @@ class SabuhoDatabase extends Dexie {
 class DatabaseManager {
   constructor() {
     this.db = new SabuhoDatabase()
+    if (import.meta.env && import.meta.env.DEV) {
+      console.log('Setting window.db in development mode')
+      window.db = this.db;
+    }
   }
 
   // Codes operations

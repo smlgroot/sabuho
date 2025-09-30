@@ -30,3 +30,11 @@ heroku ps
 heroku ps
 heroku logs --app orto-pdf-processor --tail
 heroku apps:info --app orto-pdf-processor
+
+---------------------------------------------------------------------
+# Display dexie tables
+
+db.tables.map(table => table.name)
+db.codes.toArray().then(console.table);
+
+
