@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { MoreVertical, FileText } from 'lucide-react'
+import { MoreVertical, FileText, XCircle, CheckCircle, X } from 'lucide-react'
 import { database } from '../../lib/game/database'
 import { quizClaimService } from '@/services/quizClaimService'
 import useGameStore from '../../store/useGameStore'
@@ -154,44 +154,46 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
   }
 
   const AlertMessages = () => (
-    <>
+    <div className="space-y-3">
       {checkingClaimed && (
-        <div className="alert alert-info mb-6">
+        <div role="alert" className="alert alert-info shadow-lg">
           <span className="loading loading-spinner loading-sm"></span>
           <span>{t('Checking for claimed quizzes...')}</span>
         </div>
       )}
       {checkingUpdates && (
-        <div className="alert alert-info mb-6">
+        <div role="alert" className="alert alert-info shadow-lg">
           <span className="loading loading-spinner loading-sm"></span>
           <span>{t('Checking for updates...')}</span>
         </div>
       )}
       {error && (
-        <div role="alert" className="alert alert-error mb-6">
-          <span>{error}</span>
+        <div role="alert" className="alert alert-error shadow-lg relative pr-12">
+          <XCircle className="h-6 w-6 shrink-0" />
+          <span className="flex-1">{error}</span>
           <button
-            className="btn btn-sm btn-circle btn-ghost"
+            className="btn btn-xs btn-circle btn-ghost absolute top-2 right-2"
             onClick={() => setError('')}
             aria-label="Close"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
       )}
       {successMessage && (
-        <div role="alert" className="alert alert-success mb-6">
-          <span>{successMessage}</span>
+        <div role="alert" className="alert alert-success shadow-lg relative pr-12">
+          <CheckCircle className="h-6 w-6 shrink-0" />
+          <span className="flex-1">{successMessage}</span>
           <button
-            className="btn btn-sm btn-circle btn-ghost"
+            className="btn btn-xs btn-circle btn-ghost absolute top-2 right-2"
             onClick={() => setSuccessMessage('')}
             aria-label="Close"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
       )}
-    </>
+    </div>
   )
 
   const ActionButtons = ({ size = 'default', showUpdateButton = true }) => (
@@ -315,7 +317,7 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto space-y-6">
         <AlertMessages />
         {quizzes.length === 0 ? <EmptyState /> : <QuizList />}
       </div>

@@ -403,14 +403,14 @@ const resources = {
       "Select Domains": "Seleccionar Dominios",
       "Select All": "Seleccionar Todo",
       "Deselect All": "Deseleccionar Todo",
-      "Add Code": "Agregar Código",
+      "Generate Code": "Generar Código",
       "Code": "Código",
       "Status": "Estado",
       "Created": "Creado",
       "Claimed By": "Reclamado Por",
       "Create First Code": "Crear Primer Código",
       "Create Code": "Crear Código",
-      "Code Created Successfully!": "¡Código Creado Exitosamente!",
+      "Code Created Successfully!": "¡Código Generado Exitosamente!",
       "Code copied to clipboard!": "¡Código copiado al portapapeles!",
       
       // Tab Labels

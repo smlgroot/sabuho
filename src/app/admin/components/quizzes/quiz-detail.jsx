@@ -587,7 +587,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
                 disabled={!quiz?.id}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                {t('Add Code')}
+                {t('Generate Code')}
               </button>
             </div>
           </div>
@@ -794,7 +794,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
                     Creating...
                   </>
                 ) : (
-                  t('Create Code')
+                  t('Generate Code')
                 )}
               </button>
             </div>
@@ -809,12 +809,12 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
           <div className="modal-box">
             <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-success" />
-              {t('Code Created Successfully!')}
+              {t('Code Generated Successfully!')}
             </h3>
             <div className="space-y-4 mb-6">
               <div className="alert alert-success">
                 <div>
-                  <p className="font-medium">{t("Your quiz code has been generated:")}</p>
+                  <p className="font-medium">{t("Your quiz code has been generated successfully:")}</p>
                 </div>
               </div>
               <div className="bg-base-200 rounded-lg p-4 border-2 border-dashed border-base-300">
