@@ -366,6 +366,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
         const isCollapsed = isDomainCollapsed(node.id)
         const indentationLeft = level * 20
         const isSelected = selected.includes(node.id)
+        const questionCount = node.questions?.length || 0
 
         return (
           <div key={node.id}>
@@ -418,16 +419,14 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
                   }}
                   disabled={isDomainListSaving}
                 />
-                <span 
+                <span
                   className={`flex-1 truncate ${level === 0 ? 'font-medium' : ''}`}
                 >
                   {node.name}
                 </span>
-                {node.question_count && node.question_count > 0 && (
-                  <span className="ml-2 px-1.5 py-0.5 text-xs bg-muted text-muted-foreground rounded">
-                    {node.question_count}
-                  </span>
-                )}
+                <span className="ml-2 px-1.5 py-0.5 text-xs bg-muted text-muted-foreground rounded">
+                  {questionCount}
+                </span>
               </div>
             </div>
             {!isCollapsed && hasChildren && renderTree(node.children || [], level + 1)}
