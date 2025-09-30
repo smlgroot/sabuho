@@ -587,9 +587,6 @@ export default function AdminPage() {
 
       {activeView === 'domains' && (
         <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-base-300/50">
-            <h3 className="text-lg font-semibold">{t("Domains")}</h3>
-          </div>
           <div className="flex-1 p-4 overflow-y-auto">
             <DomainTree
               domains={domains}
@@ -608,9 +605,6 @@ export default function AdminPage() {
       
       {activeView === 'quizzes' && (
         <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-base-300/50">
-            <h3 className="text-lg font-semibold">{t("Quizzes")}</h3>
-          </div>
           <div className="flex-1 p-4 overflow-y-auto">
             <QuizList
               quizzes={quizzes}

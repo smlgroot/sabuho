@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { MoreVertical, FileText, XCircle, CheckCircle, X } from 'lucide-react'
+import { MoreVertical, FileText, AlertTriangle, CheckCircle, X } from 'lucide-react'
 import { database } from '../../lib/game/database'
 import { quizClaimService } from '@/services/quizClaimService'
 import useGameStore from '../../store/useGameStore'
@@ -154,22 +154,22 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
   }
 
   const AlertMessages = () => (
-    <div className="space-y-3">
+    <div>
       {checkingClaimed && (
-        <div role="alert" className="alert alert-info shadow-lg">
+        <div role="alert" className="alert alert-info mb-4">
           <span className="loading loading-spinner loading-sm"></span>
           <span>{t('Checking for claimed quizzes...')}</span>
         </div>
       )}
       {checkingUpdates && (
-        <div role="alert" className="alert alert-info shadow-lg">
+        <div role="alert" className="alert alert-info mb-4">
           <span className="loading loading-spinner loading-sm"></span>
           <span>{t('Checking for updates...')}</span>
         </div>
       )}
       {error && (
-        <div role="alert" className="alert alert-error shadow-lg relative pr-12">
-          <XCircle className="h-6 w-6 shrink-0" />
+        <div role="alert" className="alert alert-error relative pr-12 mb-4">
+          <AlertTriangle className="h-6 w-6 shrink-0 text-red-700" />
           <span className="flex-1">{error}</span>
           <button
             className="btn btn-xs btn-circle btn-ghost absolute top-2 right-2"
@@ -181,7 +181,7 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
         </div>
       )}
       {successMessage && (
-        <div role="alert" className="alert alert-success shadow-lg relative pr-12">
+        <div role="alert" className="alert alert-success relative pr-12 mb-4">
           <CheckCircle className="h-6 w-6 shrink-0" />
           <span className="flex-1">{successMessage}</span>
           <button
@@ -316,8 +316,8 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
   )
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="container mx-auto py-4 px-4">
+      <div className="max-w-2xl mx-auto">
         <AlertMessages />
         {quizzes.length === 0 ? <EmptyState /> : <QuizList />}
       </div>
