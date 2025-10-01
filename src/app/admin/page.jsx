@@ -332,6 +332,27 @@ export default function AdminPage() {
     }
   };
 
+  const handleEditQuiz = async (quiz) => {
+    setCreatingQuiz(false);
+    setSelectedDomain(null);
+    try {
+      // Reload quiz data from API to get latest published_at
+      const quizzesData = await fetchQuizzes();
+      const freshQuiz = quizzesData.find(q => q.id === quiz.id);
+      if (freshQuiz) {
+        updateQuizInStore(freshQuiz);
+        setSelectedQuiz(freshQuiz);
+      } else {
+        // Fallback to the quiz from the list if not found
+        setSelectedQuiz(quiz);
+      }
+    } catch (err) {
+      console.error('Failed to reload quiz data:', err);
+      // Fallback to the quiz from the list if reload fails
+      setSelectedQuiz(quiz);
+    }
+  };
+
   // Handle level click from learning path
   const handleLevelClick = (quizId, levelId, isCompleted) => {
     setQuizModalData({
@@ -627,11 +648,7 @@ export default function AdminPage() {
                 setSelectedDomain(null);
                 handleQuizCreate();
               }}
-              onEditQuiz={(quiz) => {
-                setCreatingQuiz(false);
-                setSelectedDomain(null);
-                setSelectedQuiz(quiz);
-              }}
+              onEditQuiz={handleEditQuiz}
               onDeleteQuiz={(quiz) => handleDeleteQuiz(quiz.id)}
             />
           </div>
