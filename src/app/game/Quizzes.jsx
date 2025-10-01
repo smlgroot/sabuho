@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { MoreVertical, FileText, AlertTriangle, CheckCircle, X } from 'lucide-react'
+import { MoreVertical, FileText, AlertTriangle, CheckCircle, X, RefreshCw } from 'lucide-react'
 import { database } from '../../lib/game/database'
 import { quizClaimService } from '@/services/quizClaimService'
 import useGameStore from '../../store/useGameStore'
@@ -17,6 +17,7 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
   const [showBottomSheet, setShowBottomSheet] = useState(false)
   const [checkingClaimed, setCheckingClaimed] = useState(false)
   const [checkingUpdates, setCheckingUpdates] = useState(false)
+  const [lastUpdateCheck, setLastUpdateCheck] = useState(0)
   const navigate = useNavigate()
   const { user } = useAuth()
   const  isAuthenticated  = !!user
@@ -118,9 +119,18 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
   }
 
   const checkForUpdates = async () => {
+    const now = Date.now()
+    const cooldownPeriod = 5000 // 5 seconds
+
+    if (now - lastUpdateCheck < cooldownPeriod) {
+      setError(t('Please wait a moment before checking for updates again'))
+      return
+    }
+
     setCheckingUpdates(true)
     setError('')
     setSuccessMessage('')
+    setLastUpdateCheck(now)
 
     try {
       const result = await quizClaimService.checkForUpdates()
@@ -242,12 +252,23 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
           {t('Add Quiz')}
         </button>
 
-        <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-outline btn-sm">
-            <MoreVertical className="w-4 h-4" />
-          </div>
-          <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-            {isAuthenticated && (
+        {showUpdateButton && (
+          <button
+            className={`btn btn-outline btn-sm ${checkingUpdates ? 'loading' : ''}`}
+            onClick={checkForUpdates}
+            disabled={checkingUpdates}
+            aria-label={t('Check for Updates')}
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        )}
+
+        {isAuthenticated && (
+          <div className="dropdown dropdown-end">
+            <div tabIndex={0} role="button" className="btn btn-outline btn-sm">
+              <MoreVertical className="w-4 h-4" />
+            </div>
+            <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
               <li>
                 <button
                   className={checkingClaimed ? 'loading' : ''}
@@ -257,20 +278,9 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
                   {checkingClaimed ? t('Checking Claimed Quizzes...') : t('Check for Claimed Quizzes')}
                 </button>
               </li>
-            )}
-            {showUpdateButton && (
-              <li>
-                <button
-                  className={checkingUpdates ? 'loading' : ''}
-                  onClick={checkForUpdates}
-                  disabled={checkingUpdates}
-                >
-                  {checkingUpdates ? t('Checking for Updates...') : t('Check for Updates')}
-                </button>
-              </li>
-            )}
-          </ul>
-        </div>
+            </ul>
+          </div>
+        )}
       </div>
     )
   )
