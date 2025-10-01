@@ -61,11 +61,9 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
             <span className={`flex-1 truncate min-w-0 ${level === 0 ? 'font-medium' : ''}`}>
               {domain.name}
             </span>
-            {domain.question_count && domain.question_count > 0 && (
-              <div className="badge badge-neutral badge-sm ml-2">
-                {domain.question_count}
-              </div>
-            )}
+            <div className="badge badge-neutral badge-sm ml-2">
+              {domain.questions?.length || 0}
+            </div>
           </button>
           
           <div className="dropdown dropdown-end">
