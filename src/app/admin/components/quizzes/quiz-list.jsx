@@ -3,8 +3,7 @@
 import { Plus, FileText, Coins } from 'lucide-react'
 // DaisyUI components used directly
 import { useStore } from '@/store/useStore'
-import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
@@ -12,36 +11,6 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
   const { selectedQuiz, setSelectedQuiz, setSelectedDomain } = useStore()
   const [userCredits, setUserCredits] = useState(0)
   const [isLoadingCredits, setIsLoadingCredits] = useState(false)
-
-  // Load user credits
-  const loadUserCredits = async () => {
-    setIsLoadingCredits(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data: credits, error } = await supabase
-        .from('user_credits')
-        .select('credits')
-        .eq('user_id', user.id)
-        .single()
-
-      if (error && error.code !== 'PGRST116') {
-        throw error
-      }
-
-      setUserCredits(credits?.credits || 0)
-    } catch (error) {
-      console.error('Failed to load user credits:', error)
-      setUserCredits(0)
-    } finally {
-      setIsLoadingCredits(false)
-    }
-  }
-
-  useEffect(() => {
-    loadUserCredits()
-  }, [])
 
   return (
     <div className="space-y-4">
