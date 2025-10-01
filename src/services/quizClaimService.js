@@ -746,12 +746,14 @@ class QuizClaimService {
       if (!localQuizzes || localQuizzes.length === 0) {
         return {
           success: true,
+          updatedQuizzesCount: 0,
           newDomainsCount: 0,
           newQuestionsCount: 0,
           message: i18n.t('No local quizzes to check for updates')
         }
       }
 
+      let totalUpdatedQuizzes = 0
       let totalNewDomains = 0
       let totalNewQuestions = 0
 
@@ -760,6 +762,17 @@ class QuizClaimService {
         try {
           // Fetch fresh quiz data from Supabase
           const remoteQuiz = await this.loadQuiz(localQuiz.id)
+
+          // Check if quiz metadata has changed (name, description, etc.)
+          let quizUpdated = false
+          if (remoteQuiz.name !== localQuiz.name ||
+              remoteQuiz.description !== localQuiz.description ||
+              remoteQuiz.updated_at !== localQuiz.updated_at) {
+            // Update the local quiz with fresh data
+            await database.saveQuiz(remoteQuiz)
+            quizUpdated = true
+            totalUpdatedQuizzes++
+          }
 
           // Load remote domains
           const remoteDomains = await this.loadDomainsFromQuiz(remoteQuiz)
@@ -803,10 +816,13 @@ class QuizClaimService {
 
       return {
         success: true,
+        updatedQuizzesCount: totalUpdatedQuizzes,
         newDomainsCount: totalNewDomains,
         newQuestionsCount: totalNewQuestions,
-        message: totalNewDomains > 0 || totalNewQuestions > 0
-          ? i18n.t('Found {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}', {
+        message: totalUpdatedQuizzes > 0 || totalNewDomains > 0 || totalNewQuestions > 0
+          ? i18n.t('Found {{quizCount}} updated quiz{{quizPlural}}, {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}', {
+              quizCount: totalUpdatedQuizzes,
+              quizPlural: totalUpdatedQuizzes !== 1 ? 'zes' : '',
               domainCount: totalNewDomains,
               domainPlural: totalNewDomains !== 1 ? 's' : '',
               questionCount: totalNewQuestions,
@@ -822,6 +838,7 @@ class QuizClaimService {
       return {
         success: false,
         error: errorMessage,
+        updatedQuizzesCount: 0,
         newDomainsCount: 0,
         newQuestionsCount: 0
       }

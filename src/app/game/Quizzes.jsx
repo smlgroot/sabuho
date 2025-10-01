@@ -140,6 +140,11 @@ function Quizzes({ onQuizSelect, selectedQuiz }) {
         return
       }
 
+      // Reload quizzes if there were any updates
+      if (result.updatedQuizzesCount > 0 || result.newDomainsCount > 0 || result.newQuestionsCount > 0) {
+        await loadQuizzes()
+      }
+
       setSuccessMessage(result.message)
 
     } catch (err) {

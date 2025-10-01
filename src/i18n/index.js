@@ -10,7 +10,8 @@ const resources = {
       "Successfully downloaded {{count}} claimed quiz{{plural}}!": "Successfully downloaded {{count}} claimed {{word}}!",
       "quiz": "quiz",
       "quizzes": "quizzes",
-      "Found {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}": "Found {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}"
+      "Found {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}": "Found {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}",
+      "Found {{quizCount}} updated quiz{{quizPlural}}, {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}": "Found {{quizCount}} updated quiz{{quizPlural}}, {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}"
     }
   },
   es: {
@@ -342,6 +343,7 @@ const resources = {
       "Failed to check for updates": "Error al verificar actualizaciones",
       "No local quizzes to check for updates": "No hay cuestionarios locales para verificar actualizaciones",
       "Found {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}": "Se encontraron {{domainCount}} dominio{{domainPlural}} nuevo{{domainPlural}} y {{questionCount}} pregunta{{questionPlural}} nueva{{questionPlural}}",
+      "Found {{quizCount}} updated quiz{{quizPlural}}, {{domainCount}} new domain{{domainPlural}} and {{questionCount}} new question{{questionPlural}}": "Se encontraron {{quizCount}} cuestionario{{quizPlural}} actualizado{{quizPlural}}, {{domainCount}} dominio{{domainPlural}} nuevo{{domainPlural}} y {{questionCount}} pregunta{{questionPlural}} nueva{{questionPlural}}",
       "No updates found. Everything is up to date!": "No se encontraron actualizaciones. ¡Todo está actualizado!",
       
       // Creator Onboarding
