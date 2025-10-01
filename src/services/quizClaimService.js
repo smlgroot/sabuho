@@ -827,6 +827,49 @@ class QuizClaimService {
       }
     }
   }
+
+  async publishQuiz(quizId) {
+    try {
+      // 1. Check if quiz is already downloaded locally
+      const existingQuiz = await database.checkQuizExists(quizId)
+
+      let result
+      if (existingQuiz) {
+        // Quiz exists locally - check for updates
+        result = await this.checkForUpdates()
+      } else {
+        // Quiz doesn't exist locally - download claimed quizzes
+        result = await this.checkAndDownloadClaimedQuizzes()
+      }
+
+      // 2. Update published_at timestamp in Supabase after successful operations
+      const { error: updateError } = await supabase
+        .from('quizzes')
+        .update({ published_at: new Date().toISOString() })
+        .eq('id', quizId)
+
+      if (updateError) {
+        throw new Error(`Failed to update published_at: ${updateError.message}`)
+      }
+
+      return {
+        success: result.success,
+        message: existingQuiz
+          ? i18n.t('Quiz published and offline data updated')
+          : i18n.t('Quiz published and downloaded to offline storage'),
+        action: existingQuiz ? 'updated' : 'downloaded',
+        ...result
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : i18n.t('An unknown error occurred')
+      console.error('Error publishing quiz:', error)
+
+      return {
+        success: false,
+        error: errorMessage
+      }
+    }
+  }
 }
 
 export const quizClaimService = new QuizClaimService()

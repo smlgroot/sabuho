@@ -317,6 +317,21 @@ export default function AdminPage() {
     }
   };
 
+  const handleQuizUpdate = async () => {
+    if (!selectedQuiz?.id) return;
+    try {
+      // Reload quiz data from API to get updated published_at
+      const quizzesData = await fetchQuizzes();
+      const updatedQuiz = quizzesData.find(q => q.id === selectedQuiz.id);
+      if (updatedQuiz) {
+        updateQuizInStore(updatedQuiz);
+        setSelectedQuiz(updatedQuiz);
+      }
+    } catch (err) {
+      console.error('Failed to refresh quiz data:', err);
+    }
+  };
+
   // Handle level click from learning path
   const handleLevelClick = (quizId, levelId, isCompleted) => {
     setQuizModalData({
@@ -709,6 +724,7 @@ export default function AdminPage() {
                 quiz={selectedQuiz}
                 domains={domains}
                 onSave={handleQuizSave}
+                onQuizUpdate={handleQuizUpdate}
                 onDelete={handleDeleteQuiz}
               />
             ) : (

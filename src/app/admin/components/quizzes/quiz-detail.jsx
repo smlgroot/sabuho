@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Plus, CheckCircle, XCircle, Copy, TicketSlash, Trash2, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useTranslation } from 'react-i18next'
+import { quizClaimService } from '@/services/quizClaimService'
 
 export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   const { t } = useTranslation()
@@ -25,6 +26,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   const [toast, setToast] = useState(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
   const inputRef = useRef(null)
   const textareaRef = useRef(null)
 
@@ -87,10 +89,15 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
     return (values.description || '').trim() !== (initialDesc || '').trim()
   }, [values.description, initialDesc])
 
-  const domainDirty = useMemo(() => {
-    const norm = (arr) => [...arr].sort()
-    return JSON.stringify(norm(selected)) !== JSON.stringify(norm(initialSelected))
-  }, [selected, initialSelected])
+  // Check if quiz has unpublished changes
+  const hasUnpublishedChanges = useMemo(() => {
+    if (!quiz.published_at) return true;
+
+    const updatedAt = new Date(quiz.updated_at)
+    const publishedAt = new Date(quiz.published_at)
+
+    return updatedAt > publishedAt
+  }, [quiz?.updated_at, quiz?.published_at])
 
   const toggleDomainCollapsed = (domainId) => {
     setCollapsedDomains(prev => {
@@ -115,13 +122,11 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
     const newSelected = isCurrentlySelected ? selected.filter(x => x !== id) : [...selected, id]
     const previousSelected = selected
     
-    console.log('toggleDomain:', { id, isCurrentlySelected, previousSelected, newSelected })
     setSelected(newSelected)
     
     if (quiz) {
       try {
         await handleDomainListSave(newSelected)
-        console.log('handleDomainListSave success')
         // Don't revert state on success - let the parent component handle updates
       } catch (error) {
         // Revert the local state if save fails
@@ -159,21 +164,21 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
 
   const handleFieldSave = async (field) => {
     if (isSaving) return
-    
+
     const currentValue = field === 'name' ? initialName : initialDesc
     const newValue = field === 'name' ? values.name.trim() : (values.description || '').trim()
-    
+
     // For existing quizzes, check if value actually changed
     if (quiz && newValue === (currentValue || '').trim()) {
       setEditingField(null)
       return
     }
-    
+
     if (field === 'name' && !newValue) {
       showToast(t('Please enter a quiz name'), 'error')
       return
     }
-    
+
     setIsSaving(true)
     try {
       await onSave({
@@ -191,7 +196,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   
   const handleDomainListSave = async (domainIds) => {
     if (isDomainListSaving) return
-    
+
     setIsDomainListSaving(true)
     try {
       await onSave({
@@ -330,13 +335,46 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
     }
   }
 
+  // Handle quiz publish
+  const handlePublishQuiz = async () => {
+    if (!quiz?.id || isPublishing) return
+
+    setIsPublishing(true)
+    try {
+      const result = await quizClaimService.publishQuiz(quiz.id)
+
+      if (result.success) {
+        showToast(
+          result.message ||
+          (result.action === 'updated'
+            ? t('Quiz published and updated in offline storage')
+            : t('Quiz published and downloaded to offline storage')
+          ),
+          'success'
+        )
+
+        // Refresh quiz data to update published_at
+        if (onQuizUpdate) {
+          await onQuizUpdate()
+        }
+      } else {
+        showToast(result.error || t('Failed to publish quiz'), 'error')
+      }
+    } catch (error) {
+      console.error('Failed to publish quiz:', error)
+      showToast(t('Failed to publish quiz. Please try again.'), 'error')
+    } finally {
+      setIsPublishing(false)
+    }
+  }
+
   // Handle quiz deletion
   const handleDeleteQuiz = async () => {
     if (!quiz?.id || !onDelete) {
       console.error('Cannot delete quiz: missing quiz ID or onDelete handler', { quiz: quiz?.id, onDelete: !!onDelete })
       return
     }
-    
+
     console.log('Starting quiz deletion:', quiz.id)
     setIsDeleting(true)
     try {
@@ -569,6 +607,37 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
 
       {activeTab === 'domains' ? (
         <div className="space-y-3">
+          {/* Publish Section */}
+          <div className={`card border ${hasUnpublishedChanges ? 'border-warning bg-warning/5' : 'border-base-300 bg-base-100'}`}>
+            <div className="card-body">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-medium">{t('Publish Quiz')}</h3>
+                  <p className="text-sm text-base-content/70 mt-1">
+                    {hasUnpublishedChanges
+                      ? t('You have unpublished changes. Publish to make them available to users.')
+                      : t('Quiz is up to date. No changes to publish.')
+                    }
+                  </p>
+                </div>
+                <button
+                  className="btn btn-primary"
+                  onClick={handlePublishQuiz}
+                  disabled={!hasUnpublishedChanges || !quiz?.id || isPublishing}
+                >
+                  {isPublishing ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      {t('Publishing...')}
+                    </>
+                  ) : (
+                    t('Publish')
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             <h2 className="text-base font-medium flex items-center gap-2">
               {t('Select Domains')}
