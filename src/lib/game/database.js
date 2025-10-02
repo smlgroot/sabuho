@@ -12,7 +12,7 @@ class SabuhoDatabase extends Dexie {
       meta: 'key, value',
       domains: 'id, parent_id, root_parent_id, author_id, name, created_at, updated_at',
       quizzes: 'id, author_id, name, is_published, created_at, updated_at',
-      questions: 'id, quiz_id, domain_id, author_id, body, explanation, options, resource_id, created_at, updated_at',
+      questions: '[quiz_id+id+domain_id], quiz_id, domain_id, author_id, body, explanation, options, resource_id, created_at, updated_at',
       quiz_learning_levels: 'id, quiz_id, index_position, name, type, is_unlocked, is_completed, created_at, updated_at',
       quiz_learning_level_names: 'id, name, type, created_at, updated_at',
       quiz_sessions: 'id, user_id, quiz_id, level_id, start_time',

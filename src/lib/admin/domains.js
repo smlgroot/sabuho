@@ -38,7 +38,6 @@ export async function createDomain(domain) {
     parent_id: domain.parent_id,
     name: domain.name,
     description: domain.description,
-    thumbnail_url: domain.thumbnail_url,
     question_count: domain.question_count
   }
 

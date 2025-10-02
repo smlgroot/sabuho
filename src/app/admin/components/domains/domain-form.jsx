@@ -8,18 +8,15 @@ export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [thumbnailUrl, setThumbnailUrl] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (domain) {
       setName(domain.name)
       setDescription(domain.description || '')
-      setThumbnailUrl(domain.thumbnail_url || '')
     } else {
       setName('')
       setDescription('')
-      setThumbnailUrl('')
     }
   }, [domain])
 
@@ -28,7 +25,6 @@ export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
       // Clear form when dialog closes
       setName('')
       setDescription('')
-      setThumbnailUrl('')
       setLoading(false)
     }
   }, [isOpen])
@@ -41,18 +37,16 @@ export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
       const domainData = {
         name,
         description: description || null,
-        thumbnail_url: thumbnailUrl || null,
         parent_id: parentId || null,
         question_count: domain?.question_count || 0
       }
 
       await onSubmit(domainData)
-      
+
       // Clear form fields after successful submission
       setName('')
       setDescription('')
-      setThumbnailUrl('')
-      
+
       onClose()
     } catch (error) {
       console.error('Failed to save domain:', error)
@@ -102,20 +96,6 @@ export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('Optional description')}
               rows={3}
-            />
-          </div>
-          
-          <div className="form-control">
-            <label className="label" htmlFor="thumbnail">
-              <span className="label-text">{t('Thumbnail URL')}</span>
-            </label>
-            <input
-              id="thumbnail"
-              className="input input-bordered"
-              value={thumbnailUrl}
-              onChange={(e) => setThumbnailUrl(e.target.value)}
-              placeholder={t('Optional thumbnail URL')}
-              type="url"
             />
           </div>
 

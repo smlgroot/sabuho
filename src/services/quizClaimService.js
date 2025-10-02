@@ -793,7 +793,7 @@ class QuizClaimService {
 
           // 4. Load remote questions
           const remoteQuestions = await this.loadQuestionsForQuiz(remoteQuiz)
-          const remoteQuestionIds = new Set(remoteQuestions.map(q => q.id))
+          const remoteQuestionKeys = new Set(remoteQuestions.map(q => `${q.quiz_id}_${q.id}`))
 
           // 5. Compare remote questions with local questions for this quiz
           const localQuestions = await database.db.questions
@@ -801,15 +801,19 @@ class QuizClaimService {
             .equals(localQuiz.id)
             .toArray()
 
-          const localQuestionIds = new Set(localQuestions.map(q => q.id))
-          const newQuestions = remoteQuestions.filter(q => !localQuestionIds.has(q.id))
+          const localQuestionKeys = new Set(localQuestions.map(q => `${q.quiz_id}_${q.id}`))
+          const newQuestions = remoteQuestions.filter(q => !localQuestionKeys.has(`${q.quiz_id}_${q.id}`))
+
+          console.log('remoteQuestions', remoteQuestions)
+          console.log('localQuestions', localQuestions)
+          console.log('newQuestions', newQuestions)
 
           // 6. Remove questions that exist locally but not in remote
-          const questionsToRemove = localQuestions.filter(lq => !remoteQuestionIds.has(lq.id))
+          const questionsToRemove = localQuestions.filter(lq => !remoteQuestionKeys.has(`${lq.quiz_id}_${lq.id}`))
 
           if (questionsToRemove.length > 0) {
             for (const question of questionsToRemove) {
-              await database.db.questions.delete(question.id)
+              await database.db.questions.delete([question.quiz_id, question.id])
             }
           }
 

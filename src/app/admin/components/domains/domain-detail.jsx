@@ -148,17 +148,6 @@ export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDom
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-4">
-        {localDomain.thumbnail_url ? (
-          <img 
-            src={localDomain.thumbnail_url} 
-            alt={localDomain.name}
-            className="w-20 h-20 object-cover rounded-lg"
-          />
-        ) : (
-          <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-            <span className="text-gray-400 text-xs">{t("No image")}</span>
-          </div>
-        )}
         <div className="flex-1">
           {editingField === 'name' ? (
             <input

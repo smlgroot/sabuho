@@ -11,7 +11,6 @@ export const DomainShape = {
   description: null,
   created_at: '',
   updated_at: '',
-  thumbnail_url: null,
   question_count: null
 }
 

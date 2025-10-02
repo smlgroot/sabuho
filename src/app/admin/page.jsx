@@ -137,7 +137,6 @@ export default function AdminPage() {
       const domainData = {
         name: 'New Domain',
         description: null,
-        thumbnail_url: null,
         parent_id: parentId || null,
         question_count: 0
       };
@@ -145,7 +144,7 @@ export default function AdminPage() {
       const created = await createDomain(domainData);
       addDomain(created);
       setSelectedDomain(created);
-      
+
       toast.success(t("Domain created successfully"));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to create domain";
