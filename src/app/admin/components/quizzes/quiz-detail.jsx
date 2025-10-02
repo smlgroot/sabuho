@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Plus, CheckCircle, XCircle, Copy, TicketSlash, Trash2, AlertTriangle } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import * as supabaseService from '@/services/supabaseService'
 import { useTranslation } from 'react-i18next'
 import { quizClaimService } from '@/services/quizClaimService'
 
@@ -215,19 +215,10 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   // Load quiz codes and their claim status
   const loadQuizCodes = async () => {
     if (!quiz?.id) return
-    
+
     setIsLoadingCodes(true)
     try {
-      const { data: codes, error: codesError } = await supabase
-        .from('quiz_codes')
-        .select(`
-          id,
-          code,
-          created_at,
-          user_quiz_codes(id, user_id)
-        `)
-        .eq('quiz_id', quiz.id)
-        .order('created_at', { ascending: false })
+      const { data: codes, error: codesError } = await supabaseService.fetchQuizCodes(quiz.id)
 
       if (codesError) throw codesError
 
@@ -243,16 +234,12 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   const loadUserCredits = async () => {
     setIsLoadingCredits(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { user } = await supabaseService.getCurrentUser()
       if (!user) return
 
-      const { data: credits, error } = await supabase
-        .from('user_credits')
-        .select('credits')
-        .eq('user_id', user.id)
-        .single()
+      const { data: credits, error } = await supabaseService.getUserCredits(user.id)
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error
       }
 
@@ -285,7 +272,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   const createQuizCode = async () => {
     // Load user credits before checking
     await loadUserCredits()
-    
+
     if (userCredits < 1) {
       setShowCreditDialog(true)
       return
@@ -293,29 +280,18 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
 
     setIsCreatingCode(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { user } = await supabaseService.getCurrentUser()
       if (!user) throw new Error('User not authenticated')
 
       const code = generateCode()
 
       // Create the quiz code
-      const { data: newCode, error: codeError } = await supabase
-        .from('quiz_codes')
-        .insert({
-          author_id: user.id,
-          quiz_id: quiz.id,
-          code: code
-        })
-        .select()
-        .single()
+      const { data: newCode, error: codeError } = await supabaseService.createQuizCode(user.id, quiz.id, code)
 
       if (codeError) throw codeError
 
       // Deduct credit
-      const { error: creditError } = await supabase
-        .from('user_credits')
-        .update({ credits: userCredits - 1 })
-        .eq('user_id', user.id)
+      const { error: creditError } = await supabaseService.deductUserCredit(user.id, 1)
 
       if (creditError) throw creditError
 
@@ -323,7 +299,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
       setUserCredits(prev => prev - 1)
       await loadQuizCodes()
       setShowCodeDialog(false)
-      
+
       // Show success dialog with generated code
       setGeneratedCode(code)
       setShowSuccessDialog(true)

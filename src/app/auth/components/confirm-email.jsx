@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { supabase } from '@/lib/supabase'
+import * as supabaseService from '@/services/supabaseService'
 import { CheckCircle, XCircle, Mail, Loader } from 'lucide-react'
 
 export function ConfirmEmail() {
@@ -23,10 +23,7 @@ export function ConfirmEmail() {
       }
 
       try {
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash,
-          type: 'email'
-        })
+        const { error } = await supabaseService.verifyOtp(token_hash, 'email')
 
         if (error) {
           console.error('Email confirmation error:', error)

@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase'
+import * as supabaseService from './supabaseService'
 import { database } from '../lib/game/database'
 import i18n from '../i18n'
 
@@ -49,11 +49,7 @@ class QuizClaimService {
       }
 
       // 2. Look up the code in quiz_codes table to get the quiz_id and code_id
-      const { data: quizCode, error: codeError } = await supabase
-        .from('quiz_codes')
-        .select('id, quiz_id')
-        .eq('code', code.trim())
-        .single()
+      const { data: quizCode, error: codeError } = await supabaseService.fetchQuizCodeByCode(code)
 
 
       if (codeError) {
@@ -68,14 +64,9 @@ class QuizClaimService {
 
       // 3. Check if this code has already been claimed by the current user
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const { user } = await supabaseService.getCurrentUser()
         if (user) {
-          const { data: existingClaim, error: claimError } = await supabase
-            .from('user_quiz_codes')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('quiz_code_id', quizCode.id)
-            .single()
+          const { data: existingClaim, error: claimError } = await supabaseService.checkUserQuizCodeClaim(user.id, quizCode.id)
 
           if (claimError && claimError.code !== 'PGRST116') { // PGRST116 is "no rows found"
             console.warn('Error checking for existing claim:', claimError)
@@ -148,16 +139,10 @@ class QuizClaimService {
 
       // 12. Save user_quiz_codes record to Supabase (if user is authenticated)
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const { user } = await supabaseService.getCurrentUser()
         if (user) {
-          const { error: userQuizCodeError } = await supabase
-            .from('user_quiz_codes')
-            .insert({
-              user_id: user.id,
-              quiz_id: quizId,
-              quiz_code_id: quizCode.id
-            })
-          
+          const { error: userQuizCodeError } = await supabaseService.createUserQuizCode(user.id, quizId, quizCode.id)
+
           if (userQuizCodeError) {
             console.warn('Failed to save user_quiz_codes record:', userQuizCodeError)
           }
@@ -184,11 +169,7 @@ class QuizClaimService {
   }
 
   async loadQuiz(quizId) {
-    const { data: quizzes, error } = await supabase
-      .from('quizzes')
-      .select('*')
-      .eq('id', quizId)
-
+    const { data: quizzes, error } = await supabaseService.fetchQuizById(quizId)
 
     if (error) {
       throw new Error(`Failed to fetch quiz: ${error.message}`)
@@ -254,10 +235,7 @@ class QuizClaimService {
       }
 
 
-      const { data: domains, error } = await supabase
-        .from('domains')
-        .select('*')
-        .in('id', domainIds)
+      const { data: domains, error } = await supabaseService.fetchDomainsByIds(domainIds)
 
       if (error) {
         throw new Error(`Failed to fetch domains: ${error.message}`)
@@ -319,10 +297,7 @@ class QuizClaimService {
       }
 
 
-      const { data: questions, error } = await supabase
-        .from('questions')
-        .select('*')
-        .in('domain_id', domainIds)
+      const { data: questions, error } = await supabaseService.fetchQuestionsByDomainIds(domainIds)
 
       if (error) {
         throw new Error(`Failed to fetch questions: ${error.message}`)
@@ -343,9 +318,7 @@ class QuizClaimService {
   }
 
   async syncLearningLevelNames() {
-    const { data, error } = await supabase
-      .from('quiz_learning_level_names')
-      .select('*')
+    const { data, error } = await supabaseService.fetchQuizLearningLevelNames()
 
     if (error) {
       throw new Error(`Failed to fetch quiz_learning_level_names: ${error.message}`)
@@ -594,7 +567,7 @@ class QuizClaimService {
     try {
 
       // 1. Get current authenticated user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      const { user, error: userError } = await supabaseService.getCurrentUser()
 
       if (userError || !user) {
         throw new Error('User not authenticated')
@@ -602,14 +575,7 @@ class QuizClaimService {
 
 
       // 2. Get all quiz codes claimed by this user from Supabase
-      const { data: userQuizCodes, error: claimedError } = await supabase
-        .from('user_quiz_codes')
-        .select(`
-          quiz_id,
-          quiz_code_id,
-          quiz_codes!inner(id, code)
-        `)
-        .eq('user_id', user.id)
+      const { data: userQuizCodes, error: claimedError } = await supabaseService.fetchUserQuizCodes(user.id)
 
       if (claimedError) {
         throw new Error(`Failed to fetch claimed quizzes: ${claimedError.message}`)
@@ -875,10 +841,9 @@ class QuizClaimService {
       }
 
       // 2. Update published_at timestamp in Supabase after successful operations
-      const { error: updateError } = await supabase
-        .from('quizzes')
-        .update({ published_at: new Date().toISOString() })
-        .eq('id', quizId)
+      const { error: updateError } = await supabaseService.updateQuiz(quizId, {
+        published_at: new Date().toISOString()
+      })
 
       if (updateError) {
         throw new Error(`Failed to update published_at: ${updateError.message}`)

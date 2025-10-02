@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DollarSign, User, Shield, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/lib/admin/auth';
-import { supabase } from '@/lib/supabase';
+import * as supabaseService from '@/services/supabaseService';
 import { toast } from 'sonner';
 
 export function CreatorOnboarding({ onComplete, onCancel }) {
@@ -34,17 +34,11 @@ export function CreatorOnboarding({ onComplete, onCancel }) {
     setLoading(true);
     try {
       // Update display_name, terms_accepted, and is_creator_enabled columns
-      const updateData = {
+      const { error } = await supabaseService.updateUserProfile(user.id, {
         display_name: formData.displayName,
         terms_accepted: formData.acceptedTerms,
-        is_creator_enabled: formData.acceptedTerms, // Enable creator when terms are accepted
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase
-        .from('user_profiles')
-        .update(updateData)
-        .eq('user_id', user.id);
+        is_creator_enabled: formData.acceptedTerms // Enable creator when terms are accepted
+      });
 
       if (error) {
         throw error;

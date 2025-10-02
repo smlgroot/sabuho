@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { supabase } from '../supabase'
+import * as supabaseService from '@/services/supabaseService'
 import { upsertUserProfile, getUserProfile } from '@/services/userProfileService'
 
 const AuthContext = createContext(undefined)
@@ -25,11 +25,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { session } = await supabaseService.getCurrentSession()
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
-      
+
       // Update user profile for existing sessions (non-blocking)
       if (session?.user) {
         // Make user profile update non-blocking to avoid interfering with auth flow
@@ -39,28 +39,28 @@ export function AuthProvider({ children }) {
 
     getSession()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabaseService.onAuthStateChange(
       async (event, session) => {
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
-        
+
         // Update user profile on sign in (non-blocking)
         if (event === 'SIGNED_IN' && session?.user) {
           // Make user profile update non-blocking to avoid interfering with auth flow
           setTimeout(() => loadUserProfile(session.user.id), 0)
-          
+
           // Redirect to admin after successful login
           if (location.pathname === '/auth') {
             navigate('/admin')
           }
         }
-        
+
         // Clear user profile on sign out
         if (event === 'SIGNED_OUT') {
           setUserProfile(null)
         }
-        
+
         // Don't redirect automatically after logout - let the component handle it
       }
     )
@@ -69,24 +69,18 @@ export function AuthProvider({ children }) {
   }, [navigate, location.pathname])
 
   const signUp = async (email, password) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
+    const { error } = await supabaseService.signUp(email, password)
     return { error }
   }
 
   const signIn = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { error } = await supabaseService.signIn(email, password)
     return { error }
   }
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut({ scope: 'local' })
+      const { error } = await supabaseService.signOut('local')
       if (error) {
         console.error('Sign out error:', error)
         return { error }

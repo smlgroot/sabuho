@@ -1,22 +1,14 @@
-import { supabase } from '../supabase'
+import * as supabaseService from '@/services/supabaseService'
 
 export async function fetchDomains() {
   // First ensure we have a valid session
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-  
+  const { session, error: sessionError } = await supabaseService.getCurrentSession()
+
   if (sessionError || !session?.user) {
     throw new Error('User must be authenticated to fetch domains')
   }
 
-  const { data, error } = await supabase
-    .from('domains')
-    .select(`
-      *,
-      resources:resources(*),
-      questions:questions(*)
-    `)
-    .eq('author_id', session.user.id)
-    .order('created_at', { ascending: true })
+  const { data, error } = await supabaseService.fetchDomains(session.user.id)
 
   if (error) {
     console.error('Database error:', error)
@@ -27,25 +19,13 @@ export async function fetchDomains() {
 }
 
 export async function createDomain(domain) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-  
+  const { session, error: sessionError } = await supabaseService.getCurrentSession()
+
   if (sessionError || !session?.user) {
     throw new Error('User must be authenticated to create domains')
   }
 
-  const insertData = {
-    author_id: session.user.id,
-    parent_id: domain.parent_id,
-    name: domain.name,
-    description: domain.description,
-    question_count: domain.question_count
-  }
-
-  const { data, error } = await supabase
-    .from('domains')
-    .insert(insertData)
-    .select()
-    .single()
+  const { data, error } = await supabaseService.createDomain(domain, session.user.id)
 
   if (error) {
     console.error('Database error:', error)
@@ -56,17 +36,7 @@ export async function createDomain(domain) {
 }
 
 export async function updateDomain(id, updates) {
-  const updateData = {
-    ...updates,
-    updated_at: new Date().toISOString()
-  }
-
-  const { data, error } = await supabase
-    .from('domains')
-    .update(updateData)
-    .eq('id', id)
-    .select()
-    .single()
+  const { data, error } = await supabaseService.updateDomain(id, updates)
 
   if (error) {
     throw new Error(`Failed to update domain: ${error.message}`)
@@ -76,10 +46,7 @@ export async function updateDomain(id, updates) {
 }
 
 export async function deleteDomain(id) {
-  const { error } = await supabase
-    .from('domains')
-    .delete()
-    .eq('id', id)
+  const { error } = await supabaseService.deleteDomain(id)
 
   if (error) {
     throw new Error(`Failed to delete domain: ${error.message}`)
