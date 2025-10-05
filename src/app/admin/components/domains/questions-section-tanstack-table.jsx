@@ -218,10 +218,15 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
       },
       renderEditCell: ({ row, onRowChange, onClose }) => {
         return (
-          <div className="w-full h-full p-2 flex items-center bg-white border-2 border-primary">
+          <div className="relative w-full h-full">
             <input
               type="text"
-              className="w-full text-sm bg-transparent border-none outline-none"
+              className="absolute top-0 left-0 h-full p-2 bg-white border-2 border-primary text-sm outline-none z-10"
+              style={{
+                minWidth: '100%',
+                width: 'max-content',
+                maxWidth: '600px'
+              }}
               autoFocus
               value={row.body}
               onChange={(e) => onRowChange({ ...row, body: e.target.value })}
@@ -255,10 +260,15 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
       },
       renderEditCell: ({ row, onRowChange, onClose }) => {
         return (
-          <div className="w-full h-full p-2 flex items-center bg-white border-2 border-primary">
+          <div className="relative w-full h-full">
             <input
               type="text"
-              className="w-full text-sm bg-transparent border-none outline-none"
+              className="absolute top-0 left-0 h-full p-2 bg-white border-2 border-primary text-sm outline-none z-10"
+              style={{
+                minWidth: '100%',
+                width: 'max-content',
+                maxWidth: '600px'
+              }}
               autoFocus
               value={row.explanation}
               onChange={(e) => onRowChange({ ...row, explanation: e.target.value })}
