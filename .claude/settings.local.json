@@ -14,7 +14,8 @@
       "Bash(tree:*)",
       "Read(//Users/smlg/projects/me/sabuho/src/components/**)",
       "WebSearch",
-      "Bash(yarn list:*)"
+      "Bash(yarn list:*)",
+      "WebFetch(domain:tanstack.com)"
     ],
     "deny": [],
     "ask": []
