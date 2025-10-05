@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Check, X } from 'lucide-react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -14,10 +14,38 @@ import { updateQuestion, updateQuestionOptions } from '@/lib/admin/questions'
 
 const columnHelper = createColumnHelper()
 
-// Helper function to convert newlines to HTML for display
-const textToHtml = (text) => {
-  if (!text) return ''
-  return text.replace(/\n/g, '<br />')
+// Editable textarea component with proper focus management
+function EditableTextarea({ value, onChange, onSave, onCancel, placeholder, disabled }) {
+  const textareaRef = useRef(null)
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      const textarea = textareaRef.current
+      const length = textarea.value.length
+      textarea.focus()
+      textarea.setSelectionRange(length, length)
+    }
+  }, [])
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={onChange}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          onCancel()
+        } else if (e.key === 'Enter' && e.ctrlKey) {
+          e.preventDefault()
+          onSave()
+        }
+      }}
+      className="textarea textarea-bordered textarea-sm w-full min-h-[4rem] text-sm resize-y"
+      placeholder={placeholder}
+      disabled={disabled}
+    />
+  )
 }
 
 export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
@@ -29,54 +57,17 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
 
   const questions = domain.questions || []
 
-  // Handle inline edit start
-  const handleEditStart = (questionId, field, currentValue, optionIndex = null) => {
-    if (!isUpdating) {
-      setEditingCell({ questionId, field, optionIndex })
-      setEditValue(currentValue || '')
-    }
-  }
-
-  // Handle inline edit save
-  const handleEditSave = async (questionId, field, element, optionIndex = null) => {
-    if (!editingCell || isUpdating) return
-
+  // Update handlers using TanStack Table meta pattern
+  const updateData = useCallback(async (questionId, field, value, optionIndex = null) => {
     const question = questions.find(q => q.id === questionId)
     if (!question) return
-
-    // Convert innerHTML to text preserving line breaks
-    const newValue = element.innerHTML
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<div>/gi, '\n')
-      .replace(/<\/div>/gi, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-
-    let currentValue
-    if (field === 'body') {
-      currentValue = question.body
-    } else if (field === 'explanation') {
-      currentValue = question.explanation || ''
-    } else if (field === 'option') {
-      const optionText = question.options?.[optionIndex] || ''
-      currentValue = optionText.replace(/\s*\[correct\]\s*$/, '')
-    }
-
-    if (newValue.trim() === currentValue.trim()) {
-      setEditingCell(null)
-      return
-    }
 
     setIsUpdating(true)
     try {
       if (field === 'option') {
-        // Update single option
         const updatedOptions = [...(question.options || [])]
         const wasCorrect = updatedOptions[optionIndex].includes('[correct]')
-        updatedOptions[optionIndex] = wasCorrect ? `${newValue.trim()} [correct]` : newValue.trim()
+        updatedOptions[optionIndex] = wasCorrect ? `${value.trim()} [correct]` : value.trim()
 
         const updatedQuestion = await updateQuestionOptions(questionId, updatedOptions)
 
@@ -93,9 +84,9 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
       } else {
         const updates = {}
         if (field === 'body') {
-          updates.body = newValue.trim()
+          updates.body = value.trim()
         } else if (field === 'explanation') {
-          updates.explanation = newValue.trim() || null
+          updates.explanation = value.trim() || null
         }
 
         const updatedQuestion = await updateQuestion(questionId, updates)
@@ -113,15 +104,56 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
       }
 
       setEditingCell(null)
+      setEditValue('')
     } catch (error) {
       console.error('Failed to update:', error)
     } finally {
       setIsUpdating(false)
     }
-  }
+  }, [domain, onDomainUpdate, questions])
+
+  // Handle edit start
+  const handleEditStart = useCallback((questionId, field, currentValue, optionIndex = null) => {
+    if (!isUpdating) {
+      setEditingCell({ questionId, field, optionIndex })
+      setEditValue(currentValue || '')
+    }
+  }, [isUpdating])
+
+  // Handle edit save
+  const handleEditSave = useCallback(() => {
+    if (!editingCell || isUpdating) return
+
+    const question = questions.find(q => q.id === editingCell.questionId)
+    if (!question) return
+
+    let currentValue
+    if (editingCell.field === 'body') {
+      currentValue = question.body
+    } else if (editingCell.field === 'explanation') {
+      currentValue = question.explanation || ''
+    } else if (editingCell.field === 'option') {
+      const optionText = question.options?.[editingCell.optionIndex] || ''
+      currentValue = optionText.replace(/\s*\[correct\]\s*$/, '')
+    }
+
+    if (editValue.trim() === currentValue.trim()) {
+      setEditingCell(null)
+      setEditValue('')
+      return
+    }
+
+    updateData(editingCell.questionId, editingCell.field, editValue, editingCell.optionIndex)
+  }, [editingCell, editValue, isUpdating, questions, updateData])
+
+  // Handle edit cancel
+  const handleEditCancel = useCallback(() => {
+    setEditingCell(null)
+    setEditValue('')
+  }, [])
 
   // Toggle option as correct
-  const handleToggleCorrect = async (questionId, optionIndex) => {
+  const handleToggleCorrect = useCallback(async (questionId, optionIndex) => {
     if (isUpdating) return
 
     const question = questions.find(q => q.id === questionId)
@@ -133,12 +165,10 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
       const currentOption = updatedOptions[optionIndex]
       const isCurrentlyCorrect = currentOption.includes('[correct]')
 
-      // Remove [correct] from all options
       updatedOptions.forEach((opt, idx) => {
         updatedOptions[idx] = opt.replace(/\s*\[correct\]\s*$/, '')
       })
 
-      // Add [correct] to the selected option if it wasn't correct
       if (!isCurrentlyCorrect) {
         updatedOptions[optionIndex] = `${updatedOptions[optionIndex]} [correct]`
       }
@@ -160,13 +190,7 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
     } finally {
       setIsUpdating(false)
     }
-  }
-
-  // Handle edit cancel
-  const handleEditCancel = () => {
-    setEditingCell(null)
-    setEditValue('')
-  }
+  }, [isUpdating, questions, domain, onDomainUpdate])
 
   // Column definitions
   const columns = useMemo(
@@ -192,34 +216,49 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
       }),
       columnHelper.accessor('body', {
         header: () => <span className="font-semibold text-xs uppercase">{t('Question')}</span>,
-        cell: ({ row }) => {
+        cell: ({ row, table }) => {
           const question = row.original
           const isEditing = editingCell?.questionId === question.id && editingCell?.field === 'body'
 
+          if (isEditing) {
+            return (
+              <div className="flex gap-1 p-1">
+                <EditableTextarea
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onSave={handleEditSave}
+                  onCancel={handleEditCancel}
+                  disabled={isUpdating}
+                />
+                <div className="flex flex-col gap-1">
+                  <button
+                    onClick={handleEditSave}
+                    className="btn btn-success btn-xs btn-square"
+                    disabled={isUpdating}
+                    title={t('Save (Ctrl+Enter)')}
+                  >
+                    <Check className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={handleEditCancel}
+                    className="btn btn-ghost btn-xs btn-square"
+                    disabled={isUpdating}
+                    title={t('Cancel (Esc)')}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+            )
+          }
+
           return (
             <div
-              contentEditable={!isUpdating}
-              suppressContentEditableWarning
-              onFocus={(e) => {
-                if (!isEditing) {
-                  handleEditStart(question.id, 'body', question.body)
-                }
-              }}
-              onBlur={(e) => {
-                if (isEditing) {
-                  handleEditSave(question.id, 'body', e.currentTarget)
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  handleEditCancel()
-                  e.currentTarget.blur()
-                }
-              }}
-              className={`w-full h-full px-2 py-1 text-sm cursor-text hover:outline hover:outline-2 hover:outline-primary/20 focus:outline focus:outline-2 focus:outline-primary ${isEditing ? 'bg-base-100' : ''}`}
+              onClick={() => handleEditStart(question.id, 'body', question.body)}
+              className="w-full h-full px-2 py-1 text-sm cursor-pointer hover:bg-base-200 whitespace-pre-wrap"
               title={t('Click to edit')}
-              dangerouslySetInnerHTML={{ __html: textToHtml(question.body) }}
             >
+              {question.body || <span className="text-base-content/40">{t('Empty')}</span>}
             </div>
           )
         },
@@ -227,46 +266,60 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
       }),
       columnHelper.accessor('explanation', {
         header: () => <span className="font-semibold text-xs uppercase">{t('Explanation')}</span>,
-        cell: ({ row }) => {
+        cell: ({ row, table }) => {
           const question = row.original
           const isEditing = editingCell?.questionId === question.id && editingCell?.field === 'explanation'
 
+          if (isEditing) {
+            return (
+              <div className="flex gap-1 p-1">
+                <EditableTextarea
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onSave={handleEditSave}
+                  onCancel={handleEditCancel}
+                  placeholder={t('Add explanation...')}
+                  disabled={isUpdating}
+                />
+                <div className="flex flex-col gap-1">
+                  <button
+                    onClick={handleEditSave}
+                    className="btn btn-success btn-xs btn-square"
+                    disabled={isUpdating}
+                    title={t('Save (Ctrl+Enter)')}
+                  >
+                    <Check className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={handleEditCancel}
+                    className="btn btn-ghost btn-xs btn-square"
+                    disabled={isUpdating}
+                    title={t('Cancel (Esc)')}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+            )
+          }
+
           return (
             <div
-              contentEditable={!isUpdating}
-              suppressContentEditableWarning
-              onFocus={(e) => {
-                if (!isEditing) {
-                  handleEditStart(question.id, 'explanation', question.explanation)
-                }
-              }}
-              onBlur={(e) => {
-                if (isEditing) {
-                  handleEditSave(question.id, 'explanation', e.currentTarget)
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  handleEditCancel()
-                  e.currentTarget.blur()
-                }
-              }}
-              className={`w-full h-full px-2 py-1 text-sm cursor-text hover:outline hover:outline-2 hover:outline-primary/20 focus:outline focus:outline-2 focus:outline-primary min-h-[2rem] ${isEditing ? 'bg-base-100' : ''}`}
+              onClick={() => handleEditStart(question.id, 'explanation', question.explanation || '')}
+              className="w-full h-full px-2 py-1 text-sm cursor-pointer hover:bg-base-200 min-h-[2rem] whitespace-pre-wrap"
               title={t('Click to edit')}
-              data-placeholder={question.explanation ? '' : t('Add explanation...')}
-              style={!question.explanation ? { color: 'var(--fallback-bc,oklch(var(--bc)/0.4))' } : {}}
-              dangerouslySetInnerHTML={{ __html: question.explanation ? textToHtml(question.explanation) : t('Empty') }}
             >
+              {question.explanation || <span className="text-base-content/40">{t('Add explanation...')}</span>}
             </div>
           )
         },
         size: 400,
       }),
     ],
-    [t, editingCell, editValue, isUpdating]
+    [t, editingCell, editValue, isUpdating, handleEditStart, handleEditSave, handleEditCancel]
   )
 
-  // Table instance
+  // Table instance with meta
   const table = useReactTable({
     data: questions,
     columns,
@@ -277,6 +330,9 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     getRowCanExpand: () => true,
+    meta: {
+      updateData,
+    },
   })
 
   return (
@@ -338,43 +394,69 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
                           </div>
                         </td>
                         <td className="border-r border-base-300 p-0" colSpan={columns.length - 1}>
-                          <div className="flex items-center gap-2 px-2 py-1">
-                            <button
-                              onClick={() => handleToggleCorrect(row.original.id, optionIndex)}
-                              className={`btn btn-xs ${isCorrect ? 'btn-success' : 'btn-ghost'}`}
-                              disabled={isUpdating}
-                              title={t('Mark as correct')}
-                            >
-                              {isCorrect ? t('Correct') : t('Incorrect')}
-                            </button>
-                            <div
-                              contentEditable={!isUpdating}
-                              suppressContentEditableWarning
-                              onFocus={(e) => {
-                                if (!isEditing) {
-                                  handleEditStart(row.original.id, 'option', optionText, optionIndex)
-                                }
-                              }}
-                              onBlur={(e) => {
-                                if (isEditing) {
-                                  handleEditSave(row.original.id, 'option', e.currentTarget, optionIndex)
-                                }
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault()
-                                  e.currentTarget.blur()
-                                } else if (e.key === 'Escape') {
-                                  handleEditCancel()
-                                  e.currentTarget.blur()
-                                }
-                              }}
-                              className={`flex-1 px-2 py-1 text-sm cursor-text hover:outline hover:outline-2 hover:outline-primary/20 focus:outline focus:outline-2 focus:outline-primary rounded ${isEditing ? 'bg-base-100' : ''} ${isCorrect ? 'font-semibold' : ''}`}
-                              title={t('Click to edit')}
-                            >
-                              {optionText}
+                          {isEditing ? (
+                            <div className="flex items-center gap-2 px-2 py-1">
+                              <button
+                                onClick={() => handleToggleCorrect(row.original.id, optionIndex)}
+                                className={`btn btn-xs ${isCorrect ? 'btn-success' : 'btn-ghost'}`}
+                                disabled={isUpdating}
+                                title={t('Mark as correct')}
+                              >
+                                {isCorrect ? t('Correct') : t('Incorrect')}
+                              </button>
+                              <input
+                                type="text"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    handleEditSave()
+                                  } else if (e.key === 'Escape') {
+                                    e.preventDefault()
+                                    handleEditCancel()
+                                  }
+                                }}
+                                className="input input-bordered input-sm flex-1 text-sm"
+                                autoFocus
+                                disabled={isUpdating}
+                              />
+                              <button
+                                onClick={handleEditSave}
+                                className="btn btn-success btn-xs btn-square"
+                                disabled={isUpdating}
+                                title={t('Save (Enter)')}
+                              >
+                                <Check className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={handleEditCancel}
+                                className="btn btn-ghost btn-xs btn-square"
+                                disabled={isUpdating}
+                                title={t('Cancel (Esc)')}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
                             </div>
-                          </div>
+                          ) : (
+                            <div className="flex items-center gap-2 px-2 py-1">
+                              <button
+                                onClick={() => handleToggleCorrect(row.original.id, optionIndex)}
+                                className={`btn btn-xs ${isCorrect ? 'btn-success' : 'btn-ghost'}`}
+                                disabled={isUpdating}
+                                title={t('Mark as correct')}
+                              >
+                                {isCorrect ? t('Correct') : t('Incorrect')}
+                              </button>
+                              <div
+                                onClick={() => handleEditStart(row.original.id, 'option', optionText, optionIndex)}
+                                className={`flex-1 px-2 py-1 text-sm cursor-pointer hover:bg-base-200 rounded ${isCorrect ? 'font-semibold' : ''}`}
+                                title={t('Click to edit')}
+                              >
+                                {optionText}
+                              </div>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     )
