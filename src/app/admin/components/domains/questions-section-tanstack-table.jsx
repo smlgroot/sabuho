@@ -1,100 +1,100 @@
 'use client'
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronRight, Check, X } from 'lucide-react'
-import {
-  useReactTable,
-  getCoreRowModel,
-  getExpandedRowModel,
-  flexRender,
-  createColumnHelper,
-} from '@tanstack/react-table'
+import { Check } from 'lucide-react'
+import { DataGrid, Row } from 'react-data-grid'
+import 'react-data-grid/lib/styles.css'
 import { updateQuestion, updateQuestionOptions } from '@/lib/admin/questions'
-
-const columnHelper = createColumnHelper()
-
-// Editable textarea component with proper focus management
-function EditableTextarea({ value, onChange, onSave, onCancel, placeholder, disabled }) {
-  const textareaRef = useRef(null)
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      const textarea = textareaRef.current
-      const length = textarea.value.length
-      textarea.focus()
-      textarea.setSelectionRange(length, length)
-    }
-  }, [])
-
-  return (
-    <textarea
-      ref={textareaRef}
-      value={value}
-      onChange={onChange}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          e.preventDefault()
-          onCancel()
-        } else if (e.key === 'Enter' && e.ctrlKey) {
-          e.preventDefault()
-          onSave()
-        }
-      }}
-      className="textarea textarea-bordered textarea-sm w-full min-h-[4rem] text-sm resize-y"
-      placeholder={placeholder}
-      disabled={disabled}
-    />
-  )
-}
 
 export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
   const { t } = useTranslation()
-  const [expanded, setExpanded] = useState({})
-  const [editingCell, setEditingCell] = useState(null)
-  const [editValue, setEditValue] = useState('')
   const [isUpdating, setIsUpdating] = useState(false)
-
   const questions = domain.questions || []
 
-  // Update handlers using TanStack Table meta pattern
-  const updateData = useCallback(async (questionId, field, value, optionIndex = null) => {
-    const question = questions.find(q => q.id === questionId)
-    if (!question) return
+  // Transform questions into flat rows for the grid
+  const rows = useMemo(() => {
+    const result = []
+    questions.forEach((question, qIndex) => {
+      // Main question row
+      result.push({
+        id: `q-${question.id}`,
+        questionId: question.id,
+        type: 'question',
+        rowIndex: qIndex,
+        body: question.body || '',
+        explanation: question.explanation || '',
+      })
+
+      // Option rows
+      if (question.options && question.options.length > 0) {
+        question.options.forEach((option, optIndex) => {
+          const isCorrect = option.includes('[correct]')
+          const optionText = option.replace(/\s*\[correct\]\s*$/, '')
+          result.push({
+            id: `q-${question.id}-opt-${optIndex}`,
+            questionId: question.id,
+            type: 'option',
+            optionIndex: optIndex,
+            optionLabel: String.fromCharCode(65 + optIndex),
+            optionText,
+            isCorrect,
+            body: optionText,
+            explanation: '',
+          })
+        })
+      }
+    })
+    return result
+  }, [questions])
+
+  // Handle row updates
+  const handleRowsChange = useCallback(async (updatedRows, { indexes, column }) => {
+    if (isUpdating) return
+
+    const rowIndex = indexes[0]
+    const row = updatedRows[rowIndex]
 
     setIsUpdating(true)
     try {
-      if (field === 'option') {
-        const updatedOptions = [...(question.options || [])]
-        const wasCorrect = updatedOptions[optionIndex].includes('[correct]')
-        updatedOptions[optionIndex] = wasCorrect ? `${value.trim()} [correct]` : value.trim()
+      if (row.type === 'question') {
+        // Update question body or explanation
+        const updates = {}
+        if (column.key === 'body') {
+          updates.body = row.body.trim()
+        } else if (column.key === 'explanation') {
+          updates.explanation = row.explanation.trim() || null
+        }
 
-        const updatedQuestion = await updateQuestionOptions(questionId, updatedOptions)
+        const updatedQuestion = await updateQuestion(row.questionId, updates)
 
         const updatedDomain = {
           ...domain,
           questions: domain.questions?.map(q =>
-            q.id === questionId ? { ...q, options: updatedQuestion.options } : q
+            q.id === row.questionId ? { ...q, ...updatedQuestion } : q
           )
         }
 
         if (onDomainUpdate) {
           onDomainUpdate(updatedDomain)
         }
-      } else {
-        const updates = {}
-        if (field === 'body') {
-          updates.body = value.trim()
-        } else if (field === 'explanation') {
-          updates.explanation = value.trim() || null
-        }
+      } else if (row.type === 'option' && column.key === 'body') {
+        // Update option text
+        const question = questions.find(q => q.id === row.questionId)
+        if (!question) return
 
-        const updatedQuestion = await updateQuestion(questionId, updates)
+        const updatedOptions = [...(question.options || [])]
+        const wasCorrect = updatedOptions[row.optionIndex].includes('[correct]')
+        updatedOptions[row.optionIndex] = wasCorrect
+          ? `${row.body.trim()} [correct]`
+          : row.body.trim()
+
+        const updatedQuestion = await updateQuestionOptions(row.questionId, updatedOptions)
 
         const updatedDomain = {
           ...domain,
           questions: domain.questions?.map(q =>
-            q.id === questionId ? { ...q, ...updatedQuestion } : q
+            q.id === row.questionId ? { ...q, options: updatedQuestion.options } : q
           )
         }
 
@@ -102,55 +102,12 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
           onDomainUpdate(updatedDomain)
         }
       }
-
-      setEditingCell(null)
-      setEditValue('')
     } catch (error) {
       console.error('Failed to update:', error)
     } finally {
       setIsUpdating(false)
     }
-  }, [domain, onDomainUpdate, questions])
-
-  // Handle edit start
-  const handleEditStart = useCallback((questionId, field, currentValue, optionIndex = null) => {
-    if (!isUpdating) {
-      setEditingCell({ questionId, field, optionIndex })
-      setEditValue(currentValue || '')
-    }
-  }, [isUpdating])
-
-  // Handle edit save
-  const handleEditSave = useCallback(() => {
-    if (!editingCell || isUpdating) return
-
-    const question = questions.find(q => q.id === editingCell.questionId)
-    if (!question) return
-
-    let currentValue
-    if (editingCell.field === 'body') {
-      currentValue = question.body
-    } else if (editingCell.field === 'explanation') {
-      currentValue = question.explanation || ''
-    } else if (editingCell.field === 'option') {
-      const optionText = question.options?.[editingCell.optionIndex] || ''
-      currentValue = optionText.replace(/\s*\[correct\]\s*$/, '')
-    }
-
-    if (editValue.trim() === currentValue.trim()) {
-      setEditingCell(null)
-      setEditValue('')
-      return
-    }
-
-    updateData(editingCell.questionId, editingCell.field, editValue, editingCell.optionIndex)
-  }, [editingCell, editValue, isUpdating, questions, updateData])
-
-  // Handle edit cancel
-  const handleEditCancel = useCallback(() => {
-    setEditingCell(null)
-    setEditValue('')
-  }, [])
+  }, [domain, onDomainUpdate, questions, isUpdating])
 
   // Toggle option as correct
   const handleToggleCorrect = useCallback(async (questionId, optionIndex) => {
@@ -165,10 +122,12 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
       const currentOption = updatedOptions[optionIndex]
       const isCurrentlyCorrect = currentOption.includes('[correct]')
 
+      // Remove [correct] from all options
       updatedOptions.forEach((opt, idx) => {
         updatedOptions[idx] = opt.replace(/\s*\[correct\]\s*$/, '')
       })
 
+      // Add [correct] to selected option if it wasn't correct
       if (!isCurrentlyCorrect) {
         updatedOptions[optionIndex] = `${updatedOptions[optionIndex]} [correct]`
       }
@@ -192,287 +151,159 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
     }
   }, [isUpdating, questions, domain, onDomainUpdate])
 
+  // Custom row renderer - just use default Row for all rows
+  const RowRenderer = useCallback((key, props) => {
+    return <Row key={key} {...props} className={props.row.type === 'option' ? 'bg-base-200/30' : ''} />
+  }, [])
+
   // Column definitions
-  const columns = useMemo(
-    () => [
-      columnHelper.display({
-        id: 'expander',
-        header: () => <div className="w-8"></div>,
-        cell: ({ row }) => {
-          return row.getCanExpand() ? (
-            <button
-              onClick={row.getToggleExpandedHandler()}
-              className="btn btn-ghost btn-xs btn-square"
-            >
-              {row.getIsExpanded() ? (
-                <ChevronDown className="h-3 w-3" />
-              ) : (
-                <ChevronRight className="h-3 w-3" />
-              )}
-            </button>
-          ) : null
-        },
-        size: 40,
-      }),
-      columnHelper.accessor('body', {
-        header: () => <span className="font-semibold text-xs uppercase">{t('Question')}</span>,
-        cell: ({ row, table }) => {
-          const question = row.original
-          const isEditing = editingCell?.questionId === question.id && editingCell?.field === 'body'
-
-          if (isEditing) {
-            return (
-              <div className="flex gap-1 p-1">
-                <EditableTextarea
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onSave={handleEditSave}
-                  onCancel={handleEditCancel}
-                  disabled={isUpdating}
-                />
-                <div className="flex flex-col gap-1">
-                  <button
-                    onClick={handleEditSave}
-                    className="btn btn-success btn-xs btn-square"
-                    disabled={isUpdating}
-                    title={t('Save (Ctrl+Enter)')}
-                  >
-                    <Check className="h-3 w-3" />
-                  </button>
-                  <button
-                    onClick={handleEditCancel}
-                    className="btn btn-ghost btn-xs btn-square"
-                    disabled={isUpdating}
-                    title={t('Cancel (Esc)')}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
-            )
-          }
-
+  const columns = useMemo(() => [
+    {
+      key: 'type',
+      name: '',
+      width: 60,
+      frozen: true,
+      renderCell: ({ row }) => {
+        if (row.type === 'question') {
+          return <div className="px-2 py-1 text-xs font-semibold text-base-content/50">Q{row.rowIndex + 1}</div>
+        }
+        if (row.type === 'option') {
           return (
-            <div
-              onClick={() => handleEditStart(question.id, 'body', question.body)}
-              className="w-full h-full px-2 py-1 text-sm cursor-pointer hover:bg-base-200 whitespace-pre-wrap"
-              title={t('Click to edit')}
-            >
-              {question.body || <span className="text-base-content/40">{t('Empty')}</span>}
+            <div className="flex items-center justify-center w-full h-full">
+              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-base-300 text-xs font-semibold">
+                {row.optionLabel}
+              </div>
             </div>
           )
-        },
-        size: 500,
-      }),
-      columnHelper.accessor('explanation', {
-        header: () => <span className="font-semibold text-xs uppercase">{t('Explanation')}</span>,
-        cell: ({ row, table }) => {
-          const question = row.original
-          const isEditing = editingCell?.questionId === question.id && editingCell?.field === 'explanation'
-
-          if (isEditing) {
-            return (
-              <div className="flex gap-1 p-1">
-                <EditableTextarea
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onSave={handleEditSave}
-                  onCancel={handleEditCancel}
-                  placeholder={t('Add explanation...')}
-                  disabled={isUpdating}
-                />
-                <div className="flex flex-col gap-1">
-                  <button
-                    onClick={handleEditSave}
-                    className="btn btn-success btn-xs btn-square"
-                    disabled={isUpdating}
-                    title={t('Save (Ctrl+Enter)')}
-                  >
-                    <Check className="h-3 w-3" />
-                  </button>
-                  <button
-                    onClick={handleEditCancel}
-                    className="btn btn-ghost btn-xs btn-square"
-                    disabled={isUpdating}
-                    title={t('Cancel (Esc)')}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
-            )
-          }
-
+        }
+        return null
+      },
+      editable: false,
+    },
+    {
+      key: 'body',
+      name: t('Question'),
+      width: 500,
+      editable: true,
+      renderCell: ({ row }) => {
+        if (row.type === 'option') {
           return (
-            <div
-              onClick={() => handleEditStart(question.id, 'explanation', question.explanation || '')}
-              className="w-full h-full px-2 py-1 text-sm cursor-pointer hover:bg-base-200 min-h-[2rem] whitespace-pre-wrap"
-              title={t('Click to edit')}
-            >
-              {question.explanation || <span className="text-base-content/40">{t('Add explanation...')}</span>}
+            <div className="flex items-center gap-2 px-2 py-1">
+              <button
+                onClick={() => handleToggleCorrect(row.questionId, row.optionIndex)}
+                className={`btn btn-xs ${row.isCorrect ? 'btn-success' : 'btn-ghost'}`}
+                disabled={isUpdating}
+                title={t('Mark as correct')}
+              >
+                {row.isCorrect ? (
+                  <>
+                    <Check className="h-3 w-3" />
+                    {t('Correct')}
+                  </>
+                ) : (
+                  t('Incorrect')
+                )}
+              </button>
+              <div className="flex-1 text-sm whitespace-pre-wrap leading-relaxed">
+                {row.body}
+              </div>
             </div>
           )
-        },
-        size: 400,
-      }),
-    ],
-    [t, editingCell, editValue, isUpdating, handleEditStart, handleEditSave, handleEditCancel]
-  )
+        }
+        return (
+          <div className="px-2 py-1 text-sm whitespace-pre-wrap leading-relaxed">
+            {row.body || <span className="text-base-content/40">{t('Click to edit')}</span>}
+          </div>
+        )
+      },
+      renderEditCell: ({ row, onRowChange, onClose }) => {
+        return (
+          <div className="w-full h-full p-2 flex items-center bg-white border-2 border-primary">
+            <input
+              type="text"
+              className="w-full text-sm bg-transparent border-none outline-none"
+              autoFocus
+              value={row.body}
+              onChange={(e) => onRowChange({ ...row, body: e.target.value })}
+              onBlur={onClose}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  onClose(false)
+                } else if (e.key === 'Enter') {
+                  e.preventDefault()
+                  onClose(true)
+                }
+              }}
+            />
+          </div>
+        )
+      },
+    },
+    {
+      key: 'explanation',
+      name: t('Explanation'),
+      width: 400,
+      editable: (row) => row.type === 'question',
+      renderCell: ({ row }) => {
+        if (row.type === 'option') return null
+        return (
+          <div className="px-2 py-1 text-sm whitespace-pre-wrap leading-relaxed">
+            {row.explanation || <span className="text-base-content/40">{t('Add explanation...')}</span>}
+          </div>
+        )
+      },
+      renderEditCell: ({ row, onRowChange, onClose }) => {
+        return (
+          <div className="w-full h-full p-2 flex items-center bg-white border-2 border-primary">
+            <input
+              type="text"
+              className="w-full text-sm bg-transparent border-none outline-none"
+              autoFocus
+              value={row.explanation}
+              onChange={(e) => onRowChange({ ...row, explanation: e.target.value })}
+              onBlur={onClose}
+              placeholder={t('Add explanation...')}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  onClose(false)
+                } else if (e.key === 'Enter') {
+                  e.preventDefault()
+                  onClose(true)
+                }
+              }}
+            />
+          </div>
+        )
+      },
+    },
+  ], [t])
 
-  // Table instance with meta
-  const table = useReactTable({
-    data: questions,
-    columns,
-    state: {
-      expanded,
-    },
-    onExpandedChange: setExpanded,
-    getCoreRowModel: getCoreRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-    getRowCanExpand: () => true,
-    meta: {
-      updateData,
-    },
-  })
+  if (questions.length === 0) {
+    return (
+      <div className="w-full h-full bg-base-100">
+        <div className="text-center py-12 text-base-content/50">
+          <p className="text-sm">{t('No Questions Created Yet')}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full h-full bg-base-100">
-      <div className="overflow-auto border border-base-300 rounded-lg">
-        <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
-          <thead className="sticky top-0 z-10">
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th
-                    key={header.id}
-                    className="bg-base-200 border-b-2 border-r border-base-300 px-0 py-2 text-left font-semibold"
-                    style={{ width: header.column.columnDef.size }}
-                  >
-                    <div className="px-2">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map(row => (
-              <>
-                <tr key={row.id} className="border-b border-base-300 hover:bg-base-100">
-                  {row.getVisibleCells().map(cell => (
-                    <td
-                      key={cell.id}
-                      className="border-r border-base-300 p-0 align-top"
-                      style={{ width: cell.column.columnDef.size }}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </tr>
-                {row.getIsExpanded() && row.original.options && row.original.options.length > 0 && (
-                  row.original.options.map((option, optionIndex) => {
-                    const isCorrect = option.includes('[correct]')
-                    const optionText = option.replace(/\s*\[correct\]\s*$/, '')
-                    const isEditing = editingCell?.questionId === row.original.id &&
-                                     editingCell?.field === 'option' &&
-                                     editingCell?.optionIndex === optionIndex
-
-                    return (
-                      <tr key={`${row.id}-option-${optionIndex}`} className="border-b border-base-300 bg-base-200/30">
-                        <td className="border-r border-base-300 p-2 text-center">
-                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-base-300 text-xs font-semibold mx-auto">
-                            {String.fromCharCode(65 + optionIndex)}
-                          </div>
-                        </td>
-                        <td className="border-r border-base-300 p-0" colSpan={columns.length - 1}>
-                          {isEditing ? (
-                            <div className="flex items-center gap-2 px-2 py-1">
-                              <button
-                                onClick={() => handleToggleCorrect(row.original.id, optionIndex)}
-                                className={`btn btn-xs ${isCorrect ? 'btn-success' : 'btn-ghost'}`}
-                                disabled={isUpdating}
-                                title={t('Mark as correct')}
-                              >
-                                {isCorrect ? t('Correct') : t('Incorrect')}
-                              </button>
-                              <input
-                                type="text"
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault()
-                                    handleEditSave()
-                                  } else if (e.key === 'Escape') {
-                                    e.preventDefault()
-                                    handleEditCancel()
-                                  }
-                                }}
-                                className="input input-bordered input-sm flex-1 text-sm"
-                                autoFocus
-                                disabled={isUpdating}
-                              />
-                              <button
-                                onClick={handleEditSave}
-                                className="btn btn-success btn-xs btn-square"
-                                disabled={isUpdating}
-                                title={t('Save (Enter)')}
-                              >
-                                <Check className="h-3 w-3" />
-                              </button>
-                              <button
-                                onClick={handleEditCancel}
-                                className="btn btn-ghost btn-xs btn-square"
-                                disabled={isUpdating}
-                                title={t('Cancel (Esc)')}
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 px-2 py-1">
-                              <button
-                                onClick={() => handleToggleCorrect(row.original.id, optionIndex)}
-                                className={`btn btn-xs ${isCorrect ? 'btn-success' : 'btn-ghost'}`}
-                                disabled={isUpdating}
-                                title={t('Mark as correct')}
-                              >
-                                {isCorrect ? t('Correct') : t('Incorrect')}
-                              </button>
-                              <div
-                                onClick={() => handleEditStart(row.original.id, 'option', optionText, optionIndex)}
-                                className={`flex-1 px-2 py-1 text-sm cursor-pointer hover:bg-base-200 rounded ${isCorrect ? 'font-semibold' : ''}`}
-                                title={t('Click to edit')}
-                              >
-                                {optionText}
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </>
-            ))}
-          </tbody>
-        </table>
-
-        {questions.length === 0 && (
-          <div className="text-center py-12 text-base-content/50">
-            <p className="text-sm">{t('No Questions Created Yet')}</p>
-          </div>
-        )}
-      </div>
+      <DataGrid
+        columns={columns}
+        rows={rows}
+        onRowsChange={handleRowsChange}
+        rowHeight={45}
+        className="rdg-light border border-base-300 rounded-lg"
+        style={{ height: '600px' }}
+        rowKeyGetter={(row) => row.id}
+        renderers={{
+          renderRow: RowRenderer,
+        }}
+      />
     </div>
   )
 }

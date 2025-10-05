@@ -17,7 +17,9 @@
       "Bash(yarn list:*)",
       "WebFetch(domain:tanstack.com)",
       "WebFetch(domain:www.material-react-table.com)",
-      "WebFetch(domain:muhimasri.com)"
+      "WebFetch(domain:muhimasri.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:adazzle.github.io)"
     ],
     "deny": [],
     "ask": []
