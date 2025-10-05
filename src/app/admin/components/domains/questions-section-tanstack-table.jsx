@@ -217,31 +217,41 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
         )
       },
       renderEditCell: ({ row, onRowChange, onClose }) => {
+        const inputRef = useCallback((node) => {
+          if (node) {
+            node.focus()
+            // Auto-resize based on content
+            const adjustWidth = () => {
+              const canvas = document.createElement('canvas')
+              const context = canvas.getContext('2d')
+              context.font = '14px system-ui'
+              const width = context.measureText(node.value || 'W').width
+              node.style.width = Math.max(200, Math.min(800, width + 40)) + 'px'
+            }
+            adjustWidth()
+            node.addEventListener('input', adjustWidth)
+          }
+        }, [])
+
         return (
-          <div className="relative w-full h-full">
-            <input
-              type="text"
-              className="absolute top-0 left-0 h-full p-2 bg-white border-2 border-primary text-sm outline-none z-10"
-              style={{
-                minWidth: '100%',
-                width: 'max-content',
-                maxWidth: '600px'
-              }}
-              autoFocus
-              value={row.body}
-              onChange={(e) => onRowChange({ ...row, body: e.target.value })}
-              onBlur={onClose}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  e.preventDefault()
-                  onClose(false)
-                } else if (e.key === 'Enter') {
-                  e.preventDefault()
-                  onClose(true)
-                }
-              }}
-            />
-          </div>
+          <input
+            ref={inputRef}
+            type="text"
+            className="fixed p-2 bg-white border-2 border-primary text-sm outline-none shadow-lg"
+            style={{ zIndex: 9999 }}
+            value={row.body}
+            onChange={(e) => onRowChange({ ...row, body: e.target.value })}
+            onBlur={onClose}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                onClose(false)
+              } else if (e.key === 'Enter') {
+                e.preventDefault()
+                onClose(true)
+              }
+            }}
+          />
         )
       },
     },
@@ -259,32 +269,42 @@ export function QuestionsSectionTanstackTable({ domain, onDomainUpdate }) {
         )
       },
       renderEditCell: ({ row, onRowChange, onClose }) => {
+        const inputRef = useCallback((node) => {
+          if (node) {
+            node.focus()
+            // Auto-resize based on content
+            const adjustWidth = () => {
+              const canvas = document.createElement('canvas')
+              const context = canvas.getContext('2d')
+              context.font = '14px system-ui'
+              const width = context.measureText(node.value || 'W').width
+              node.style.width = Math.max(200, Math.min(800, width + 40)) + 'px'
+            }
+            adjustWidth()
+            node.addEventListener('input', adjustWidth)
+          }
+        }, [])
+
         return (
-          <div className="relative w-full h-full">
-            <input
-              type="text"
-              className="absolute top-0 left-0 h-full p-2 bg-white border-2 border-primary text-sm outline-none z-10"
-              style={{
-                minWidth: '100%',
-                width: 'max-content',
-                maxWidth: '600px'
-              }}
-              autoFocus
-              value={row.explanation}
-              onChange={(e) => onRowChange({ ...row, explanation: e.target.value })}
-              onBlur={onClose}
-              placeholder={t('Add explanation...')}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  e.preventDefault()
-                  onClose(false)
-                } else if (e.key === 'Enter') {
-                  e.preventDefault()
-                  onClose(true)
-                }
-              }}
-            />
-          </div>
+          <input
+            ref={inputRef}
+            type="text"
+            className="fixed p-2 bg-white border-2 border-primary text-sm outline-none shadow-lg"
+            style={{ zIndex: 9999 }}
+            value={row.explanation}
+            onChange={(e) => onRowChange({ ...row, explanation: e.target.value })}
+            onBlur={onClose}
+            placeholder={t('Add explanation...')}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                onClose(false)
+              } else if (e.key === 'Enter') {
+                e.preventDefault()
+                onClose(true)
+              }
+            }}
+          />
         )
       },
     },
