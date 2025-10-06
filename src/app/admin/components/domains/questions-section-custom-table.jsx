@@ -86,7 +86,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="absolute z-10 border-2 border-blue-500 resize-none overflow-hidden"
+          className="absolute z-10 border-2 border-blue-500 resize-none overflow-hidden bg-white"
           style={{
             position: 'absolute',
             top: `${editingCell.position.top}px`,
@@ -95,7 +95,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
             minHeight: `${editingCell.position.height}px`,
             padding: '12px',
             margin: 0,
-            fontSize: 'inherit',
+            fontSize: '14px',
             fontFamily: 'inherit',
             lineHeight: 'inherit',
             boxSizing: 'border-box',
