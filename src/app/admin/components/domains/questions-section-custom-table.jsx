@@ -12,6 +12,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
   const [dragStart, setDragStart] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
   const [activeQuestionGroup, setActiveQuestionGroup] = useState(null);
+  const [lastClickedCell, setLastClickedCell] = useState(null);
   const inputRef = useRef(null);
   const cellRefs = useRef({});
   const containerRef = useRef(null);
@@ -37,7 +38,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
     }
   }, [editingCell]);
 
-  const handleDoubleClick = (rowIndex, value, event, type = 'question', answerId = null) => {
+  const handleDoubleClick = (rowIndex, value, event, type = 'question', answerId = null, questionId = null) => {
     const cell = event.currentTarget;
     const cellRect = cell.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
@@ -49,6 +50,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
       rowIndex,
       type,
       answerId,
+      questionId,
       isCorrect,
       position: {
         top: cellRect.top - containerRect.top,
@@ -102,6 +104,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
         // Different question group, clear selection and start new group
         setActiveQuestionGroup(rowIndex);
         setSelectedCells(new Set([cellId]));
+        setLastClickedCell({ cellId, rowIndex, type, optionIndex });
         return;
       }
       setActiveQuestionGroup(rowIndex);
@@ -110,7 +113,33 @@ export default function QuestionsSectionCustomTable({ domain }) {
       setActiveQuestionGroup(null);
     }
 
-    if (e.ctrlKey || e.metaKey) {
+    if (e.shiftKey && lastClickedCell) {
+      // Shift-select mode: select range from last clicked cell to current cell
+      const cellsInRange = new Set();
+
+      if (type === 'option' && lastClickedCell.type === 'option' && rowIndex === lastClickedCell.rowIndex) {
+        // Both are options from the same question
+        const minOption = Math.min(lastClickedCell.optionIndex, optionIndex);
+        const maxOption = Math.max(lastClickedCell.optionIndex, optionIndex);
+
+        for (let i = minOption; i <= maxOption; i++) {
+          cellsInRange.add(`o-${rowIndex}-${i}`);
+        }
+      } else if (type === 'question' && lastClickedCell.type === 'question') {
+        // Both are questions
+        const minRow = Math.min(lastClickedCell.rowIndex, rowIndex);
+        const maxRow = Math.max(lastClickedCell.rowIndex, rowIndex);
+
+        for (let i = minRow; i <= maxRow; i++) {
+          cellsInRange.add(`q-${i}`);
+        }
+      } else {
+        // Mixed types, just select the current cell
+        cellsInRange.add(cellId);
+      }
+
+      setSelectedCells(cellsInRange);
+    } else if (e.ctrlKey || e.metaKey) {
       // Multi-select mode
       setSelectedCells((prev) => {
         const next = new Set(prev);
@@ -121,8 +150,11 @@ export default function QuestionsSectionCustomTable({ domain }) {
         }
         return next;
       });
+      setLastClickedCell({ cellId, rowIndex, type, optionIndex });
     } else {
+      // Single select
       setSelectedCells(new Set([cellId]));
+      setLastClickedCell({ cellId, rowIndex, type, optionIndex });
     }
   };
 
@@ -365,6 +397,21 @@ export default function QuestionsSectionCustomTable({ domain }) {
                     {question.body || ''}
                   </td>
                 </tr>
+                {isExpanded && (
+                  <tr className="bg-base-200/50 border-l-4 border-l-secondary">
+                    <td className="w-12 text-center text-xs text-base-content/50">
+                      EXP
+                    </td>
+                    <td
+                      onDoubleClick={(e) =>
+                        handleDoubleClick(rowIndex, question.explanation, e, 'explanation', null, question.id)
+                      }
+                      className="cursor-cell italic text-base-content/70"
+                    >
+                      {question.explanation || ''}
+                    </td>
+                  </tr>
+                )}
                 {isExpanded && options.map((option, optionIndex) => {
                   const isCorrect = option?.includes('[correct]');
                   const displayText = option?.replace('[correct]', '').trim() || '';
