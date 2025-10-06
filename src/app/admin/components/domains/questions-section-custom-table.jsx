@@ -1,15 +1,29 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Fragment } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 export default function QuestionsSectionCustomTable({ domain }) {
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState('');
+  const [expandedRows, setExpandedRows] = useState(new Set());
   const inputRef = useRef(null);
   const cellRefs = useRef({});
   const containerRef = useRef(null);
 
   const questions = domain?.questions || [];
+
+  const toggleRow = (questionId) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(questionId)) {
+        next.delete(questionId);
+      } else {
+        next.add(questionId);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (editingCell && inputRef.current) {
@@ -18,13 +32,15 @@ export default function QuestionsSectionCustomTable({ domain }) {
     }
   }, [editingCell]);
 
-  const handleDoubleClick = (rowIndex, value, event) => {
+  const handleDoubleClick = (rowIndex, value, event, type = 'question', answerId = null) => {
     const cell = event.currentTarget;
     const cellRect = cell.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
 
     setEditingCell({
       rowIndex,
+      type,
+      answerId,
       position: {
         top: cellRect.top - containerRect.top,
         left: cellRect.left - containerRect.left,
@@ -57,25 +73,68 @@ export default function QuestionsSectionCustomTable({ domain }) {
       <table className="table table-zebra w-full">
         <thead>
           <tr>
+            <th className="w-12"></th>
             <th>Question</th>
           </tr>
         </thead>
         <tbody>
-          {questions.map((question, rowIndex) => (
-            <tr key={question.id}>
-              <td
-                onDoubleClick={(e) =>
-                  handleDoubleClick(rowIndex, question.body, e)
-                }
-                className="cursor-cell relative"
-                ref={(el) => {
-                  if (el) cellRefs.current[rowIndex] = el;
-                }}
-              >
-                {question.body || ''}
-              </td>
-            </tr>
-          ))}
+          {questions.map((question, rowIndex) => {
+            const isExpanded = expandedRows.has(question.id);
+            const options = question.options || [];
+
+            return (
+              <Fragment key={question.id}>
+                <tr>
+                  <td className="w-12">
+                    <button
+                      className="btn btn-ghost btn-xs"
+                      onClick={() => toggleRow(question.id)}
+                      aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                    </button>
+                  </td>
+                  <td
+                    onDoubleClick={(e) =>
+                      handleDoubleClick(rowIndex, question.body, e, 'question')
+                    }
+                    className="cursor-cell relative"
+                    ref={(el) => {
+                      if (el) cellRefs.current[`q-${rowIndex}`] = el;
+                    }}
+                  >
+                    {question.body || ''}
+                  </td>
+                </tr>
+                {isExpanded && options.map((option, optionIndex) => (
+                  <tr key={`${question.id}-option-${optionIndex}`} className="bg-base-200">
+                    <td></td>
+                    <td
+                      onDoubleClick={(e) =>
+                        handleDoubleClick(
+                          `${rowIndex}-${optionIndex}`,
+                          option,
+                          e,
+                          'option',
+                          optionIndex
+                        )
+                      }
+                      className="cursor-cell relative pl-12"
+                      ref={(el) => {
+                        if (el) cellRefs.current[`o-${rowIndex}-${optionIndex}`] = el;
+                      }}
+                    >
+                      {option || ''}
+                    </td>
+                  </tr>
+                ))}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
 
