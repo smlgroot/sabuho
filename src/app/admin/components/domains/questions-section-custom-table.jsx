@@ -80,22 +80,25 @@ export default function QuestionsSectionCustomTable({ domain }) {
       </table>
 
       {editingCell && (
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="input input-bordered absolute z-10"
+          className="absolute z-10 border-2 border-blue-500 resize-none overflow-hidden"
           style={{
             position: 'absolute',
             top: `${editingCell.position.top}px`,
             left: `${editingCell.position.left}px`,
             width: `${editingCell.position.width}px`,
-            height: `${editingCell.position.height}px`,
-            padding: '8px',
+            minHeight: `${editingCell.position.height}px`,
+            padding: '12px',
             margin: 0,
+            fontSize: 'inherit',
+            fontFamily: 'inherit',
+            lineHeight: 'inherit',
+            boxSizing: 'border-box',
           }}
         />
       )}
