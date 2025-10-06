@@ -123,7 +123,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
                           optionIndex
                         )
                       }
-                      className="cursor-cell relative pl-12"
+                      className="cursor-cell relative"
                       ref={(el) => {
                         if (el) cellRefs.current[`o-${rowIndex}-${optionIndex}`] = el;
                       }}
@@ -151,7 +151,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
             top: `${editingCell.position.top}px`,
             left: `${editingCell.position.left}px`,
             width: `${editingCell.position.width}px`,
-            minHeight: `${editingCell.position.height}px`,
+            height: `${editingCell.position.height}px`,
             padding: '12px',
             margin: 0,
             fontSize: '14px',
