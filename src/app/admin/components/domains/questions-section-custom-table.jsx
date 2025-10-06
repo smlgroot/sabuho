@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, Fragment } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 
 export default function QuestionsSectionCustomTable({ domain }) {
   const [editingCell, setEditingCell] = useState(null);
@@ -37,10 +37,14 @@ export default function QuestionsSectionCustomTable({ domain }) {
     const cellRect = cell.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
 
+    const isCorrect = value?.includes('[correct]');
+    const displayValue = value?.replace('[correct]', '').trim() || '';
+
     setEditingCell({
       rowIndex,
       type,
       answerId,
+      isCorrect,
       position: {
         top: cellRect.top - containerRect.top,
         left: cellRect.left - containerRect.left,
@@ -48,12 +52,13 @@ export default function QuestionsSectionCustomTable({ domain }) {
         height: cellRect.height,
       },
     });
-    setEditValue(value || '');
+    setEditValue(displayValue);
   };
 
   const handleBlur = () => {
     // Here you would save the edited value
-    console.log('Saving:', editingCell, editValue);
+    const valueToSave = editingCell?.isCorrect ? `${editValue} [correct]` : editValue;
+    console.log('Saving:', editingCell, valueToSave);
     setEditingCell(null);
     setEditValue('');
   };
@@ -70,7 +75,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
 
   return (
     <div ref={containerRef} className="relative overflow-auto">
-      <table className="table table-zebra w-full">
+      <table className="table table-zebra w-full [&_td]:border-x-0 [&_th]:border-x-0">
         <thead>
           <tr>
             <th className="w-12"></th>
@@ -110,28 +115,42 @@ export default function QuestionsSectionCustomTable({ domain }) {
                     {question.body || ''}
                   </td>
                 </tr>
-                {isExpanded && options.map((option, optionIndex) => (
-                  <tr key={`${question.id}-option-${optionIndex}`} className="bg-base-200">
-                    <td></td>
-                    <td
-                      onDoubleClick={(e) =>
-                        handleDoubleClick(
-                          `${rowIndex}-${optionIndex}`,
-                          option,
-                          e,
-                          'option',
-                          optionIndex
-                        )
-                      }
-                      className="cursor-cell relative"
-                      ref={(el) => {
-                        if (el) cellRefs.current[`o-${rowIndex}-${optionIndex}`] = el;
-                      }}
+                {isExpanded && options.map((option, optionIndex) => {
+                  const isCorrect = option?.includes('[correct]');
+                  const displayText = option?.replace('[correct]', '').trim() || '';
+
+                  return (
+                    <tr
+                      key={`${question.id}-option-${optionIndex}`}
+                      className="bg-base-200 border-l-4 border-l-primary"
                     >
-                      {option || ''}
-                    </td>
-                  </tr>
-                ))}
+                      <td className="w-12 text-center">
+                        {isCorrect && (
+                          <span className="badge badge-success badge-sm flex items-center justify-center">
+                            <Check className="w-3 h-3" />
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        onDoubleClick={(e) =>
+                          handleDoubleClick(
+                            `${rowIndex}-${optionIndex}`,
+                            option,
+                            e,
+                            'option',
+                            optionIndex
+                          )
+                        }
+                        className="cursor-cell relative"
+                        ref={(el) => {
+                          if (el) cellRefs.current[`o-${rowIndex}-${optionIndex}`] = el;
+                        }}
+                      >
+                        {displayText}
+                      </td>
+                    </tr>
+                  );
+                })}
               </Fragment>
             );
           })}
