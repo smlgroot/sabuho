@@ -333,9 +333,9 @@ export function QuestionsSection({
               <div className="text-xs text-muted-foreground truncate">{domainItem.description}</div>
             )}
           </div>
-          {domainItem.question_count && domainItem.question_count > 0 && (
+          {domainItem.questions && domainItem.questions.length > 0 && (
             <span className="ml-2 px-1.5 py-0.5 text-xs bg-muted text-muted-foreground rounded">
-              {domainItem.question_count}
+              {domainItem.questions.length}
             </span>
           )}
         </div>

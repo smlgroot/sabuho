@@ -11,7 +11,7 @@ export const DomainShape = {
   description: null,
   created_at: '',
   updated_at: '',
-  question_count: null
+  domain_type: 'folder' // 'folder' | 'file'
 }
 
 export const QuestionShape = {

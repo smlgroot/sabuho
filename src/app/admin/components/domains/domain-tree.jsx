@@ -1,6 +1,7 @@
 'use client'
 
-import { Plus, MoreHorizontal, FolderOpen, Folder, Edit, Trash2, ChevronRight, ChevronDown } from 'lucide-react'
+import React from 'react'
+import { Plus, FolderOpen, Folder, File, Trash2, ChevronRight, ChevronDown } from 'lucide-react'
 // DaisyUI components used directly
 import { useStore } from '@/store/useStore'
 import { useTranslation } from 'react-i18next'
@@ -12,11 +13,39 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
   const hasChildren = domain.children && domain.children.length > 0
   const isCollapsed = isDomainCollapsed(domain.id)
   const indentationLeft = level * 20 // 20px per level for indentation
+  const [contextMenuOpen, setContextMenuOpen] = React.useState(false)
+  const [contextMenuPosition, setContextMenuPosition] = React.useState({ x: 0, y: 0 })
+  const contextMenuRef = React.useRef(null)
+
+  // Close context menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target)) {
+        setContextMenuOpen(false)
+      }
+    }
+
+    if (contextMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [contextMenuOpen])
+
+  const handleContextMenu = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenuPosition({ x: e.clientX, y: e.clientY })
+    setContextMenuOpen(true)
+  }
 
   return (
     <>
       <div className="w-full">
-        <div className="flex items-center group relative min-w-0" style={{ paddingLeft: `${indentationLeft}px` }}>
+        <div
+          className="flex items-center group relative min-w-0"
+          style={{ paddingLeft: `${indentationLeft}px` }}
+          onContextMenu={handleContextMenu}
+        >
           {hasChildren ? (
             <button
               onClick={(e) => {
@@ -42,15 +71,22 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
             }}
           >
             <div className="flex items-center mr-2">
-              {level === 0 ? (
-                // Root level domains - always show folder icons
+              {domain.domain_type === 'file' ? (
+                // File type domains - show file icon
+                level === 0 ? (
+                  <File className="h-4 w-4 text-primary mr-2" />
+                ) : (
+                  <File className="h-3.5 w-3.5 opacity-70 mr-2" />
+                )
+              ) : level === 0 ? (
+                // Root level folder domains - always show folder icons
                 hasChildren ? (
                   <FolderOpen className="h-4 w-4 text-primary mr-2" />
                 ) : (
                   <Folder className="h-4 w-4 text-primary mr-2" />
                 )
               ) : (
-                // Child domains - show smaller, muted folder icons
+                // Child folder domains - show smaller, muted folder icons
                 hasChildren ? (
                   <FolderOpen className="h-3.5 w-3.5 opacity-70 mr-2" />
                 ) : (
@@ -61,59 +97,69 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
             <span className={`flex-1 truncate min-w-0 ${level === 0 ? 'font-medium' : ''}`}>
               {domain.name}
             </span>
-            <div className="badge badge-neutral badge-sm ml-2">
-              {domain.questions?.length || 0}
-            </div>
+            {domain.domain_type === 'file' && (
+              <div className="badge badge-neutral badge-sm ml-2">
+                {domain.questions?.length || 0}
+              </div>
+            )}
           </button>
-          
-          <div className="dropdown dropdown-end">
-            <button
-              tabIndex={0}
-              className="btn btn-ghost btn-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">{t("More options")}</span>
-            </button>
-            <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-48 p-2 shadow">
+        </div>
+      </div>
+
+      {/* Context Menu */}
+      {contextMenuOpen && (
+        <ul
+          ref={contextMenuRef}
+          className="menu bg-base-100 rounded-box w-48 p-2 shadow-lg border border-base-300 fixed z-50"
+          style={{
+            left: `${contextMenuPosition.x}px`,
+            top: `${contextMenuPosition.y}px`,
+          }}
+        >
+          {domain.domain_type === 'folder' && (
+            <>
               <li>
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    onCreateDomain(domain.id)
+                    onCreateDomain(domain.id, 'folder')
+                    setContextMenuOpen(false)
                   }}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("Add Subdomain")}
+                  <Folder className="h-4 w-4 mr-2" />
+                  {t("Add Sub Folder")}
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onCreateDomain(domain.id, 'file')
+                    setContextMenuOpen(false)
+                  }}
+                >
+                  <File className="h-4 w-4 mr-2" />
+                  {t("Add File")}
                 </button>
               </li>
               <li><hr className="divider my-1" /></li>
-              <li>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onEditDomain(domain)
-                  }}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  {t("Edit Domain")}
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDeleteDomain(domain)
-                  }}
-                  className="text-error hover:bg-error hover:text-white"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {t("Delete Domain")}
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+            </>
+          )}
+          <li>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDeleteDomain(domain)
+                setContextMenuOpen(false)
+              }}
+              className="text-error hover:bg-error hover:text-white"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t("Delete")}
+            </button>
+          </li>
+        </ul>
+      )}
       {!isCollapsed && domain.children?.map((child) => (
         <DomainNode
           key={child.id}
@@ -133,13 +179,13 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
   const { t } = useTranslation()
   return (
     <div className="space-y-4">
-      {/* Add Domain Button */}
+      {/* Add Folder Button */}
       <button
         className="btn btn-primary w-full"
-        onClick={() => onCreateDomain()}
+        onClick={() => onCreateDomain(null, 'folder')}
       >
         <Plus className="h-4 w-4 mr-2" />
-        {t("Add Domain")}
+        {t("Add Folder")}
       </button>
       
       {/* Domains List */}

@@ -23,7 +23,7 @@ export function DeleteDomainDialog({ isOpen, onClose, domain, onConfirm }) {
   }
 
   const hasChildren = domain?.children && domain.children.length > 0
-  const hasQuestions = domain?.question_count && domain.question_count > 0
+  const hasQuestions = domain?.questions && domain.questions.length > 0
   const hasResources = domain?.resources && domain.resources.length > 0
 
   if (!isOpen) return null
@@ -59,7 +59,7 @@ export function DeleteDomainDialog({ isOpen, onClose, domain, onConfirm }) {
                     <li>• {domain.children.length} child domain{domain.children.length !== 1 ? 's' : ''}</li>
                   )}
                   {hasQuestions && (
-                    <li>• {domain.question_count} question{domain.question_count !== 1 ? 's' : ''}</li>
+                    <li>• {domain.questions.length} question{domain.questions.length !== 1 ? 's' : ''}</li>
                   )}
                   {hasResources && (
                     <li>• {domain.resources.length} resource{domain.resources.length !== 1 ? 's' : ''}</li>

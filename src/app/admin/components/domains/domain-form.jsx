@@ -37,8 +37,7 @@ export function DomainForm({ isOpen, onClose, domain, parentId, onSubmit }) {
       const domainData = {
         name,
         description: description || null,
-        parent_id: parentId || null,
-        question_count: domain?.question_count || 0
+        parent_id: parentId || null
       }
 
       await onSubmit(domainData)
