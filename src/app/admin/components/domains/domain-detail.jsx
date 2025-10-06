@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Calendar, FileText, HelpCircle } from 'lucide-react'
 import { updateDomain, fetchDomains } from '@/lib/admin/domains'
-import { QuestionsSectionTanstackTable } from './questions-section-tanstack-table'
+import QuestionsSectionCustomTable from './questions-section-custom-table'
 import { ResourcesSection } from './resources-section'
 import { DomainTabs } from './domain-tabs'
 import { useTranslation } from 'react-i18next'
@@ -217,9 +217,8 @@ export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDom
       />
 
       {activeTab === 'questions' ? (
-        <QuestionsSectionTanstackTable
+        <QuestionsSectionCustomTable
           domain={localDomain}
-          onDomainUpdate={handleDomainUpdate}
         />
       ) : (
         <ResourcesSection
