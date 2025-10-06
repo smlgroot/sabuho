@@ -288,6 +288,35 @@ export default function QuestionsSectionCustomTable({ domain }) {
 
   return (
     <div ref={containerRef} className="relative overflow-auto">
+      <div className="sticky top-0 z-20 bg-base-100 border-b border-base-300 p-4 flex items-center gap-2">
+        <span className="text-sm font-medium">
+          {isSelectingOptions()
+            ? `${getSelectedOptionIndices().length} ${getSelectedOptionIndices().length === 1 ? 'option' : 'options'} selected`
+            : `${getSelectedRowIndices().length} ${getSelectedRowIndices().length === 1 ? 'row' : 'rows'} selected`
+          }
+        </span>
+        <div className="flex gap-2">
+          {isSelectingOptions() ? (
+            <>
+              <button onClick={handleDeleteOptions} className="btn btn-error btn-sm" disabled={selectedCells.size === 0}>
+                Delete
+              </button>
+              <button onClick={handleInsertOption} className="btn btn-primary btn-sm" disabled={selectedCells.size === 0}>
+                Insert new option
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={handleDeleteRows} className="btn btn-error btn-sm" disabled={selectedCells.size === 0}>
+                Delete
+              </button>
+              <button onClick={handleDuplicateRows} className="btn btn-primary btn-sm" disabled={selectedCells.size === 0}>
+                Duplicate
+              </button>
+            </>
+          )}
+        </div>
+      </div>
       <table className="table table-zebra w-full [&_td]:border-x-0 [&_th]:border-x-0">
         <thead>
           <tr>
