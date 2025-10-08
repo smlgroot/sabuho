@@ -6,7 +6,7 @@ import { Plus, FolderOpen, Folder, File, Trash2, ChevronRight, ChevronDown } fro
 import { useStore } from '@/store/useStore'
 import { useTranslation } from 'react-i18next'
 
-function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain }) {
+function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain, allDomains }) {
   const { t } = useTranslation()
   const { selectedDomain, toggleDomainCollapsed, isDomainCollapsed } = useStore()
   const isSelected = selectedDomain?.id === domain.id
@@ -16,6 +16,9 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
   const [contextMenuOpen, setContextMenuOpen] = React.useState(false)
   const [contextMenuPosition, setContextMenuPosition] = React.useState({ x: 0, y: 0 })
   const contextMenuRef = React.useRef(null)
+  const [isDragging, setIsDragging] = React.useState(false)
+  const [isDropTarget, setIsDropTarget] = React.useState(false)
+  const nodeRef = React.useRef(null)
 
   // Close context menu when clicking outside
   React.useEffect(() => {
@@ -38,12 +41,140 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
     setContextMenuOpen(true)
   }
 
+  // Helper to find a domain in the tree by ID
+  const findDomainById = (domains, id) => {
+    for (const d of domains) {
+      if (d.id === id) return d
+      if (d.children) {
+        const found = findDomainById(d.children, id)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  // Check if targetId is a descendant of parentDomain
+  const isDescendantOf = (parentDomain, targetId) => {
+    if (!parentDomain || !parentDomain.children) return false
+    for (const child of parentDomain.children) {
+      if (child.id === targetId) return true
+      if (isDescendantOf(child, targetId)) return true
+    }
+    return false
+  }
+
+  const handleDragStart = (e) => {
+    // Prevent dragging by text selection
+    if (e.target.tagName === 'BUTTON' && !e.target.hasAttribute('draggable')) {
+      return
+    }
+
+    e.stopPropagation()
+    setIsDragging(true)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('application/json', JSON.stringify({
+      id: domain.id,
+      name: domain.name,
+      type: domain.domain_type,
+      parent_id: domain.parent_id
+    }))
+
+    // Create a fully opaque drag image
+    const dragImage = document.createElement('div')
+    dragImage.style.position = 'absolute'
+    dragImage.style.top = '-9999px'
+    dragImage.style.left = '-9999px'
+    dragImage.style.padding = '0.75rem 1rem'
+    dragImage.style.backgroundColor = '#ffffff'
+    dragImage.style.border = '2px solid'
+    dragImage.style.borderColor = 'var(--fallback-p,oklch(var(--p)/1))'
+    dragImage.style.borderRadius = '0.5rem'
+    dragImage.style.boxShadow = '0 10px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5)'
+    dragImage.style.fontSize = '14px'
+    dragImage.style.fontWeight = '500'
+    dragImage.style.color = '#000000'
+    dragImage.style.whiteSpace = 'nowrap'
+    dragImage.style.zIndex = '9999'
+    dragImage.innerHTML = `📁 ${domain.name}`
+
+    document.body.appendChild(dragImage)
+    e.dataTransfer.setDragImage(dragImage, dragImage.offsetWidth / 2, dragImage.offsetHeight / 2)
+    setTimeout(() => document.body.removeChild(dragImage), 0)
+  }
+
+  const handleDragEnd = (e) => {
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDragOver = (e) => {
+    // Only folders can be drop targets
+    if (domain.domain_type !== 'folder') return
+
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'move'
+    setIsDropTarget(true)
+  }
+
+  const handleDragLeave = (e) => {
+    // Only clear drop target if actually leaving this element
+    if (nodeRef.current && !nodeRef.current.contains(e.relatedTarget)) {
+      setIsDropTarget(false)
+    }
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDropTarget(false)
+
+    // Only folders can be drop targets
+    if (domain.domain_type !== 'folder') return
+
+    try {
+      const draggedData = JSON.parse(e.dataTransfer.getData('application/json'))
+
+      // Prevent dropping onto itself
+      if (draggedData.id === domain.id) return
+
+      // Check if already in this folder
+      if (draggedData.parent_id === domain.id) return
+
+      // Find the dragged domain in the tree
+      const draggedDomain = findDomainById(allDomains, draggedData.id)
+      if (!draggedDomain) {
+        console.error('Dragged domain not found in tree')
+        return
+      }
+
+      // Prevent dropping a folder into its own descendants
+      if (isDescendantOf(draggedDomain, domain.id)) return
+
+      // Call the move handler
+      onMoveDomain(draggedData.id, domain.id)
+    } catch (error) {
+      console.error('Error handling drop:', error)
+    }
+  }
+
   return (
     <>
       <div className="w-full">
         <div
-          className="flex items-center group relative min-w-0"
+          ref={nodeRef}
+          className={`flex items-center group relative min-w-0 transition-all cursor-move select-none ${
+            isDragging ? 'scale-105 shadow-lg ring-2 ring-primary bg-base-200 rounded-lg' : ''
+          } ${
+            isDropTarget ? 'bg-primary/20 rounded-lg' : ''
+          }`}
           style={{ paddingLeft: `${indentationLeft}px` }}
+          draggable={true}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
           onContextMenu={handleContextMenu}
         >
           {hasChildren ? (
@@ -169,14 +300,68 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
           onCreateDomain={onCreateDomain}
           onEditDomain={onEditDomain}
           onDeleteDomain={onDeleteDomain}
+          onMoveDomain={onMoveDomain}
+          allDomains={allDomains}
         />
       ))}
     </>
   )
 }
 
-export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain }) {
+export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain }) {
   const { t } = useTranslation()
+  const dropZoneRef = React.useRef(null)
+
+  // Helper to find a domain in the tree by ID
+  const findDomainById = (domainList, id) => {
+    for (const d of domainList) {
+      if (d.id === id) return d
+      if (d.children) {
+        const found = findDomainById(d.children, id)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  // Handle drop at root level (moving to root)
+  const handleDragOver = (e) => {
+    // Only accept drops within the drop zone element
+    if (!dropZoneRef.current) return
+
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDragLeave = (e) => {
+    // No visual feedback needed
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    try {
+      const draggedData = JSON.parse(e.dataTransfer.getData('application/json'))
+
+      // Check if domain exists in tree
+      const draggedDomain = findDomainById(domains, draggedData.id)
+      if (!draggedDomain) {
+        console.error('Dragged domain not found in tree')
+        return
+      }
+
+      // Check if already at root
+      if (draggedData.parent_id === null) return
+
+      // Move to root (null parent)
+      onMoveDomain(draggedData.id, null)
+    } catch (error) {
+      console.error('Error handling drop:', error)
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Add Folder Button */}
@@ -187,9 +372,15 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
         <Plus className="h-4 w-4 mr-2" />
         {t("Add Folder")}
       </button>
-      
-      {/* Domains List */}
-      <div className="space-y-1 overflow-x-hidden">
+
+      {/* Domains List - Drop zone for moving to root */}
+      <div
+        ref={dropZoneRef}
+        className="space-y-1 overflow-x-hidden min-h-[100px]"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         {domains.length === 0 ? (
           <div className="alert alert-info">
             <div className="text-center w-full">
@@ -207,6 +398,8 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
               onCreateDomain={onCreateDomain}
               onEditDomain={onEditDomain}
               onDeleteDomain={onDeleteDomain}
+              onMoveDomain={onMoveDomain}
+              allDomains={domains}
             />
           ))
         )}

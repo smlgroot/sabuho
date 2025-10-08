@@ -180,6 +180,20 @@ export default function AdminPage() {
     }
   };
 
+  const handleMoveDomain = async (domainId, newParentId) => {
+    try {
+      const updated = await updateDomain(domainId, { parent_id: newParentId });
+      updateDomainInStore(updated);
+      // Reload domains to rebuild the tree structure
+      await loadDomains();
+      toast.success(t("Domain moved successfully"));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to move domain";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    }
+  };
+
   const handleDomainSubmit = async (domainData) => {
     try {
       if (editingDomain) {
@@ -633,6 +647,7 @@ export default function AdminPage() {
               onCreateDomain={handleCreateDomain}
               onEditDomain={handleEditDomain}
               onDeleteDomain={handleDeleteDomain}
+              onMoveDomain={handleMoveDomain}
             />
           </div>
         </div>
