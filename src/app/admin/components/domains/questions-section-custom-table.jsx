@@ -2,10 +2,13 @@
 
 import { useState, useRef, useEffect, Fragment } from 'react';
 import { ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { createQuestion, deleteQuestion, updateQuestion } from '@/lib/admin/questions';
 
-export default function QuestionsSectionCustomTable({ domain }) {
+export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) {
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState('');
+  const [originalValue, setOriginalValue] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [selectedCells, setSelectedCells] = useState(new Set());
   const [isDragging, setIsDragging] = useState(false);
@@ -13,6 +16,9 @@ export default function QuestionsSectionCustomTable({ domain }) {
   const [contextMenu, setContextMenu] = useState(null);
   const [activeQuestionGroup, setActiveQuestionGroup] = useState(null);
   const [lastClickedCell, setLastClickedCell] = useState(null);
+  const [isCreatingQuestion, setIsCreatingQuestion] = useState(false);
+  const [isDeletingQuestions, setIsDeletingQuestions] = useState(false);
+  const [dialog, setDialog] = useState(null);
   const inputRef = useRef(null);
   const cellRefs = useRef({});
   const containerRef = useRef(null);
@@ -38,7 +44,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
     }
   }, [editingCell]);
 
-  const handleDoubleClick = (rowIndex, value, event, type = 'question', answerId = null, questionId = null) => {
+  const handleDoubleClick = (rowIndex, value, event, type = 'question', optionIndex = null, questionId = null) => {
     const cell = event.currentTarget;
     const cellRect = cell.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
@@ -49,7 +55,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
     setEditingCell({
       rowIndex,
       type,
-      answerId,
+      optionIndex,
       questionId,
       isCorrect,
       position: {
@@ -60,14 +66,71 @@ export default function QuestionsSectionCustomTable({ domain }) {
       },
     });
     setEditValue(displayValue);
+    setOriginalValue(displayValue);
   };
 
-  const handleBlur = () => {
-    // Here you would save the edited value
-    const valueToSave = editingCell?.isCorrect ? `${editValue} [correct]` : editValue;
-    console.log('Saving:', editingCell, valueToSave);
-    setEditingCell(null);
-    setEditValue('');
+  const handleBlur = async () => {
+    if (!editingCell || isSaving) return;
+
+    // Check if value has changed
+    if (editValue.trim() === originalValue.trim()) {
+      setEditingCell(null);
+      setEditValue('');
+      setOriginalValue('');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const question = questions[editingCell.rowIndex];
+      let updates = {};
+
+      if (editingCell.type === 'question') {
+        // Update question body
+        updates.body = editValue.trim();
+      } else if (editingCell.type === 'explanation') {
+        // Update explanation
+        updates.explanation = editValue.trim();
+      } else if (editingCell.type === 'option') {
+        // Update option
+        const updatedOptions = [...(question.options || [])];
+        const valueToSave = editingCell.isCorrect ? `${editValue.trim()} [correct]` : editValue.trim();
+        updatedOptions[editingCell.optionIndex] = valueToSave;
+        updates.options = updatedOptions;
+      }
+
+      // Save to backend
+      const updatedQuestion = await updateQuestion(question.id, updates);
+
+      // Update local domain state
+      const updatedQuestions = [...questions];
+      updatedQuestions[editingCell.rowIndex] = {
+        ...question,
+        ...updatedQuestion
+      };
+
+      const updatedDomain = {
+        ...domain,
+        questions: updatedQuestions
+      };
+
+      if (onDomainUpdate) {
+        onDomainUpdate(updatedDomain);
+      }
+
+      setEditingCell(null);
+      setEditValue('');
+      setOriginalValue('');
+    } catch (error) {
+      console.error('Failed to update question:', error);
+      setDialog({
+        type: 'alert',
+        title: 'Error',
+        message: `Failed to save changes: ${error.message}`
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -77,6 +140,7 @@ export default function QuestionsSectionCustomTable({ domain }) {
     } else if (e.key === 'Escape') {
       setEditingCell(null);
       setEditValue('');
+      setOriginalValue('');
     }
   };
 
@@ -261,13 +325,52 @@ export default function QuestionsSectionCustomTable({ domain }) {
     return activeQuestionGroup !== null;
   };
 
-  const handleDeleteRows = () => {
+  const handleDeleteRows = async () => {
+    if (isDeletingQuestions) return;
+
     const rowIndices = getSelectedRowIndices();
-    console.log('Delete rows:', rowIndices);
-    // Implement delete logic here
-    setContextMenu(null);
-    setSelectedCells(new Set());
-    setActiveQuestionGroup(null);
+    if (rowIndices.length === 0) return;
+
+    const questionsToDelete = rowIndices.map(index => questions[index]);
+    const questionIds = questionsToDelete.map(q => q.id);
+
+    setDialog({
+      type: 'confirm',
+      title: 'Delete Questions',
+      message: `Are you sure you want to delete ${questionIds.length} ${questionIds.length === 1 ? 'question' : 'questions'}?`,
+      onConfirm: async () => {
+        setIsDeletingQuestions(true);
+        setDialog(null);
+        try {
+          // Delete all selected questions
+          await Promise.all(questionIds.map(id => deleteQuestion(id)));
+
+          // Update the domain by removing deleted questions
+          const updatedQuestions = questions.filter(q => !questionIds.includes(q.id));
+          const updatedDomain = {
+            ...domain,
+            questions: updatedQuestions
+          };
+
+          if (onDomainUpdate) {
+            onDomainUpdate(updatedDomain);
+          }
+
+          setContextMenu(null);
+          setSelectedCells(new Set());
+          setActiveQuestionGroup(null);
+        } catch (error) {
+          console.error('Failed to delete questions:', error);
+          setDialog({
+            type: 'alert',
+            title: 'Error',
+            message: `Failed to delete questions: ${error.message}`
+          });
+        } finally {
+          setIsDeletingQuestions(false);
+        }
+      }
+    });
   };
 
   const handleDuplicateRows = () => {
@@ -294,6 +397,72 @@ export default function QuestionsSectionCustomTable({ domain }) {
     setContextMenu(null);
     setSelectedCells(new Set());
     setActiveQuestionGroup(null);
+  };
+
+  const handleAddNewQuestion = async (insertIndex = null) => {
+    if (!domain?.id || isCreatingQuestion) return;
+
+    setIsCreatingQuestion(true);
+    try {
+      const newQuestion = await createQuestion({
+        body: 'New question',
+        domain_id: domain.id,
+        options: [
+          { label: 'Option 1' },
+          { label: 'Option 2' },
+          { label: 'Option 3' },
+          { label: 'Option 4 [correct]' }
+        ],
+        explanation: '',
+      });
+
+      // Update the domain with the new question
+      let updatedQuestions;
+      if (insertIndex !== null) {
+        // Insert at specific position (above the selected question)
+        updatedQuestions = [
+          ...(domain.questions || []).slice(0, insertIndex),
+          newQuestion,
+          ...(domain.questions || []).slice(insertIndex)
+        ];
+      } else {
+        // Add at the end
+        updatedQuestions = [...(domain.questions || []), newQuestion];
+      }
+
+      const updatedDomain = {
+        ...domain,
+        questions: updatedQuestions
+      };
+
+      if (onDomainUpdate) {
+        onDomainUpdate(updatedDomain);
+      }
+
+      setContextMenu(null);
+      setSelectedCells(new Set());
+      setActiveQuestionGroup(null);
+    } catch (error) {
+      console.error('Failed to create question:', error);
+      setDialog({
+        type: 'alert',
+        title: 'Error',
+        message: `Failed to create question: ${error.message}`
+      });
+    } finally {
+      setIsCreatingQuestion(false);
+    }
+  };
+
+  const handleAddQuestionAboveSelected = () => {
+    const rowIndices = getSelectedRowIndices();
+    if (rowIndices.length > 0) {
+      // Insert above the first selected question
+      handleAddNewQuestion(rowIndices[0]);
+    } else {
+      // No selection, add at the end
+      handleAddNewQuestion();
+    }
   };
 
   useEffect(() => {
@@ -339,11 +508,22 @@ export default function QuestionsSectionCustomTable({ domain }) {
             </>
           ) : (
             <>
-              <button onClick={handleDeleteRows} className="btn btn-error btn-sm" disabled={selectedCells.size === 0}>
-                Delete
+              <button
+                onClick={handleDeleteRows}
+                className="btn btn-error btn-sm"
+                disabled={selectedCells.size === 0 || isDeletingQuestions}
+              >
+                {isDeletingQuestions ? <span className="loading loading-spinner loading-xs"></span> : 'Delete'}
               </button>
               <button onClick={handleDuplicateRows} className="btn btn-primary btn-sm" disabled={selectedCells.size === 0}>
                 Duplicate
+              </button>
+              <button
+                onClick={handleAddQuestionAboveSelected}
+                className="btn btn-success btn-sm"
+                disabled={isCreatingQuestion}
+              >
+                {isCreatingQuestion ? <span className="loading loading-spinner loading-xs"></span> : 'Add Question'}
               </button>
             </>
           )}
@@ -357,7 +537,22 @@ export default function QuestionsSectionCustomTable({ domain }) {
           </tr>
         </thead>
         <tbody>
-          {questions.map((question, rowIndex) => {
+          {questions.length === 0 ? (
+            <tr>
+              <td colSpan="2" className="text-center py-12">
+                <div className="flex flex-col items-center gap-4">
+                  <p className="text-base-content/60">No questions yet</p>
+                  <button
+                    onClick={handleAddNewQuestion}
+                    className="btn btn-success btn-sm"
+                    disabled={isCreatingQuestion}
+                  >
+                    {isCreatingQuestion ? <span className="loading loading-spinner loading-xs"></span> : 'Add First Question'}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ) : questions.map((question, rowIndex) => {
             const isExpanded = expandedRows.has(question.id);
             const options = question.options || [];
 
@@ -435,11 +630,12 @@ export default function QuestionsSectionCustomTable({ domain }) {
                         onContextMenu={(e) => handleContextMenu(e, rowIndex, 'option', optionIndex)}
                         onDoubleClick={(e) =>
                           handleDoubleClick(
-                            `${rowIndex}-${optionIndex}`,
+                            rowIndex,
                             option,
                             e,
                             'option',
-                            optionIndex
+                            optionIndex,
+                            question.id
                           )
                         }
                         className={`cursor-cell relative select-none ${
@@ -469,7 +665,8 @@ export default function QuestionsSectionCustomTable({ domain }) {
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="absolute z-10 border-2 border-blue-500 resize-none overflow-hidden bg-white"
+          disabled={isSaving}
+          className={`absolute z-10 border-2 border-blue-500 resize-none overflow-hidden bg-white ${isSaving ? 'opacity-50 cursor-wait' : ''}`}
           style={{
             position: 'absolute',
             top: `${editingCell.position.top}px`,
@@ -510,8 +707,8 @@ export default function QuestionsSectionCustomTable({ domain }) {
           ) : (
             <>
               <li>
-                <button onClick={handleDeleteRows} className="text-error">
-                  Delete ({getSelectedRowIndices().length} {getSelectedRowIndices().length === 1 ? 'row' : 'rows'})
+                <button onClick={handleDeleteRows} className="text-error" disabled={isDeletingQuestions}>
+                  {isDeletingQuestions ? 'Deleting...' : `Delete (${getSelectedRowIndices().length} ${getSelectedRowIndices().length === 1 ? 'row' : 'rows'})`}
                 </button>
               </li>
               <li>
@@ -519,9 +716,48 @@ export default function QuestionsSectionCustomTable({ domain }) {
                   Duplicate ({getSelectedRowIndices().length} {getSelectedRowIndices().length === 1 ? 'row' : 'rows'})
                 </button>
               </li>
+              <li>
+                <button onClick={handleAddQuestionAboveSelected} disabled={isCreatingQuestion}>
+                  {isCreatingQuestion ? 'Adding...' : 'Add Question'}
+                </button>
+              </li>
             </>
           )}
         </div>
+      )}
+
+      {dialog && (
+        <dialog className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">{dialog.title}</h3>
+            <p className="py-4">{dialog.message}</p>
+            <div className="modal-action">
+              {dialog.type === 'confirm' ? (
+                <>
+                  <button
+                    className="btn"
+                    onClick={() => setDialog(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-error"
+                    onClick={dialog.onConfirm}
+                  >
+                    Delete
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="btn"
+                  onClick={() => setDialog(null)}
+                >
+                  OK
+                </button>
+              )}
+            </div>
+          </div>
+        </dialog>
       )}
     </div>
   );

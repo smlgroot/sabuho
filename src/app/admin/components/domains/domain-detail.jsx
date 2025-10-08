@@ -219,6 +219,7 @@ export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDom
       {activeTab === 'questions' ? (
         <QuestionsSectionCustomTable
           domain={localDomain}
+          onDomainUpdate={handleDomainUpdate}
         />
       ) : (
         <ResourcesSection
