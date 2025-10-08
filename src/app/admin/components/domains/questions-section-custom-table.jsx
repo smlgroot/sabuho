@@ -382,21 +382,119 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
     setActiveQuestionGroup(null);
   };
 
-  const handleDeleteOptions = () => {
+  const handleDeleteOptions = async () => {
+    if (isDeletingQuestions) return;
+
     const optionIndices = getSelectedOptionIndices();
-    console.log('Delete options:', optionIndices, 'from question:', activeQuestionGroup);
-    // Implement delete options logic here
-    setContextMenu(null);
-    setSelectedCells(new Set());
-    setActiveQuestionGroup(null);
+    if (optionIndices.length === 0) return;
+
+    const question = questions[activeQuestionGroup];
+    if (!question) return;
+
+    setDialog({
+      type: 'confirm',
+      title: 'Delete Options',
+      message: `Are you sure you want to delete ${optionIndices.length} ${optionIndices.length === 1 ? 'option' : 'options'}?`,
+      onConfirm: async () => {
+        setIsDeletingQuestions(true);
+        setDialog(null);
+        try {
+          // Remove the selected options
+          const updatedOptions = question.options.filter((_, index) => !optionIndices.includes(index));
+
+          // Update the question
+          const updatedQuestion = await updateQuestion(question.id, { options: updatedOptions });
+
+          // Update local domain state
+          const updatedQuestions = [...questions];
+          updatedQuestions[activeQuestionGroup] = {
+            ...question,
+            ...updatedQuestion
+          };
+
+          const updatedDomain = {
+            ...domain,
+            questions: updatedQuestions
+          };
+
+          if (onDomainUpdate) {
+            onDomainUpdate(updatedDomain);
+          }
+
+          setContextMenu(null);
+          setSelectedCells(new Set());
+          setActiveQuestionGroup(null);
+        } catch (error) {
+          console.error('Failed to delete options:', error);
+          setDialog({
+            type: 'alert',
+            title: 'Error',
+            message: `Failed to delete options: ${error.message}`
+          });
+        } finally {
+          setIsDeletingQuestions(false);
+        }
+      }
+    });
   };
 
-  const handleInsertOption = () => {
-    console.log('Insert new option for question:', activeQuestionGroup);
-    // Implement insert option logic here
-    setContextMenu(null);
-    setSelectedCells(new Set());
-    setActiveQuestionGroup(null);
+  const handleInsertOption = async (questionIndex = null) => {
+    if (isDeletingQuestions) return;
+
+    const targetIndex = questionIndex !== null ? questionIndex : activeQuestionGroup;
+    if (targetIndex === null || targetIndex === undefined) return;
+
+    const question = questions[targetIndex];
+    if (!question) return;
+
+    setIsDeletingQuestions(true);
+    try {
+      // Find the position to insert: after the last selected option, or at the end
+      const selectedOptions = getSelectedOptionIndices();
+      let insertPosition;
+
+      if (selectedOptions.length > 0) {
+        // Insert after the last selected option
+        insertPosition = Math.max(...selectedOptions) + 1;
+      } else {
+        // No selection, add at the end
+        insertPosition = (question.options || []).length;
+      }
+
+      const updatedOptions = [...(question.options || [])];
+      updatedOptions.splice(insertPosition, 0, 'New option');
+
+      const updatedQuestion = await updateQuestion(question.id, { options: updatedOptions });
+
+      const updatedQuestions = [...questions];
+      updatedQuestions[targetIndex] = {
+        ...question,
+        ...updatedQuestion
+      };
+
+      const updatedDomain = {
+        ...domain,
+        questions: updatedQuestions
+      };
+
+      if (onDomainUpdate) {
+        onDomainUpdate(updatedDomain);
+      }
+
+      setContextMenu(null);
+      // Keep activeQuestionGroup so user can continue adding options
+      // Only clear selection
+      setSelectedCells(new Set());
+    } catch (error) {
+      console.error('Failed to insert option:', error);
+      setDialog({
+        type: 'alert',
+        title: 'Error',
+        message: `Failed to insert option: ${error.message}`
+      });
+    } finally {
+      setIsDeletingQuestions(false);
+    }
   };
 
   const handleAddNewQuestion = async (insertIndex = null) => {
@@ -502,8 +600,8 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
               <button onClick={handleDeleteOptions} className="btn btn-error btn-sm" disabled={selectedCells.size === 0}>
                 Delete
               </button>
-              <button onClick={handleInsertOption} className="btn btn-primary btn-sm" disabled={selectedCells.size === 0}>
-                Insert new option
+              <button onClick={() => handleInsertOption()} className="btn btn-primary btn-sm" disabled={isDeletingQuestions}>
+                {isDeletingQuestions ? <span className="loading loading-spinner loading-xs"></span> : 'Insert new option'}
               </button>
             </>
           ) : (
@@ -607,6 +705,22 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                     </td>
                   </tr>
                 )}
+                {isExpanded && options.length === 0 && (
+                  <tr className="bg-base-200 border-l-4 border-l-primary">
+                    <td colSpan="2" className="text-center py-8">
+                      <div className="flex flex-col items-center gap-4">
+                        <p className="text-base-content/60">No answer options</p>
+                        <button
+                          onClick={() => handleInsertOption(rowIndex)}
+                          className="btn btn-primary btn-sm"
+                          disabled={isDeletingQuestions}
+                        >
+                          {isDeletingQuestions ? <span className="loading loading-spinner loading-xs"></span> : 'Add First Option'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
                 {isExpanded && options.map((option, optionIndex) => {
                   const isCorrect = option?.includes('[correct]');
                   const displayText = option?.replace('[correct]', '').trim() || '';
@@ -699,8 +813,8 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                 </button>
               </li>
               <li>
-                <button onClick={handleInsertOption}>
-                  Insert new option
+                <button onClick={() => handleInsertOption()} disabled={isDeletingQuestions}>
+                  {isDeletingQuestions ? 'Adding...' : 'Insert new option'}
                 </button>
               </li>
             </>
