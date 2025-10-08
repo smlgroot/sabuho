@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, Fragment } from 'react';
-import { ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, Minimize2 } from 'lucide-react';
 import { createQuestion, deleteQuestion, updateQuestion } from '@/lib/admin/questions';
 
 export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) {
@@ -35,6 +35,10 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
       }
       return next;
     });
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedRows(new Set());
   };
 
   useEffect(() => {
@@ -497,6 +501,54 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
     }
   };
 
+  const handleToggleCorrect = async (questionIndex, optionIndex) => {
+    if (isSaving) return;
+
+    const question = questions[questionIndex];
+    if (!question) return;
+
+    setIsSaving(true);
+    try {
+      const updatedOptions = [...(question.options || [])];
+      const currentOption = updatedOptions[optionIndex];
+      const isCurrentlyCorrect = currentOption?.includes('[correct]');
+
+      // Remove [correct] from all options first
+      const cleanedOptions = updatedOptions.map(opt => opt?.replace(' [correct]', '').replace('[correct]', '').trim() || '');
+
+      // Toggle the clicked option
+      if (!isCurrentlyCorrect) {
+        cleanedOptions[optionIndex] = `${cleanedOptions[optionIndex]} [correct]`;
+      }
+
+      const updatedQuestion = await updateQuestion(question.id, { options: cleanedOptions });
+
+      const updatedQuestions = [...questions];
+      updatedQuestions[questionIndex] = {
+        ...question,
+        ...updatedQuestion
+      };
+
+      const updatedDomain = {
+        ...domain,
+        questions: updatedQuestions
+      };
+
+      if (onDomainUpdate) {
+        onDomainUpdate(updatedDomain);
+      }
+    } catch (error) {
+      console.error('Failed to toggle correct answer:', error);
+      setDialog({
+        type: 'alert',
+        title: 'Error',
+        message: `Failed to update correct answer: ${error.message}`
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleAddNewQuestion = async (insertIndex = null) => {
     if (!domain?.id || isCreatingQuestion) return;
 
@@ -630,8 +682,18 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
       <table className="table table-zebra w-full [&_td]:border-x-0 [&_th]:border-x-0">
         <thead>
           <tr>
-            <th className="w-12"></th>
-            <th>Question</th>
+            <th className="w-12">
+              {expandedRows.size > 0 && (
+                <button
+                  onClick={handleCollapseAll}
+                  className="btn btn-ghost btn-xs"
+                  aria-label="Collapse all questions"
+                >
+                  <Minimize2 className="w-4 h-4" />
+                </button>
+              )}
+            </th>
+            <th>&nbsp;</th>
           </tr>
         </thead>
         <tbody>
@@ -699,9 +761,9 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                       onDoubleClick={(e) =>
                         handleDoubleClick(rowIndex, question.explanation, e, 'explanation', null, question.id)
                       }
-                      className="cursor-cell italic text-base-content/70"
+                      className={`cursor-cell italic ${question.explanation ? 'text-base-content/70' : 'text-base-content/40'}`}
                     >
-                      {question.explanation || ''}
+                      {question.explanation || 'Add question explanation'}
                     </td>
                   </tr>
                 )}
@@ -730,11 +792,19 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                       key={`${question.id}-option-${optionIndex}`}
                       className="bg-base-200 border-l-4 border-l-primary"
                     >
-                      <td className="w-12 text-center">
-                        {isCorrect && (
+                      <td
+                        className="w-12 text-center cursor-pointer hover:bg-base-300"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleCorrect(rowIndex, optionIndex);
+                        }}
+                      >
+                        {isCorrect ? (
                           <span className="badge badge-success badge-sm flex items-center justify-center">
                             <Check className="w-3 h-3" />
                           </span>
+                        ) : (
+                          <span className="w-4 h-4 inline-block border-2 border-base-content/30 rounded"></span>
                         )}
                       </td>
                       <td
