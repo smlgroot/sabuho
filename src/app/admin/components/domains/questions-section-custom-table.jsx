@@ -13,7 +13,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
   const [selectedCells, setSelectedCells] = useState(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
-  const [contextMenu, setContextMenu] = useState(null);
   const [activeQuestionGroup, setActiveQuestionGroup] = useState(null);
   const [lastClickedCell, setLastClickedCell] = useState(null);
   const [isCreatingQuestion, setIsCreatingQuestion] = useState(false);
@@ -287,22 +286,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
     setDragStart(null);
   };
 
-  const handleContextMenu = (e, rowIndex, type = 'question', optionIndex = null) => {
-    e.preventDefault();
-
-    const cellId = getCellId(rowIndex, type, optionIndex);
-
-    // If right-clicked cell is not in selection, select it
-    if (!selectedCells.has(cellId)) {
-      setSelectedCells(new Set([cellId]));
-    }
-
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-    });
-  };
-
   const getSelectedRowIndices = () => {
     const rowIndices = new Set();
     selectedCells.forEach((cellId) => {
@@ -360,7 +343,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
             onDomainUpdate(updatedDomain);
           }
 
-          setContextMenu(null);
           setSelectedCells(new Set());
           setActiveQuestionGroup(null);
         } catch (error) {
@@ -375,15 +357,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
         }
       }
     });
-  };
-
-  const handleDuplicateRows = () => {
-    const rowIndices = getSelectedRowIndices();
-    console.log('Duplicate rows:', rowIndices);
-    // Implement duplicate logic here
-    setContextMenu(null);
-    setSelectedCells(new Set());
-    setActiveQuestionGroup(null);
   };
 
   const handleDeleteOptions = async () => {
@@ -425,7 +398,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
             onDomainUpdate(updatedDomain);
           }
 
-          setContextMenu(null);
           setSelectedCells(new Set());
           setActiveQuestionGroup(null);
         } catch (error) {
@@ -485,7 +457,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
         onDomainUpdate(updatedDomain);
       }
 
-      setContextMenu(null);
       // Keep activeQuestionGroup so user can continue adding options
       // Only clear selection
       setSelectedCells(new Set());
@@ -589,7 +560,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
         onDomainUpdate(updatedDomain);
       }
 
-      setContextMenu(null);
       setSelectedCells(new Set());
       setActiveQuestionGroup(null);
     } catch (error) {
@@ -616,17 +586,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
   };
 
   useEffect(() => {
-    const handleClickOutside = () => {
-      setContextMenu(null);
-    };
-
-    if (contextMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [contextMenu]);
-
-  useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isDragging) {
         handleMouseUp();
@@ -640,44 +599,35 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
   return (
     <div ref={containerRef} className="relative overflow-auto">
       <div className="sticky top-0 z-20 bg-base-100 border-b border-base-300 p-4 flex items-center gap-2">
-        <span className="text-sm font-medium">
-          {isSelectingOptions()
-            ? `${getSelectedOptionIndices().length} ${getSelectedOptionIndices().length === 1 ? 'option' : 'options'} selected`
-            : `${getSelectedRowIndices().length} ${getSelectedRowIndices().length === 1 ? 'row' : 'rows'} selected`
-          }
-        </span>
-        <div className="flex gap-2">
-          {isSelectingOptions() ? (
-            <>
-              <button onClick={handleDeleteOptions} className="btn btn-error btn-sm" disabled={selectedCells.size === 0}>
-                Delete
-              </button>
-              <button onClick={() => handleInsertOption()} className="btn btn-primary btn-sm" disabled={isDeletingQuestions}>
-                {isDeletingQuestions ? <span className="loading loading-spinner loading-xs"></span> : 'Insert new option'}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={handleDeleteRows}
-                className="btn btn-error btn-sm"
-                disabled={selectedCells.size === 0 || isDeletingQuestions}
-              >
-                {isDeletingQuestions ? <span className="loading loading-spinner loading-xs"></span> : 'Delete'}
-              </button>
-              <button onClick={handleDuplicateRows} className="btn btn-primary btn-sm" disabled={selectedCells.size === 0}>
-                Duplicate
-              </button>
-              <button
-                onClick={handleAddQuestionAboveSelected}
-                className="btn btn-success btn-sm"
-                disabled={isCreatingQuestion}
-              >
-                {isCreatingQuestion ? <span className="loading loading-spinner loading-xs"></span> : 'Add Question'}
-              </button>
-            </>
-          )}
-        </div>
+        {isSelectingOptions() ? (
+          <>
+            <button onClick={() => handleInsertOption()} className="btn btn-primary btn-sm" disabled={isDeletingQuestions}>
+              {isDeletingQuestions ? <span className="loading loading-spinner loading-xs"></span> : 'Insert option'}
+            </button>
+            <div className="divider divider-horizontal mx-0"></div>
+            <button onClick={handleDeleteOptions} className="btn btn-error btn-sm" disabled={selectedCells.size === 0}>
+              Delete ({getSelectedOptionIndices().length})
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handleAddQuestionAboveSelected}
+              className="btn btn-primary btn-sm"
+              disabled={isCreatingQuestion}
+            >
+              {isCreatingQuestion ? <span className="loading loading-spinner loading-xs"></span> : 'Insert question'}
+            </button>
+            <div className="divider divider-horizontal mx-0"></div>
+            <button
+              onClick={handleDeleteRows}
+              className="btn btn-error btn-sm"
+              disabled={selectedCells.size === 0 || isDeletingQuestions}
+            >
+              {isDeletingQuestions ? <span className="loading loading-spinner loading-xs"></span> : `Delete (${getSelectedRowIndices().length})`}
+            </button>
+          </>
+        )}
       </div>
       <table className="table table-zebra w-full [&_td]:border-x-0 [&_th]:border-x-0">
         <thead>
@@ -736,7 +686,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                     onClick={(e) => handleCellClick(e, rowIndex, 'question')}
                     onMouseDown={(e) => handleMouseDown(e, rowIndex, 'question')}
                     onMouseEnter={(e) => handleMouseEnter(e, rowIndex, 'question')}
-                    onContextMenu={(e) => handleContextMenu(e, rowIndex, 'question')}
                     onDoubleClick={(e) =>
                       handleDoubleClick(rowIndex, question.body, e, 'question')
                     }
@@ -811,7 +760,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                         onClick={(e) => handleCellClick(e, rowIndex, 'option', optionIndex)}
                         onMouseDown={(e) => handleMouseDown(e, rowIndex, 'option', optionIndex)}
                         onMouseEnter={(e) => handleMouseEnter(e, rowIndex, 'option', optionIndex)}
-                        onContextMenu={(e) => handleContextMenu(e, rowIndex, 'option', optionIndex)}
                         onDoubleClick={(e) =>
                           handleDoubleClick(
                             rowIndex,
@@ -865,49 +813,6 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
             boxSizing: 'border-box',
           }}
         />
-      )}
-
-      {contextMenu && (
-        <div
-          className="fixed z-50 menu bg-base-100 rounded-box shadow-lg border border-base-300 w-56"
-          style={{
-            top: `${contextMenu.y}px`,
-            left: `${contextMenu.x}px`,
-          }}
-        >
-          {isSelectingOptions() ? (
-            <>
-              <li>
-                <button onClick={handleDeleteOptions} className="text-error">
-                  Delete ({getSelectedOptionIndices().length} {getSelectedOptionIndices().length === 1 ? 'option' : 'options'})
-                </button>
-              </li>
-              <li>
-                <button onClick={() => handleInsertOption()} disabled={isDeletingQuestions}>
-                  {isDeletingQuestions ? 'Adding...' : 'Insert new option'}
-                </button>
-              </li>
-            </>
-          ) : (
-            <>
-              <li>
-                <button onClick={handleDeleteRows} className="text-error" disabled={isDeletingQuestions}>
-                  {isDeletingQuestions ? 'Deleting...' : `Delete (${getSelectedRowIndices().length} ${getSelectedRowIndices().length === 1 ? 'row' : 'rows'})`}
-                </button>
-              </li>
-              <li>
-                <button onClick={handleDuplicateRows}>
-                  Duplicate ({getSelectedRowIndices().length} {getSelectedRowIndices().length === 1 ? 'row' : 'rows'})
-                </button>
-              </li>
-              <li>
-                <button onClick={handleAddQuestionAboveSelected} disabled={isCreatingQuestion}>
-                  {isCreatingQuestion ? 'Adding...' : 'Add Question'}
-                </button>
-              </li>
-            </>
-          )}
-        </div>
       )}
 
       {dialog && (
