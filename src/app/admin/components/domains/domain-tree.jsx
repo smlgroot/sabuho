@@ -1,18 +1,19 @@
 'use client'
 
 import React from 'react'
-import { Plus, FolderOpen, Folder, File, Trash2, ChevronRight, ChevronDown } from 'lucide-react'
+import { Plus, FolderOpen, Folder, File, Trash2, ChevronRight, ChevronDown, Play, GraduationCap } from 'lucide-react'
 // DaisyUI components used directly
 import { useStore } from '@/store/useStore'
 import { useTranslation } from 'react-i18next'
 
-function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain, allDomains }) {
+function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain, allDomains, selectedDomains, toggleDomainSelection, showCheckboxes }) {
   const { t } = useTranslation()
   const { selectedDomain, toggleDomainCollapsed, isDomainCollapsed } = useStore()
   const isSelected = selectedDomain?.id === domain.id
   const hasChildren = domain.children && domain.children.length > 0
   const isCollapsed = isDomainCollapsed(domain.id)
-  const indentationLeft = level * 20 // 20px per level for indentation
+  const indentationLeft = level * 8 // 8px per level for indentation
+  const isChecked = selectedDomains.has(domain.id)
   const [contextMenuOpen, setContextMenuOpen] = React.useState(false)
   const [contextMenuPosition, setContextMenuPosition] = React.useState({ x: 0, y: 0 })
   const contextMenuRef = React.useRef(null)
@@ -162,45 +163,59 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
     <>
       <div className="w-full">
         <div
-          ref={nodeRef}
           className={`flex items-center group relative min-w-0 transition-all cursor-move select-none ${
             isDragging ? 'scale-105 shadow-lg ring-2 ring-primary bg-base-200 rounded-lg' : ''
           } ${
             isDropTarget ? 'bg-primary/20 rounded-lg' : ''
           }`}
-          style={{ paddingLeft: `${indentationLeft}px` }}
-          draggable={true}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onContextMenu={handleContextMenu}
         >
-          {hasChildren ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                toggleDomainCollapsed(domain.id)
-              }}
-              className="btn btn-ghost btn-xs p-0.5 mr-1 flex-shrink-0"
-            >
-              {isCollapsed ? (
-                <ChevronRight className="h-3 w-3" />
-              ) : (
-                <ChevronDown className="h-3 w-3" />
-              )}
-            </button>
-          ) : (
-            <div className="w-4 h-4 mr-1 flex-shrink-0" />
-          )}
-          <button
-            className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${isSelected ? 'btn-active bg-primary/10 text-primary' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelectDomain(domain);
-            }}
+            {showCheckboxes && (
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary checkbox-sm mr-2 flex-shrink-0"
+                checked={isChecked}
+                onChange={(e) => {
+                  e.stopPropagation()
+                  toggleDomainSelection(domain.id)
+                }}
+              />
+            )}
+          <div
+            ref={nodeRef}
+            className="flex items-center flex-1 min-w-0"
+            style={{ paddingLeft: `${indentationLeft}px` }}
+            draggable={true}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onContextMenu={handleContextMenu}
           >
+            {hasChildren ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleDomainCollapsed(domain.id)
+                }}
+                className="btn btn-ghost btn-xs p-0.5 mr-1 flex-shrink-0"
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="h-3 w-3" />
+                ) : (
+                  <ChevronDown className="h-3 w-3" />
+                )}
+              </button>
+            ) : (
+              <div className="w-4 h-4 mr-1 flex-shrink-0" />
+            )}
+            <button
+              className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${isSelected ? 'btn-active bg-primary/10 text-primary' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectDomain(domain);
+              }}
+            >
             <div className="flex items-center mr-2">
               {domain.domain_type === 'file' ? (
                 // File type domains - show file icon
@@ -234,6 +249,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
               </div>
             )}
           </button>
+          </div>
         </div>
       </div>
 
@@ -273,7 +289,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
                   {t("Add File")}
                 </button>
               </li>
-              <li><hr className="divider my-1" /></li>
+              <li className="border-t border-base-300 my-1"></li>
             </>
           )}
           <li>
@@ -302,6 +318,9 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
           onDeleteDomain={onDeleteDomain}
           onMoveDomain={onMoveDomain}
           allDomains={allDomains}
+          selectedDomains={selectedDomains}
+          toggleDomainSelection={toggleDomainSelection}
+          showCheckboxes={showCheckboxes}
         />
       ))}
     </>
@@ -311,6 +330,8 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
 export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain }) {
   const { t } = useTranslation()
   const dropZoneRef = React.useRef(null)
+  const [selectedDomains, setSelectedDomains] = React.useState(new Set())
+  const [isLearnMode, setIsLearnMode] = React.useState(false)
 
   // Helper to find a domain in the tree by ID
   const findDomainById = (domainList, id) => {
@@ -323,6 +344,44 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
     }
     return null
   }
+
+  // Toggle domain selection
+  const toggleDomainSelection = (domainId) => {
+    setSelectedDomains(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(domainId)) {
+        newSet.delete(domainId)
+      } else {
+        newSet.add(domainId)
+      }
+      return newSet
+    })
+  }
+
+  // Count questions from selected domains
+  const countQuestionsFromDomain = (domain) => {
+    let count = 0
+    if (domain.domain_type === 'file') {
+      count += domain.questions?.length || 0
+    }
+    if (domain.children) {
+      for (const child of domain.children) {
+        count += countQuestionsFromDomain(child)
+      }
+    }
+    return count
+  }
+
+  const totalQuestions = React.useMemo(() => {
+    let total = 0
+    for (const domainId of selectedDomains) {
+      const domain = findDomainById(domains, domainId)
+      if (domain) {
+        total += countQuestionsFromDomain(domain)
+      }
+    }
+    return total
+  }, [selectedDomains, domains])
 
   // Handle drop at root level (moving to root)
   const handleDragOver = (e) => {
@@ -364,14 +423,43 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
 
   return (
     <div className="space-y-4">
-      {/* Add Folder Button */}
-      <button
-        className="btn btn-primary w-full"
-        onClick={() => onCreateDomain(null, 'folder')}
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        {t("Add Folder")}
-      </button>
+      {/* Header with Learn/Start Buttons */}
+      {domains.length > 0 && (
+        <div className="flex gap-2">
+          {!isLearnMode ? (
+            <button
+              className="btn btn-success btn-lg flex-1"
+              onClick={() => setIsLearnMode(true)}
+            >
+              <Play className="h-5 w-5 mr-2" />
+              {t("Learn")}
+            </button>
+          ) : (
+            <>
+              <button
+                className="btn btn-outline"
+                onClick={() => {
+                  setIsLearnMode(false)
+                  setSelectedDomains(new Set())
+                }}
+              >
+                {t("Cancel")}
+              </button>
+              <button
+                className="btn btn-success flex-1"
+                disabled={totalQuestions === 0}
+                onClick={() => {
+                  // Handle start button click
+                  console.log('Start with', totalQuestions, 'questions')
+                }}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                {t("Start")} ({totalQuestions})
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Domains List - Drop zone for moving to root */}
       <div
@@ -384,8 +472,14 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
         {domains.length === 0 ? (
           <div className="alert alert-info">
             <div className="text-center w-full">
-              <p>{t("No domains yet")}</p>
-              <p className="text-sm opacity-70 mt-1">{t("Click the button above to create your first domain")}</p>
+              <p className="mb-4">{t("No domains yet")}</p>
+              <button
+                className="btn btn-primary"
+                onClick={() => onCreateDomain(null, 'folder')}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {t("Add Folder")}
+              </button>
             </div>
           </div>
         ) : (
@@ -400,6 +494,9 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
               onDeleteDomain={onDeleteDomain}
               onMoveDomain={onMoveDomain}
               allDomains={domains}
+              selectedDomains={selectedDomains}
+              toggleDomainSelection={toggleDomainSelection}
+              showCheckboxes={isLearnMode}
             />
           ))
         )}
