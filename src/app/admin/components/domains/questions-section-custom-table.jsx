@@ -740,7 +740,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                     onDoubleClick={(e) =>
                       handleDoubleClick(rowIndex, question.body, e, 'question')
                     }
-                    className={`cursor-cell relative select-none ${
+                    className={`cursor-cell relative select-none hover:bg-base-300 ${
                       selectedCells.has(`q-${rowIndex}`)
                         ? 'ring-2 ring-blue-500 ring-inset bg-blue-50'
                         : ''
@@ -761,7 +761,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                       onDoubleClick={(e) =>
                         handleDoubleClick(rowIndex, question.explanation, e, 'explanation', null, question.id)
                       }
-                      className={`cursor-cell italic ${question.explanation ? 'text-base-content/70' : 'text-base-content/40'}`}
+                      className={`cursor-cell italic hover:bg-base-300 ${question.explanation ? 'text-base-content/70' : 'text-base-content/40'}`}
                     >
                       {question.explanation || 'Add question explanation'}
                     </td>
@@ -822,7 +822,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                             question.id
                           )
                         }
-                        className={`cursor-cell relative select-none ${
+                        className={`cursor-cell relative select-none hover:bg-base-300 ${
                           selectedCells.has(`o-${rowIndex}-${optionIndex}`)
                             ? 'ring-2 ring-blue-500 ring-inset bg-blue-50'
                             : ''
