@@ -804,16 +804,17 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           disabled={isSaving}
-          className={`absolute z-10 border-2 border-blue-500 resize-none overflow-hidden bg-white ${isSaving ? 'opacity-50 cursor-wait' : ''}`}
+          className={`absolute z-10 resize-none overflow-hidden bg-white ${isSaving ? 'opacity-50 cursor-wait' : ''}`}
           style={{
             position: 'absolute',
-            top: `${editingCell.position.top}px`,
-            left: `${editingCell.position.left}px`,
-            width: `${editingCell.position.width}px`,
-            height: `${editingCell.position.height}px`,
-            padding: '12px',
+            top: `${editingCell.position.top + 1}px`,
+            left: `${editingCell.position.left + 1}px`,
+            width: `${editingCell.position.width - 2}px`,
+            height: `${editingCell.position.height - 2}px`,
+            padding: '0',
             margin: 0,
-            fontSize: '14px',
+            border: '2px solid rgb(59, 130, 246)',
+            fontSize: 'inherit',
             fontFamily: 'inherit',
             lineHeight: 'inherit',
             boxSizing: 'border-box',
