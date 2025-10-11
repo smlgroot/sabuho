@@ -272,7 +272,7 @@ export default function AdminPage() {
     }
   };
 
-  // Quizzes handlers  
+  // Quizzes handlers
   const handleQuizCreate = async () => {
     try {
       setCreatingQuiz(true);
@@ -284,6 +284,78 @@ export default function AdminPage() {
       addQuiz(created);
       setCreatingQuiz(false);
       setSelectedQuiz(created);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create quiz';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setCreatingQuiz(false);
+    }
+  };
+
+  const handleQuizCreateFromDomains = async (domainIds) => {
+    try {
+      setCreatingQuiz(true);
+
+      // Check if quiz with same domains already exists
+      const existingQuiz = quizzes.find(quiz => {
+        const quizDomainIds = quiz.domains?.map(d => d.id) || [];
+        if (quizDomainIds.length !== domainIds.length) return false;
+        const sortedQuizDomains = [...quizDomainIds].sort();
+        const sortedSelectedDomains = [...domainIds].sort();
+        return sortedQuizDomains.every((id, index) => id === sortedSelectedDomains[index]);
+      });
+
+      if (existingQuiz) {
+        // Navigate to existing quiz
+        setCreatingQuiz(false);
+        setSelectedQuiz(existingQuiz);
+        setActiveView('quizzes');
+        toast.info(t('Opening existing quiz'));
+        return;
+      }
+
+      // Find first root parent domain name
+      const findDomainById = (domainList, id) => {
+        for (const d of domainList) {
+          if (d.id === id) return d;
+          if (d.children) {
+            const found = findDomainById(d.children, id);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const findRootParent = (domainId) => {
+        const domain = findDomainById(domains, domainId);
+        if (!domain) return null;
+
+        // If domain has no parent, it's a root
+        if (!domain.parent_id) return domain;
+
+        // Find the root parent
+        let current = domain;
+        while (current.parent_id) {
+          current = findDomainById(domains, current.parent_id);
+          if (!current) break;
+        }
+        return current;
+      };
+
+      const firstRootParent = findRootParent(domainIds[0]);
+      const quizName = firstRootParent?.name || 'New Quiz';
+
+      // Create new quiz
+      const created = await createQuizApi({
+        name: quizName,
+        description: null,
+        domains: domainIds,
+      });
+      addQuiz(created);
+      setCreatingQuiz(false);
+      setSelectedQuiz(created);
+      setActiveView('quizzes');
+      toast.success(t('Quiz created successfully'));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create quiz';
       setError(errorMessage);
@@ -453,7 +525,7 @@ export default function AdminPage() {
       {/* Main Navigation Menu */}
       <div className="flex-1 flex flex-col items-center py-4 gap-2">
         {/* Sidebar Toggle */}
-        <button 
+        <button
           className="btn btn-ghost p-3 h-auto min-w-16"
           onClick={() => {
             trackEvent('sidebar_toggle_clicked', { props: { action: secondSidebarOpen ? 'close' : 'open' } });
@@ -462,7 +534,7 @@ export default function AdminPage() {
         >
           <Menu className="h-6 w-6" />
         </button>
-        
+
         {/* Learning Hub */}
         <button 
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'learning-hub' ? 'btn-active bg-primary/10 text-primary' : ''}`}
@@ -591,7 +663,7 @@ export default function AdminPage() {
   const { t, i18n } = useTranslation();
 
   const SecondSidebar = () => (
-   
+
     <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-screen">
       {activeView === 'learning-hub' && (
         <LearningPath 
@@ -648,6 +720,7 @@ export default function AdminPage() {
               onEditDomain={handleEditDomain}
               onDeleteDomain={handleDeleteDomain}
               onMoveDomain={handleMoveDomain}
+              onCreateQuiz={handleQuizCreateFromDomains}
             />
           </div>
         </div>

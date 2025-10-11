@@ -327,7 +327,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
   )
 }
 
-export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain }) {
+export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain, onCreateQuiz }) {
   const { t } = useTranslation()
   const dropZoneRef = React.useRef(null)
   const [selectedDomains, setSelectedDomains] = React.useState(new Set())
@@ -449,8 +449,13 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
                 className="btn btn-success flex-1"
                 disabled={totalQuestions === 0}
                 onClick={() => {
-                  // Handle start button click
-                  console.log('Start with', totalQuestions, 'questions')
+                  // Create quiz with selected domains
+                  if (onCreateQuiz && selectedDomains.size > 0) {
+                    onCreateQuiz(Array.from(selectedDomains))
+                    // Reset selection after creating quiz
+                    setIsLearnMode(false)
+                    setSelectedDomains(new Set())
+                  }
                 }}
               >
                 <Play className="h-4 w-4 mr-2" />
