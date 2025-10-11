@@ -2,7 +2,8 @@
 
 import { useTranslation } from 'react-i18next'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend
 } from 'recharts'
 import {
   Target, Award, TrendingUp, AlertCircle, CheckCircle2, ArrowRight, PlayCircle
@@ -18,21 +19,37 @@ export function QuizInsights({ quiz, selected, idToName }) {
   const accuracyRate = Math.round((correctAnswers / answeredQuestions) * 100)
   const progressPercentage = Math.round((answeredQuestions / totalQuestions) * 100)
 
-  // Domains that need attention (weak areas)
-  const weakDomains = selected.slice(0, 5).map((id, index) => ({
-    id,
-    name: idToName?.get(id) || `Domain ${id}`,
-    accuracy: [45, 62, 58, 71, 68][index], // Mock data
-    questionsAttempted: [12, 8, 15, 20, 10][index],
-    totalQuestions: [50, 40, 45, 60, 35][index]
-  })).sort((a, b) => a.accuracy - b.accuracy)
+  // All domains with realistic mock performance data
+  const allDomains = selected.map((id, index) => {
+    // Realistic accuracy patterns: weak areas (45-65%), medium (65-78%), strong (80-92%)
+    const patterns = [52, 88, 67, 48, 91, 73, 58, 85, 71, 64, 90, 55, 78, 83, 61, 75, 87, 69]
+    const accuracy = patterns[index % patterns.length]
 
-  // Strong domains (for positive reinforcement)
-  const strongDomains = selected.slice(0, 3).map((id, index) => ({
-    id,
-    name: idToName?.get(id) || `Domain ${id}`,
-    accuracy: [92, 88, 85][index],
-    questionsAttempted: [25, 30, 22][index]
+    // Questions attempted correlates loosely with accuracy (better students attempt more)
+    const questionsAttempted = accuracy > 80
+      ? Math.floor(20 + index * 3)
+      : accuracy > 65
+        ? Math.floor(12 + index * 2)
+        : Math.floor(8 + index * 1.5)
+
+    return {
+      id,
+      name: idToName?.get(id) || `Domain ${id}`,
+      accuracy,
+      questionsAttempted,
+      totalQuestions: Math.floor(questionsAttempted * (100 / Math.max(accuracy, 20)))
+    }
+  })
+
+  const weakDomains = allDomains.filter(d => d.accuracy < 70).sort((a, b) => a.accuracy - b.accuracy)
+  const strongDomains = allDomains.filter(d => d.accuracy >= 80).sort((a, b) => b.accuracy - a.accuracy)
+
+  // Create complete radar shapes by using baseline values for non-matching domains
+  const BASELINE = 70 // Middle ground between weak and strong
+  const radarData = allDomains.map(domain => ({
+    ...domain,
+    focusArea: domain.accuracy < 70 ? domain.accuracy : BASELINE,
+    strength: domain.accuracy >= 80 ? domain.accuracy : BASELINE
   }))
 
   const getAccuracyColor = (accuracy) => {
@@ -84,217 +101,120 @@ export function QuizInsights({ quiz, selected, idToName }) {
         </div>
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Areas Needing Attention */}
-        <div className="card bg-base-100 border border-warning/30 shadow-sm">
-          <div className="card-body">
-            <div className="flex items-center gap-2 mb-4">
-              <AlertCircle className="h-5 w-5 text-warning" />
-              <h3 className="text-lg font-semibold">{t('Focus Areas')}</h3>
-            </div>
-            <p className="text-sm text-base-content/70 mb-4">
-              {t('These domains need more practice')}
-            </p>
-
-            {weakDomains.length > 0 ? (
-              <div className="space-y-3">
-                {weakDomains.map((domain, index) => (
-                  <div key={domain.id} className="group">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="text-xs font-semibold text-base-content/50 w-5">
-                          {index + 1}
-                        </span>
-                        <span className="text-sm font-medium truncate">
-                          {domain.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-semibold" style={{ color: getAccuracyColor(domain.accuracy) }}>
-                          {domain.accuracy}%
-                        </span>
-                        <button className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                          <ArrowRight className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-7">
-                      <progress
-                        className="progress w-full h-2"
-                        value={domain.accuracy}
-                        max="100"
-                        style={{ '--progress-color': getAccuracyColor(domain.accuracy) }}
-                      />
-                      <span className="text-xs text-base-content/50 whitespace-nowrap">
-                        {domain.questionsAttempted}/{domain.totalQuestions}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-base-content/50">
-                <p className="text-sm">{t('Select domains to see focus areas')}</p>
-              </div>
-            )}
-
-            {weakDomains.length > 0 && (
-              <button className="btn btn-warning btn-block mt-4">
-                {t('Practice Weak Areas')}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Strong Performance */}
-        <div className="card bg-base-100 border border-success/30 shadow-sm">
-          <div className="card-body">
-            <div className="flex items-center gap-2 mb-4">
-              <CheckCircle2 className="h-5 w-5 text-success" />
-              <h3 className="text-lg font-semibold">{t('Strengths')}</h3>
-            </div>
-            <p className="text-sm text-base-content/70 mb-4">
-              {t("You're doing great in these areas!")}
-            </p>
-
-            {strongDomains.length > 0 ? (
-              <div className="space-y-4">
-                {strongDomains.map((domain, index) => (
-                  <div key={domain.id} className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-2xl font-bold text-success">
-                        {domain.accuracy}%
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{domain.name}</p>
-                      <p className="text-xs text-base-content/50">
-                        {domain.questionsAttempted} {t('questions completed')}
-                      </p>
-                    </div>
-                    <Award className="h-5 w-5 text-success flex-shrink-0" />
-                  </div>
-                ))}
-
-                <div className="alert alert-success mt-4">
-                  <CheckCircle2 className="h-5 w-5" />
-                  <span className="text-sm">
-                    {t('Keep it up! Consider moving to harder topics.')}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-base-content/50">
-                <p className="text-sm">{t('Complete more questions to see your strengths')}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Domain Performance Chart */}
-      {selected.length > 0 && (
-        <div className="card bg-base-100 border border-base-300 shadow-sm">
+      {/* Performance Overview Radar */}
+      {allDomains.length > 0 ? (
+        <div className="card bg-base-100 border border-primary/30 shadow-sm">
           <div className="card-body">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                {t('Performance Overview')}
-              </h3>
-              <div className="text-sm text-base-content/60">
-                {t('Accuracy by domain')}
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">{t('Performance Overview')}</h3>
               </div>
             </div>
 
-            <ResponsiveContainer width="100%" height={Math.max(250, weakDomains.length * 50)}>
-              <BarChart
-                data={weakDomains}
-                layout="vertical"
-                margin={{ top: 5, right: 30, left: 120, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                <XAxis
-                  type="number"
-                  domain={[0, 100]}
-                  stroke="#6b7280"
-                  fontSize={12}
-                  tickFormatter={(value) => `${value}%`}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  stroke="#6b7280"
-                  fontSize={12}
-                  width={110}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                  formatter={(value) => [`${value}%`, 'Accuracy']}
-                />
-                <Bar
-                  dataKey="accuracy"
-                  radius={[0, 4, 4, 0]}
-                  onClick={(data) => console.log('Navigate to domain:', data.id)}
-                  cursor="pointer"
-                >
-                  {weakDomains.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getAccuracyColor(entry.accuracy)} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <ResponsiveContainer width="100%" height={400}>
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="#e5e7eb" />
+                    <PolarAngleAxis
+                      dataKey="name"
+                      tick={{ fill: '#6b7280', fontSize: 11 }}
+                      tickFormatter={(value) => value.length > 25 ? value.slice(0, 25) + '...' : value}
+                    />
+                    <PolarRadiusAxis
+                      angle={90}
+                      domain={[0, 100]}
+                      tick={{ fill: '#6b7280', fontSize: 10 }}
+                      tickFormatter={(value) => `${value}%`}
+                    />
+                    <Radar
+                      name="Focus Areas"
+                      dataKey="focusArea"
+                      stroke="#f59e0b"
+                      fill="#f59e0b"
+                      fillOpacity={0.2}
+                      strokeWidth={2}
+                      dot={{ fill: '#f59e0b', r: 4 }}
+                    />
+                    <Radar
+                      name="Strengths"
+                      dataKey="strength"
+                      stroke="#10b981"
+                      fill="#10b981"
+                      fillOpacity={0.2}
+                      strokeWidth={2}
+                      dot={{ fill: '#10b981', r: 4 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                      formatter={(value, name, props) => {
+                        if (!value) return null
+                        return [
+                          `${value}%`,
+                          `${props.payload.questionsAttempted}/${props.payload.totalQuestions} questions`
+                        ]
+                      }}
+                    />
+                    <Legend />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
 
-            <div className="flex justify-center gap-6 mt-4 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-success" />
-                <span className="text-base-content/70">{t('Good')} (&gt;80%)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-warning" />
-                <span className="text-base-content/70">{t('Fair')} (60-80%)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-error" />
-                <span className="text-base-content/70">{t('Needs Work')} (&lt;60%)</span>
+              <div className="space-y-4">
+                {weakDomains.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <AlertCircle className="h-4 w-4 text-warning" />
+                      <h4 className="font-semibold text-sm">{t('Focus Areas')}</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {weakDomains.map((domain) => (
+                        <div key={domain.id} className="flex items-center justify-between text-sm p-2 rounded bg-warning/5">
+                          <span className="truncate flex-1">{domain.name}</span>
+                          <span className="font-semibold ml-2 text-warning">
+                            {domain.accuracy}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="btn btn-warning btn-sm btn-block mt-3">
+                      {t('Practice Weak Areas')}
+                    </button>
+                  </div>
+                )}
+
+                {strongDomains.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                      <h4 className="font-semibold text-sm">{t('Strengths')}</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {strongDomains.map((domain) => (
+                        <div key={domain.id} className="flex items-center justify-between text-sm p-2 rounded bg-success/5">
+                          <span className="truncate flex-1">{domain.name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-success">
+                              {domain.accuracy}%
+                            </span>
+                            <Award className="h-4 w-4 text-success" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card bg-base-100 border border-base-300">
-          <div className="card-body p-4 text-center">
-            <div className="text-3xl font-bold text-primary">{totalQuestions - answeredQuestions}</div>
-            <p className="text-xs text-base-content/60 mt-1">{t('Questions Left')}</p>
-          </div>
-        </div>
-        <div className="card bg-base-100 border border-base-300">
-          <div className="card-body p-4 text-center">
-            <div className="text-3xl font-bold text-success">{correctAnswers}</div>
-            <p className="text-xs text-base-content/60 mt-1">{t('Correct Answers')}</p>
-          </div>
-        </div>
-        <div className="card bg-base-100 border border-base-300">
-          <div className="card-body p-4 text-center">
-            <div className="text-3xl font-bold text-error">{answeredQuestions - correctAnswers}</div>
-            <p className="text-xs text-base-content/60 mt-1">{t('Incorrect')}</p>
-          </div>
-        </div>
-        <div className="card bg-base-100 border border-base-300">
-          <div className="card-body p-4 text-center">
-            <div className="text-3xl font-bold text-secondary">{selected.length}</div>
-            <p className="text-xs text-base-content/60 mt-1">{t('Active Domains')}</p>
-          </div>
-        </div>
-      </div>
+      ) : null}
     </div>
   )
 }
