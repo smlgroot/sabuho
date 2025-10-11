@@ -675,6 +675,37 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
           {selected.length > 0 && (
             <div className="text-xs text-muted-foreground">{selected.length} domain(s) selected</div>
           )}
+
+          {/* Danger Zone */}
+          <div className="mt-8 pt-6 border-t border-error/30">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-error flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                {t("Danger Zone")}
+              </h3>
+
+              <div className="card border border-error bg-error/5">
+                <div className="card-body">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-error">{t("Delete Quiz")}</h4>
+                      <p className="text-sm text-base-content/70 mt-1">
+                        {t("This will make the quiz unavailable for all users.")}
+                      </p>
+                    </div>
+                    <button
+                      className="btn btn-error"
+                      onClick={() => setShowDeleteDialog(true)}
+                      disabled={!quiz?.id}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {t("Delete")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -756,37 +787,6 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
           )}
         </div>
       )}
-
-      {/* Danger Zone */}
-      <div className="mt-8 pt-6 border-t border-error/30">
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-error flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            {t("Danger Zone")}
-          </h3>
-          
-          <div className="card border border-error bg-error/5">
-            <div className="card-body">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-semibold text-error">{t("Delete Quiz")}</h4>
-                  <p className="text-sm text-base-content/70 mt-1">
-                    {t("This will make the quiz unavailable for all users.")}
-                  </p>
-                </div>
-                <button 
-                  className="btn btn-error"
-                  onClick={() => setShowDeleteDialog(true)}
-                  disabled={!quiz?.id}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {t("Delete")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Credit Dialog */}
       {showCreditDialog && (

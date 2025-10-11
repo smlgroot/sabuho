@@ -512,7 +512,7 @@ export default function AdminPage() {
   };
 
   const MainSidebar = () => (
-    <aside className="min-w-20 bg-base-200 text-base-content flex flex-col min-h-full border-r border-base-300">
+    <aside className="min-w-20 bg-base-200 text-base-content flex flex-col h-full border-r border-base-300">
       {/* App Logo */}
       <div className="p-4 border-b border-base-300">
         <img 
@@ -664,7 +664,7 @@ export default function AdminPage() {
 
   const SecondSidebar = () => (
 
-    <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-screen">
+    <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-full">
       {activeView === 'learning-hub' && (
         <LearningPath 
           ref={learningPathRef}
@@ -757,7 +757,7 @@ export default function AdminPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex">
+      <div className="h-screen flex">
         {/* Main Sidebar */}
         {sidebarOpen && <MainSidebar />}
         

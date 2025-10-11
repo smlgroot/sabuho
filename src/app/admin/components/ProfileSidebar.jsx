@@ -37,7 +37,7 @@ export function ProfileSidebar({ onClose }) {
   };
 
   return (
-    <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-screen">
+    <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-full">
       {/* Header */}
       <div className="p-6 border-b border-base-300">
         <div className="flex items-center justify-between">
