@@ -629,10 +629,11 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
           </>
         )}
       </div>
-      <table className="table table-zebra w-full [&_td]:border-x-0 [&_th]:border-x-0">
+      <table className="w-full border-collapse [&_td]:border [&_td]:border-base-300 [&_th]:border [&_th]:border-base-300">
         <thead>
-          <tr>
-            <th className="w-12">
+          <tr className="bg-base-200">
+            <th className="w-16 bg-base-200 text-center font-semibold text-xs">&nbsp;</th>
+            <th className="w-12 bg-base-200">
               {expandedRows.size > 0 && (
                 <button
                   onClick={handleCollapseAll}
@@ -643,13 +644,13 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                 </button>
               )}
             </th>
-            <th>&nbsp;</th>
+            <th className="bg-base-200">&nbsp;</th>
           </tr>
         </thead>
         <tbody>
           {questions.length === 0 ? (
             <tr>
-              <td colSpan="2" className="text-center py-12">
+              <td colSpan="3" className="text-center py-12">
                 <div className="flex flex-col items-center gap-4">
                   <p className="text-base-content/60">No questions yet</p>
                   <button
@@ -669,6 +670,9 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
             return (
               <Fragment key={question.id}>
                 <tr>
+                  <td className="w-16 bg-base-200 text-center font-semibold text-xs text-base-content/60">
+                    {rowIndex + 1}
+                  </td>
                   <td className="w-12">
                     <button
                       className="btn btn-ghost btn-xs"
@@ -703,6 +707,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                 </tr>
                 {isExpanded && (
                   <tr className="bg-base-200/50 border-l-4 border-l-secondary">
+                    <td className="w-16 bg-base-200"></td>
                     <td className="w-12 text-center text-xs text-base-content/50">
                       EXP
                     </td>
@@ -718,7 +723,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                 )}
                 {isExpanded && options.length === 0 && (
                   <tr className="bg-base-200 border-l-4 border-l-primary">
-                    <td colSpan="2" className="text-center py-8">
+                    <td colSpan="3" className="text-center py-8">
                       <div className="flex flex-col items-center gap-4">
                         <p className="text-base-content/60">No answer options</p>
                         <button
@@ -741,6 +746,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                       key={`${question.id}-option-${optionIndex}`}
                       className="bg-base-200 border-l-4 border-l-primary"
                     >
+                      <td className="w-16 bg-base-200"></td>
                       <td
                         className="w-12 text-center cursor-pointer hover:bg-base-300"
                         onClick={(e) => {
