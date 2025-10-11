@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Plus, CheckCircle, XCircle, Copy, TicketSlash, Trash2, AlertTriangle } from 'lucide-react'
+import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Plus, CheckCircle, XCircle, Copy, TicketSlash, Trash2, AlertTriangle, BarChart3 } from 'lucide-react'
 import * as supabaseService from '@/services/supabaseService'
 import { useTranslation } from 'react-i18next'
 import { quizClaimService } from '@/services/quizClaimService'
+import { QuizInsights } from './quiz-insights'
 
 export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   const { t } = useTranslation()
@@ -13,7 +14,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   const [isDomainListSaving, setIsDomainListSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [collapsedDomains, setCollapsedDomains] = useState(new Set())
-  const [activeTab, setActiveTab] = useState('domains')
+  const [activeTab, setActiveTab] = useState('insights')
   const [quizCodes, setQuizCodes] = useState([])
   const [userCredits, setUserCredits] = useState(0)
   const [isLoadingCodes, setIsLoadingCodes] = useState(false)
@@ -482,7 +483,14 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   // Tabs component
   const QuizTabs = () => (
     <div className="tabs tabs-box mb-6">
-      <button 
+      <button
+        className={`tab ${activeTab === 'insights' ? 'tab-active' : ''}`}
+        onClick={() => setActiveTab('insights')}
+      >
+        <BarChart3 className="h-4 w-4 mr-2" />
+        {t('Insights')}
+      </button>
+      <button
         className={`tab ${activeTab === 'domains' ? 'tab-active' : ''}`}
         onClick={() => setActiveTab('domains')}
       >
@@ -494,7 +502,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
           </span>
         )}
       </button>
-      <button 
+      <button
         className={`tab ${activeTab === 'codes' ? 'tab-active' : ''}`}
         onClick={() => setActiveTab('codes')}
       >
@@ -581,7 +589,9 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
 
       <QuizTabs />
 
-      {activeTab === 'domains' ? (
+      {activeTab === 'insights' ? (
+        <QuizInsights quiz={quiz} selected={selected} idToName={idToName} />
+      ) : activeTab === 'domains' ? (
         <div className="space-y-3">
           {/* Publish Section */}
           <div className={`card border ${hasUnpublishedChanges ? 'border-warning bg-warning/5' : 'border-base-300 bg-base-100'}`}>

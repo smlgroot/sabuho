@@ -7,7 +7,7 @@ export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCo
   const { t } = useTranslation()
   return (
     <div className="tabs tabs-box mb-6">
-      <button 
+      <button
         className={`tab ${activeTab === 'questions' ? 'tab-active' : ''}`}
         onClick={() => onTabChange('questions')}
       >
@@ -19,7 +19,7 @@ export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCo
           </span>
         )}
       </button>
-      <button 
+      <button
         className={`tab ${activeTab === 'resources' ? 'tab-active' : ''}`}
         onClick={() => onTabChange('resources')}
       >
