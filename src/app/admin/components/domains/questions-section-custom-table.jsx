@@ -18,6 +18,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
   const [isCreatingQuestion, setIsCreatingQuestion] = useState(false);
   const [isDeletingQuestions, setIsDeletingQuestions] = useState(false);
   const [dialog, setDialog] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null);
   const inputRef = useRef(null);
   const cellRefs = useRef({});
   const containerRef = useRef(null);
@@ -585,6 +586,31 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
     }
   };
 
+  const handleContextMenu = (e, rowIndex, type = 'question', optionIndex = null) => {
+    e.preventDefault();
+
+    // Select the cell that was right-clicked if it's not already selected
+    const cellId = getCellId(rowIndex, type, optionIndex);
+    if (!selectedCells.has(cellId)) {
+      setSelectedCells(new Set([cellId]));
+      setLastClickedCell({ cellId, rowIndex, type, optionIndex });
+
+      if (type === 'option') {
+        setActiveQuestionGroup(rowIndex);
+      } else {
+        setActiveQuestionGroup(null);
+      }
+    }
+
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      type,
+      rowIndex,
+      optionIndex
+    });
+  };
+
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isDragging) {
@@ -595,6 +621,19 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
     document.addEventListener('mouseup', handleGlobalMouseUp);
     return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
   }, [isDragging]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.context-menu')) {
+        setContextMenu(null);
+      }
+    };
+
+    if (contextMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [contextMenu]);
 
   return (
     <div ref={containerRef} className="relative overflow-auto">
@@ -693,6 +732,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                     onDoubleClick={(e) =>
                       handleDoubleClick(rowIndex, question.body, e, 'question')
                     }
+                    onContextMenu={(e) => handleContextMenu(e, rowIndex, 'question')}
                     className={`cursor-cell relative select-none hover:bg-base-300 ${
                       selectedCells.has(`q-${rowIndex}`)
                         ? 'ring-2 ring-blue-500 ring-inset bg-blue-50'
@@ -778,6 +818,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                             question.id
                           )
                         }
+                        onContextMenu={(e) => handleContextMenu(e, rowIndex, 'option', optionIndex)}
                         className={`cursor-cell relative select-none hover:bg-base-300 ${
                           selectedCells.has(`o-${rowIndex}-${optionIndex}`)
                             ? 'ring-2 ring-blue-500 ring-inset bg-blue-50'
@@ -822,6 +863,72 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
             boxSizing: 'border-box',
           }}
         />
+      )}
+
+      {contextMenu && (
+        <div
+          className="context-menu fixed z-50 bg-base-100 border border-base-300 rounded-lg shadow-lg py-2 min-w-48"
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+          }}
+        >
+          {contextMenu.type === 'question' ? (
+            <>
+              <button
+                className="w-full text-left px-4 py-2 hover:bg-base-200 text-sm"
+                onClick={() => {
+                  handleAddQuestionAboveSelected();
+                  setContextMenu(null);
+                }}
+              >
+                Insert question
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 hover:bg-base-200 text-sm text-error"
+                onClick={() => {
+                  handleDeleteRows();
+                  setContextMenu(null);
+                }}
+                disabled={selectedCells.size === 0}
+              >
+                Delete question{getSelectedRowIndices().length > 1 ? 's' : ''} ({getSelectedRowIndices().length})
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="w-full text-left px-4 py-2 hover:bg-base-200 text-sm"
+                onClick={() => {
+                  handleToggleCorrect(contextMenu.rowIndex, contextMenu.optionIndex);
+                  setContextMenu(null);
+                }}
+              >
+                Toggle correct
+              </button>
+              <div className="divider my-1"></div>
+              <button
+                className="w-full text-left px-4 py-2 hover:bg-base-200 text-sm"
+                onClick={() => {
+                  handleInsertOption(contextMenu.rowIndex);
+                  setContextMenu(null);
+                }}
+              >
+                Insert option
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 hover:bg-base-200 text-sm text-error"
+                onClick={() => {
+                  handleDeleteOptions();
+                  setContextMenu(null);
+                }}
+                disabled={selectedCells.size === 0}
+              >
+                Delete option{getSelectedOptionIndices().length > 1 ? 's' : ''} ({getSelectedOptionIndices().length})
+              </button>
+            </>
+          )}
+        </div>
       )}
 
       {dialog && (
