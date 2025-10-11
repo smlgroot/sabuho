@@ -632,7 +632,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
       <table className="w-full border-collapse [&_td]:border [&_td]:border-base-300 [&_th]:border [&_th]:border-base-300">
         <thead>
           <tr className="bg-base-200">
-            <th className="w-16 bg-base-200 text-center font-semibold text-xs">&nbsp;</th>
+            <th className="w-10 bg-base-200 text-center font-semibold text-xs">&nbsp;</th>
             <th className="w-12 bg-base-200">
               {expandedRows.size > 0 && (
                 <button
@@ -670,7 +670,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
             return (
               <Fragment key={question.id}>
                 <tr>
-                  <td className="w-16 bg-base-200 text-center font-semibold text-xs text-base-content/60">
+                  <td className="w-10 bg-base-200 text-center font-semibold text-xs text-base-content/60">
                     {rowIndex + 1}
                   </td>
                   <td className="w-12">
@@ -707,7 +707,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                 </tr>
                 {isExpanded && (
                   <tr className="bg-base-200/50 border-l-4 border-l-secondary">
-                    <td className="w-16 bg-base-200"></td>
+                    <td className="w-10 bg-base-200"></td>
                     <td className="w-12 text-center text-xs text-base-content/50">
                       EXP
                     </td>
@@ -746,21 +746,23 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                       key={`${question.id}-option-${optionIndex}`}
                       className="bg-base-200 border-l-4 border-l-primary"
                     >
-                      <td className="w-16 bg-base-200"></td>
+                      <td className="w-10 bg-base-200"></td>
                       <td
-                        className="w-12 text-center cursor-pointer hover:bg-base-300"
+                        className="w-12 cursor-pointer hover:bg-base-300"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleToggleCorrect(rowIndex, optionIndex);
                         }}
                       >
-                        {isCorrect ? (
-                          <span className="badge badge-success badge-sm flex items-center justify-center">
-                            <Check className="w-3 h-3" />
-                          </span>
-                        ) : (
-                          <span className="w-4 h-4 inline-block border-2 border-base-content/30 rounded"></span>
-                        )}
+                        <div className="flex items-center justify-center">
+                          {isCorrect ? (
+                            <span className="badge badge-success badge-sm flex items-center justify-center">
+                              <Check className="w-3 h-3" />
+                            </span>
+                          ) : (
+                            <span className="w-4 h-4 inline-block border-2 border-base-content/30 rounded"></span>
+                          )}
+                        </div>
                       </td>
                       <td
                         onClick={(e) => handleCellClick(e, rowIndex, 'option', optionIndex)}
