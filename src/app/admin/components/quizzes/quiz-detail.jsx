@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, ChevronDown, FolderOpen, Folder, Hash, Plus, CheckCircle, XCircle, Copy, TicketSlash, Trash2, AlertTriangle, BarChart3 } from 'lucide-react'
+import { ChevronRight, ChevronDown, FolderOpen, Folder, Settings, Plus, CheckCircle, XCircle, Copy, TicketSlash, Trash2, AlertTriangle, BarChart3 } from 'lucide-react'
 import * as supabaseService from '@/services/supabaseService'
 import { useTranslation } from 'react-i18next'
 import { quizClaimService } from '@/services/quizClaimService'
@@ -494,8 +494,8 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
         className={`tab ${activeTab === 'domains' ? 'tab-active' : ''}`}
         onClick={() => setActiveTab('domains')}
       >
-        <Hash className="h-4 w-4 mr-2" />
-        {t('Domains')}
+        <Settings className="h-4 w-4 mr-2" />
+        {t('Config')}
         {selected.length > 0 && (
           <span className="badge badge-secondary ml-2 text-xs px-2">
             {selected.length}
