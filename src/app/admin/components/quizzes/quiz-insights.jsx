@@ -129,7 +129,7 @@ export function QuizInsights({ quiz, selected, idToName }) {
                       tickFormatter={(value) => `${value}%`}
                     />
                     <Radar
-                      name="Focus Areas"
+                      name={t('Focus Areas')}
                       dataKey="focusArea"
                       stroke="#f59e0b"
                       fill="#f59e0b"
@@ -138,7 +138,7 @@ export function QuizInsights({ quiz, selected, idToName }) {
                       dot={{ fill: '#f59e0b', r: 4 }}
                     />
                     <Radar
-                      name="Strengths"
+                      name={t('Strengths')}
                       dataKey="strength"
                       stroke="#10b981"
                       fill="#10b981"
