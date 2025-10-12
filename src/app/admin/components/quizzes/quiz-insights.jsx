@@ -65,11 +65,6 @@ export function QuizInsights({ quiz, selected, idToName }) {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAgMi4yMSAxLjc5IDQgNCA0czQtMS43OSA0LTQtMS43OS00LTQtNC00IDEuNzktNCA0em0wIDI0YzAgMi4yMSAxLjc5IDQgNCA0czQtMS43OSA0LTQtMS43OS00LTQtNC00IDEuNzktNCA0eiIvPjwvZz48L2c+PC9zdmc+')] opacity-40"></div>
 
         <div className="relative p-10">
-          {/* Huge floating percentage */}
-          <div className="absolute top-0 right-0 text-[12rem] font-black text-white/5 leading-none pointer-events-none select-none">
-            {progressPercentage}%
-          </div>
-
           <div className="relative z-10">
             {/* Top Section */}
             <div className="flex items-start justify-between mb-8">
@@ -91,11 +86,9 @@ export function QuizInsights({ quiz, selected, idToName }) {
             {/* Visual Question Grid - The Innovation */}
             <div className="mb-8 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               {(() => {
-                // Adaptive scaling: determine how many questions each dot represents
-                const maxDots = 100
-                const dotsToShow = Math.min(totalQuestions, maxDots)
-                const questionsPerDot = Math.ceil(totalQuestions / dotsToShow)
-                const correctPerDot = correctAnswers / answeredQuestions // Ratio
+                // ALWAYS show 100 dots - each represents 1% of the quiz
+                const TOTAL_DOTS = 100
+                const accuracyRate = answeredQuestions > 0 ? correctAnswers / answeredQuestions : 0
 
                 return (
                   <>
@@ -114,14 +107,12 @@ export function QuizInsights({ quiz, selected, idToName }) {
                           <span className="text-xs text-white/70 font-medium">{t('Not answered')}</span>
                         </div>
                       </div>
-                      {questionsPerDot > 1 && (
-                        <span className="text-xs text-white/50 font-medium">
-                          {t('Each dot')} ≈ {questionsPerDot} {t('questions')}
-                        </span>
-                      )}
+                      <span className="text-xs text-white/50 font-medium">
+                        {t('Each dot = 1% of quiz')}
+                      </span>
                     </div>
 
-                    {/* Flowing Progress River */}
+                    {/* Flowing Progress River - 100 dots always */}
                     <div className="relative h-24 rounded-xl bg-white/5 overflow-hidden">
                       {/* Background grid lines */}
                       <div className="absolute inset-0 opacity-20">
@@ -130,45 +121,48 @@ export function QuizInsights({ quiz, selected, idToName }) {
                         ))}
                       </div>
 
-                      {/* The flowing dots */}
+                      {/* The flowing dots - always 100 */}
                       <div className="absolute inset-0 flex items-center px-2">
                         <div className="flex items-center gap-1 flex-wrap">
-                          {Array.from({ length: dotsToShow }).map((_, i) => {
-                            const questionStart = i * questionsPerDot
-                            const questionEnd = Math.min((i + 1) * questionsPerDot, totalQuestions)
-                            const isInAnsweredRange = questionEnd <= answeredQuestions
-                            const isPartiallyAnswered = questionStart < answeredQuestions && questionEnd > answeredQuestions
+                          {Array.from({ length: TOTAL_DOTS }).map((_, i) => {
+                            // Calculate dot counts based on actual data
+                            const correctPercentage = (correctAnswers / totalQuestions) * 100
+                            const wrongPercentage = ((answeredQuestions - correctAnswers) / totalQuestions) * 100
 
-                            // For each dot, calculate if it represents mostly correct or wrong answers
+                            const correctDots = Math.round(correctPercentage)
+                            const wrongDots = Math.round(wrongPercentage)
+
+                            const dotPercentage = i + 1 // 1-100%
+
+                            // Determine dot state based on order: correct -> wrong -> unanswered
                             let dotState = 'unanswered'
-                            if (isInAnsweredRange) {
-                              const avgCorrectness = Math.random() // Mock: replace with actual calculation
-                              dotState = avgCorrectness > (correctPerDot - 0.2) ? 'correct' : 'wrong'
-                            } else if (isPartiallyAnswered) {
-                              dotState = 'partial'
-                            }
+                            let tooltipText = ''
 
-                            // Determine size based on grouping
-                            const dotSize = questionsPerDot === 1 ? 'w-2 h-2' : questionsPerDot < 5 ? 'w-2.5 h-2.5' : questionsPerDot < 10 ? 'w-3 h-3' : 'w-3.5 h-3.5'
+                            if (i < correctDots) {
+                              dotState = 'correct'
+                              tooltipText = `${dotPercentage}% - Correct`
+                            } else if (i < correctDots + wrongDots) {
+                              dotState = 'wrong'
+                              tooltipText = `${dotPercentage}% - Wrong`
+                            } else {
+                              dotState = 'unanswered'
+                              tooltipText = `${dotPercentage}% - Not answered`
+                            }
 
                             return (
                               <div
                                 key={i}
-                                className={`${dotSize} rounded-full transition-all duration-500 ${
+                                className={`w-2 h-2 rounded-full transition-all duration-500 ${
                                   dotState === 'correct'
-                                    ? 'bg-success shadow-lg shadow-success/50 animate-pulse'
+                                    ? 'bg-success shadow-lg shadow-success/50 scale-110'
                                     : dotState === 'wrong'
-                                    ? 'bg-warning shadow-lg shadow-warning/50'
-                                    : dotState === 'partial'
-                                    ? 'bg-info shadow-lg shadow-info/50'
+                                    ? 'bg-warning shadow-md shadow-warning/50'
                                     : 'bg-white/20 hover:bg-white/30'
                                 }`}
                                 style={{
-                                  transitionDelay: `${i * 10}ms`,
-                                  animationDelay: `${i * 50}ms`,
-                                  animationDuration: '2s'
+                                  transitionDelay: `${i * 5}ms`,
                                 }}
-                                title={`Questions ${questionStart + 1}-${questionEnd}`}
+                                title={tooltipText}
                               />
                             )
                           })}
