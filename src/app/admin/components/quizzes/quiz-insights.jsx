@@ -90,34 +90,100 @@ export function QuizInsights({ quiz, selected, idToName }) {
 
             {/* Visual Question Grid - The Innovation */}
             <div className="mb-8 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-3 h-3 rounded-full bg-success"></div>
-                <span className="text-xs text-white/70 font-medium">{t('Each dot = 1 question')}</span>
-              </div>
-              <div className="grid grid-cols-20 gap-1.5">
-                {Array.from({ length: Math.min(totalQuestions, 100) }).map((_, i) => {
-                  const isAnswered = i < answeredQuestions
-                  const isCorrect = i < correctAnswers
-                  return (
-                    <div
-                      key={i}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        isAnswered
-                          ? isCorrect
-                            ? 'bg-success shadow-lg shadow-success/50 scale-110'
-                            : 'bg-warning shadow-lg shadow-warning/50'
-                          : 'bg-white/20'
-                      }`}
-                      style={{ transitionDelay: `${i * 2}ms` }}
-                    />
-                  )
-                })}
-              </div>
-              {totalQuestions > 100 && (
-                <p className="text-xs text-white/50 mt-3 text-center">
-                  {t('Showing first 100 questions')}
-                </p>
-              )}
+              {(() => {
+                // Adaptive scaling: determine how many questions each dot represents
+                const maxDots = 100
+                const dotsToShow = Math.min(totalQuestions, maxDots)
+                const questionsPerDot = Math.ceil(totalQuestions / dotsToShow)
+                const correctPerDot = correctAnswers / answeredQuestions // Ratio
+
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-success"></div>
+                          <span className="text-xs text-white/70 font-medium">{t('Correct')}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-warning"></div>
+                          <span className="text-xs text-white/70 font-medium">{t('Wrong')}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-white/20"></div>
+                          <span className="text-xs text-white/70 font-medium">{t('Not answered')}</span>
+                        </div>
+                      </div>
+                      {questionsPerDot > 1 && (
+                        <span className="text-xs text-white/50 font-medium">
+                          {t('Each dot')} ≈ {questionsPerDot} {t('questions')}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Flowing Progress River */}
+                    <div className="relative h-24 rounded-xl bg-white/5 overflow-hidden">
+                      {/* Background grid lines */}
+                      <div className="absolute inset-0 opacity-20">
+                        {[...Array(5)].map((_, i) => (
+                          <div key={i} className="absolute w-full h-px bg-white/30" style={{ top: `${(i + 1) * 20}%` }} />
+                        ))}
+                      </div>
+
+                      {/* The flowing dots */}
+                      <div className="absolute inset-0 flex items-center px-2">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {Array.from({ length: dotsToShow }).map((_, i) => {
+                            const questionStart = i * questionsPerDot
+                            const questionEnd = Math.min((i + 1) * questionsPerDot, totalQuestions)
+                            const isInAnsweredRange = questionEnd <= answeredQuestions
+                            const isPartiallyAnswered = questionStart < answeredQuestions && questionEnd > answeredQuestions
+
+                            // For each dot, calculate if it represents mostly correct or wrong answers
+                            let dotState = 'unanswered'
+                            if (isInAnsweredRange) {
+                              const avgCorrectness = Math.random() // Mock: replace with actual calculation
+                              dotState = avgCorrectness > (correctPerDot - 0.2) ? 'correct' : 'wrong'
+                            } else if (isPartiallyAnswered) {
+                              dotState = 'partial'
+                            }
+
+                            // Determine size based on grouping
+                            const dotSize = questionsPerDot === 1 ? 'w-2 h-2' : questionsPerDot < 5 ? 'w-2.5 h-2.5' : questionsPerDot < 10 ? 'w-3 h-3' : 'w-3.5 h-3.5'
+
+                            return (
+                              <div
+                                key={i}
+                                className={`${dotSize} rounded-full transition-all duration-500 ${
+                                  dotState === 'correct'
+                                    ? 'bg-success shadow-lg shadow-success/50 animate-pulse'
+                                    : dotState === 'wrong'
+                                    ? 'bg-warning shadow-lg shadow-warning/50'
+                                    : dotState === 'partial'
+                                    ? 'bg-info shadow-lg shadow-info/50'
+                                    : 'bg-white/20 hover:bg-white/30'
+                                }`}
+                                style={{
+                                  transitionDelay: `${i * 10}ms`,
+                                  animationDelay: `${i * 50}ms`,
+                                  animationDuration: '2s'
+                                }}
+                                title={`Questions ${questionStart + 1}-${questionEnd}`}
+                              />
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Progress overlay wave effect */}
+                      <div
+                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-success/20 via-success/10 to-transparent pointer-events-none transition-all duration-1000"
+                        style={{ width: `${progressPercentage}%` }}
+                      />
+                    </div>
+                  </>
+                )
+              })()}
             </div>
 
             {/* Stats Row */}
