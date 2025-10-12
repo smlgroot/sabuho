@@ -12,8 +12,20 @@ import {
 
 export function QuizInsights({ quiz, selected, idToName }) {
   const { t } = useTranslation()
-  const [activeSection, setActiveSection] = useState(null)
+  const [selectedTypes, setSelectedTypes] = useState(new Set(['correct', 'wrong', 'unanswered']))
   const [hoveredDotType, setHoveredDotType] = useState(null)
+
+  const toggleSelection = (type) => {
+    setSelectedTypes(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(type)) {
+        newSet.delete(type)
+      } else {
+        newSet.add(type)
+      }
+      return newSet
+    })
+  }
 
   // Mock data - replace with real data from your backend
   const totalQuestions = 412
@@ -96,66 +108,29 @@ export function QuizInsights({ quiz, selected, idToName }) {
                 // Calculate sections
                 const correctPercentage = (correctAnswers / totalQuestions) * 100
                 const wrongPercentage = ((answeredQuestions - correctAnswers) / totalQuestions) * 100
-                const unansweredPercentage = 100 - correctPercentage - wrongPercentage
 
                 const correctDots = Math.round(correctPercentage)
                 const wrongDots = Math.round(wrongPercentage)
-
-                const sectionData = {
-                  correct: {
-                    count: correctAnswers,
-                    percentage: Math.round(correctPercentage),
-                    color: 'success',
-                    icon: CheckCircle2,
-                    title: t('Correct Answers'),
-                    description: t('Review your correct answers'),
-                    action: t('Review Answers'),
-                    bgColor: 'bg-success/20',
-                    borderColor: 'border-success/40'
-                  },
-                  wrong: {
-                    count: answeredQuestions - correctAnswers,
-                    percentage: Math.round(wrongPercentage),
-                    color: 'warning',
-                    icon: RefreshCw,
-                    title: t('Wrong Answers'),
-                    description: t('Practice these questions again'),
-                    action: t('Practice Wrong Answers'),
-                    bgColor: 'bg-warning/20',
-                    borderColor: 'border-warning/40'
-                  },
-                  unanswered: {
-                    count: totalQuestions - answeredQuestions,
-                    percentage: Math.round(unansweredPercentage),
-                    color: 'base-content',
-                    icon: SkipForward,
-                    title: t('Not Answered'),
-                    description: t('Continue from where you left off'),
-                    action: t('Continue Quiz'),
-                    bgColor: 'bg-white/10',
-                    borderColor: 'border-white/30'
-                  }
-                }
 
                 return (
                   <>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-success"></div>
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></div>
                           <span className="text-xs text-white/70 font-medium">{t('Correct')}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-warning"></div>
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></div>
                           <span className="text-xs text-white/70 font-medium">{t('Wrong')}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-white/20"></div>
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6]"></div>
                           <span className="text-xs text-white/70 font-medium">{t('Not answered')}</span>
                         </div>
                       </div>
                       <span className="text-xs text-white/50 font-medium">
-                        {t('Hover to highlight, click to take action')}
+                        {t('Click dots to toggle selection')}
                       </span>
                     </div>
 
@@ -176,39 +151,63 @@ export function QuizInsights({ quiz, selected, idToName }) {
 
                             // Determine dot state based on order: correct -> wrong -> unanswered
                             let dotState = 'unanswered'
-                            let tooltipText = ''
 
                             if (i < correctDots) {
                               dotState = 'correct'
-                              tooltipText = `${dotPercentage}% - Correct`
                             } else if (i < correctDots + wrongDots) {
                               dotState = 'wrong'
-                              tooltipText = `${dotPercentage}% - Wrong`
                             } else {
                               dotState = 'unanswered'
-                              tooltipText = `${dotPercentage}% - Not answered`
                             }
 
                             const isHovered = hoveredDotType === dotState
+                            const isSelected = selectedTypes.has(dotState)
+
+                            // Vivid colors for normal state, hover overrides selected
+                            let dotColor = ''
+                            let borderStyle = ''
+
+                            if (dotState === 'correct') {
+                              dotColor = 'bg-[#10b981]'
+                              if (isHovered) {
+                                borderStyle = 'ring-2 ring-white/70'
+                              } else if (isSelected) {
+                                borderStyle = 'ring-2 ring-[#34d399]'
+                              }
+                            } else if (dotState === 'wrong') {
+                              dotColor = 'bg-[#f59e0b]'
+                              if (isHovered) {
+                                borderStyle = 'ring-2 ring-white/70'
+                              } else if (isSelected) {
+                                borderStyle = 'ring-2 ring-[#fbbf24]'
+                              }
+                            } else {
+                              dotColor = 'bg-[#8b5cf6]'
+                              if (isHovered) {
+                                borderStyle = 'ring-2 ring-white/70'
+                              } else if (isSelected) {
+                                borderStyle = 'ring-2 ring-[#a78bfa]'
+                              }
+                            }
 
                             return (
                               <button
                                 key={i}
                                 onMouseEnter={() => setHoveredDotType(dotState)}
                                 onMouseLeave={() => setHoveredDotType(null)}
-                                onClick={() => setActiveSection(dotState)}
-                                className={`w-2 h-2 rounded-full transition-all duration-200 cursor-pointer ${
+                                onClick={() => toggleSelection(dotState)}
+                                className={`w-2 h-2 rounded-full transition-all duration-200 cursor-pointer ${dotColor} ${borderStyle} ${
                                   dotState === 'correct'
-                                    ? `bg-success shadow-lg shadow-success/50 ${isHovered ? 'scale-150 ring-2 ring-success/50' : 'scale-110'}`
+                                    ? 'shadow-lg shadow-success/50 scale-110'
                                     : dotState === 'wrong'
-                                    ? `bg-warning shadow-md shadow-warning/50 ${isHovered ? 'scale-150 ring-2 ring-warning/50' : ''}`
-                                    : `bg-white/20 ${isHovered ? 'scale-150 ring-2 ring-white/50 bg-white/40' : ''}`
+                                    ? 'shadow-md shadow-warning/50'
+                                    : 'shadow-md shadow-violet-500/50'
                                 }`}
                                 style={{
                                   transitionDelay: isHovered ? '0ms' : `${i * 5}ms`,
                                 }}
-                                title={tooltipText}
-                                aria-label={tooltipText}
+                                title={`${dotPercentage}% - ${dotState}`}
+                                aria-label={`${dotPercentage}% - ${dotState}`}
                               />
                             )
                           })}
@@ -222,85 +221,108 @@ export function QuizInsights({ quiz, selected, idToName }) {
                       />
                     </div>
 
-                    {/* Quick Actions Modal */}
-                    {activeSection && (
-                      <dialog className="modal modal-open">
-                        <div className="modal-box bg-gradient-to-br from-base-100 to-base-200 border border-base-300">
-                          <button
-                            onClick={() => setActiveSection(null)}
-                            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-                          >✕</button>
-
-                          <div className="flex items-center gap-3 mb-4">
-                            {(() => {
-                              const Icon = sectionData[activeSection].icon
-                              return <Icon className={`w-8 h-8 text-${sectionData[activeSection].color}`} />
-                            })()}
-                            <h3 className="font-bold text-2xl">{sectionData[activeSection].title}</h3>
-                          </div>
-
-                          <div className={`stats shadow mb-6 ${sectionData[activeSection].bgColor} border ${sectionData[activeSection].borderColor}`}>
-                            <div className="stat">
-                              <div className="stat-title">{t('Questions')}</div>
-                              <div className="stat-value text-3xl">{sectionData[activeSection].count}</div>
-                              <div className="stat-desc">{sectionData[activeSection].percentage}% {t('of quiz')}</div>
-                            </div>
-                          </div>
-
-                          <p className="text-base-content/70 mb-6">{sectionData[activeSection].description}</p>
-
-                          <div className="modal-action flex-col sm:flex-row gap-3">
-                            <button
-                              className={`btn btn-${sectionData[activeSection].color} flex-1 gap-2`}
-                              onClick={() => {
-                                // Add your navigation logic here
-                                console.log(`Action: ${activeSection}`)
-                                setActiveSection(null)
-                              }}
-                            >
-                              {(() => {
-                                const Icon = sectionData[activeSection].icon
-                                return <Icon className="w-5 h-5" />
-                              })()}
-                              {sectionData[activeSection].action}
-                            </button>
-                            <button
-                              className="btn btn-ghost flex-1"
-                              onClick={() => setActiveSection(null)}
-                            >
-                              {t('Cancel')}
-                            </button>
-                          </div>
-                        </div>
-                        <div className="modal-backdrop" onClick={() => setActiveSection(null)} />
-                      </dialog>
-                    )}
                   </>
                 )
               })()}
             </div>
 
-            {/* Stats Row */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="text-3xl font-bold text-white mb-1">{progressPercentage}%</div>
-                <div className="text-sm text-white/70">{t('Complete')}</div>
-              </div>
-              <div className="bg-success/20 backdrop-blur-sm rounded-xl p-4 border border-success/30">
-                <div className="flex items-center gap-2 text-3xl font-bold text-white mb-1">
-                  <CheckCircle2 className="w-6 h-6" />
-                  {accuracyRate}%
+            {/* Dynamic Stats Based on Selection */}
+            {(() => {
+              // Always show all types, with 0 for unselected
+              const allData = [
+                {
+                  type: 'correct',
+                  count: selectedTypes.has('correct') ? correctAnswers : 0,
+                  label: t('Correct'),
+                  icon: CheckCircle2,
+                  color: '#10b981',
+                  isSelected: selectedTypes.has('correct')
+                },
+                {
+                  type: 'wrong',
+                  count: selectedTypes.has('wrong') ? (answeredQuestions - correctAnswers) : 0,
+                  label: t('Wrong'),
+                  icon: RefreshCw,
+                  color: '#f59e0b',
+                  isSelected: selectedTypes.has('wrong')
+                },
+                {
+                  type: 'unanswered',
+                  count: selectedTypes.has('unanswered') ? (totalQuestions - answeredQuestions) : 0,
+                  label: t('Not Answered'),
+                  icon: SkipForward,
+                  color: '#8b5cf6',
+                  isSelected: selectedTypes.has('unanswered')
+                }
+              ]
+
+              // Determine color theme based on selection
+              let bgColor = 'bg-white/10'
+              let borderColor = 'border-white/20'
+
+              if (selectedTypes.size === 1) {
+                if (selectedTypes.has('correct')) {
+                  bgColor = 'bg-success/20'
+                  borderColor = 'border-success/30'
+                } else if (selectedTypes.has('wrong')) {
+                  bgColor = 'bg-warning/20'
+                  borderColor = 'border-warning/30'
+                } else if (selectedTypes.has('unanswered')) {
+                  bgColor = 'bg-violet-500/20'
+                  borderColor = 'border-violet-500/30'
+                }
+              }
+
+              return (
+                <div className={`mb-6 ${bgColor} backdrop-blur-sm rounded-xl p-4 border ${borderColor}`}>
+                  <div className="flex flex-wrap gap-2">
+                    {allData.map(item => {
+                      const Icon = item.icon
+                      return (
+                        <div
+                          key={item.type}
+                          className={`flex items-center gap-1.5 bg-white/5 rounded-lg px-3 py-1.5 ${!item.isSelected ? 'opacity-50' : ''}`}
+                        >
+                          <Icon className="w-4 h-4" style={{ color: item.color }} />
+                          <span className="text-sm font-bold text-white">{item.count}</span>
+                          <span className="text-xs text-white/50">{item.label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div className="text-sm text-white/70">{t('Accuracy')}</div>
-              </div>
-            </div>
+              )
+            })()}
 
             {/* CTA */}
-            <button className="btn btn-lg w-full bg-white text-purple-600 hover:bg-white/90 border-none shadow-xl hover:shadow-2xl hover:scale-105 transition-all gap-2">
-              <PlayCircle className="w-6 h-6" />
-              <span className="font-bold">{t('Continue Your Journey')}</span>
-              <ArrowRight className="w-5 h-5" />
-            </button>
+            {(() => {
+              let selectedCount = 0
+              if (selectedTypes.has('correct')) selectedCount += correctAnswers
+              if (selectedTypes.has('wrong')) selectedCount += (answeredQuestions - correctAnswers)
+              if (selectedTypes.has('unanswered')) selectedCount += (totalQuestions - answeredQuestions)
+
+              const hasSelection = selectedCount > 0
+
+              return (
+                <button
+                  className={`btn btn-lg w-full border-none shadow-xl transition-all gap-2 ${
+                    hasSelection
+                      ? 'bg-white text-purple-600 hover:bg-white/90 hover:shadow-2xl hover:scale-105'
+                      : 'bg-white/20 text-white/40 cursor-not-allowed'
+                  }`}
+                  disabled={!hasSelection}
+                >
+                  <PlayCircle className="w-6 h-6" />
+                  <span className="font-bold">
+                    {hasSelection
+                      ? `${t('Continue')} (${selectedCount} ${t('questions')})`
+                      : t('Select questions to continue')
+                    }
+                  </span>
+                  {hasSelection && <ArrowRight className="w-5 h-5" />}
+                </button>
+              )
+            })()}
           </div>
         </div>
       </div>
