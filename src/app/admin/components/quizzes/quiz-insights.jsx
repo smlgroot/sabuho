@@ -1,16 +1,19 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend
 } from 'recharts'
 import {
-  Target, Award, TrendingUp, AlertCircle, CheckCircle2, ArrowRight, PlayCircle
+  Target, Award, TrendingUp, AlertCircle, CheckCircle2, ArrowRight, PlayCircle, RefreshCw, SkipForward, Eye
 } from 'lucide-react'
 
 export function QuizInsights({ quiz, selected, idToName }) {
   const { t } = useTranslation()
+  const [activeSection, setActiveSection] = useState(null)
+  const [hoveredDotType, setHoveredDotType] = useState(null)
 
   // Mock data - replace with real data from your backend
   const totalQuestions = 412
@@ -90,6 +93,50 @@ export function QuizInsights({ quiz, selected, idToName }) {
                 const TOTAL_DOTS = 100
                 const accuracyRate = answeredQuestions > 0 ? correctAnswers / answeredQuestions : 0
 
+                // Calculate sections
+                const correctPercentage = (correctAnswers / totalQuestions) * 100
+                const wrongPercentage = ((answeredQuestions - correctAnswers) / totalQuestions) * 100
+                const unansweredPercentage = 100 - correctPercentage - wrongPercentage
+
+                const correctDots = Math.round(correctPercentage)
+                const wrongDots = Math.round(wrongPercentage)
+
+                const sectionData = {
+                  correct: {
+                    count: correctAnswers,
+                    percentage: Math.round(correctPercentage),
+                    color: 'success',
+                    icon: CheckCircle2,
+                    title: t('Correct Answers'),
+                    description: t('Review your correct answers'),
+                    action: t('Review Answers'),
+                    bgColor: 'bg-success/20',
+                    borderColor: 'border-success/40'
+                  },
+                  wrong: {
+                    count: answeredQuestions - correctAnswers,
+                    percentage: Math.round(wrongPercentage),
+                    color: 'warning',
+                    icon: RefreshCw,
+                    title: t('Wrong Answers'),
+                    description: t('Practice these questions again'),
+                    action: t('Practice Wrong Answers'),
+                    bgColor: 'bg-warning/20',
+                    borderColor: 'border-warning/40'
+                  },
+                  unanswered: {
+                    count: totalQuestions - answeredQuestions,
+                    percentage: Math.round(unansweredPercentage),
+                    color: 'base-content',
+                    icon: SkipForward,
+                    title: t('Not Answered'),
+                    description: t('Continue from where you left off'),
+                    action: t('Continue Quiz'),
+                    bgColor: 'bg-white/10',
+                    borderColor: 'border-white/30'
+                  }
+                }
+
                 return (
                   <>
                     <div className="flex items-center justify-between mb-4">
@@ -108,12 +155,12 @@ export function QuizInsights({ quiz, selected, idToName }) {
                         </div>
                       </div>
                       <span className="text-xs text-white/50 font-medium">
-                        {t('Each dot = 1% of quiz')}
+                        {t('Hover to highlight, click to take action')}
                       </span>
                     </div>
 
                     {/* Flowing Progress River - 100 dots always */}
-                    <div className="relative h-24 rounded-xl bg-white/5 overflow-hidden">
+                    <div className="relative h-24 rounded-xl bg-white/5 overflow-hidden group">
                       {/* Background grid lines */}
                       <div className="absolute inset-0 opacity-20">
                         {[...Array(5)].map((_, i) => (
@@ -125,13 +172,6 @@ export function QuizInsights({ quiz, selected, idToName }) {
                       <div className="absolute inset-0 flex items-center px-2">
                         <div className="flex items-center gap-1 flex-wrap">
                           {Array.from({ length: TOTAL_DOTS }).map((_, i) => {
-                            // Calculate dot counts based on actual data
-                            const correctPercentage = (correctAnswers / totalQuestions) * 100
-                            const wrongPercentage = ((answeredQuestions - correctAnswers) / totalQuestions) * 100
-
-                            const correctDots = Math.round(correctPercentage)
-                            const wrongDots = Math.round(wrongPercentage)
-
                             const dotPercentage = i + 1 // 1-100%
 
                             // Determine dot state based on order: correct -> wrong -> unanswered
@@ -149,20 +189,26 @@ export function QuizInsights({ quiz, selected, idToName }) {
                               tooltipText = `${dotPercentage}% - Not answered`
                             }
 
+                            const isHovered = hoveredDotType === dotState
+
                             return (
-                              <div
+                              <button
                                 key={i}
-                                className={`w-2 h-2 rounded-full transition-all duration-500 ${
+                                onMouseEnter={() => setHoveredDotType(dotState)}
+                                onMouseLeave={() => setHoveredDotType(null)}
+                                onClick={() => setActiveSection(dotState)}
+                                className={`w-2 h-2 rounded-full transition-all duration-200 cursor-pointer ${
                                   dotState === 'correct'
-                                    ? 'bg-success shadow-lg shadow-success/50 scale-110'
+                                    ? `bg-success shadow-lg shadow-success/50 ${isHovered ? 'scale-150 ring-2 ring-success/50' : 'scale-110'}`
                                     : dotState === 'wrong'
-                                    ? 'bg-warning shadow-md shadow-warning/50'
-                                    : 'bg-white/20 hover:bg-white/30'
+                                    ? `bg-warning shadow-md shadow-warning/50 ${isHovered ? 'scale-150 ring-2 ring-warning/50' : ''}`
+                                    : `bg-white/20 ${isHovered ? 'scale-150 ring-2 ring-white/50 bg-white/40' : ''}`
                                 }`}
                                 style={{
-                                  transitionDelay: `${i * 5}ms`,
+                                  transitionDelay: isHovered ? '0ms' : `${i * 5}ms`,
                                 }}
                                 title={tooltipText}
+                                aria-label={tooltipText}
                               />
                             )
                           })}
@@ -175,6 +221,60 @@ export function QuizInsights({ quiz, selected, idToName }) {
                         style={{ width: `${progressPercentage}%` }}
                       />
                     </div>
+
+                    {/* Quick Actions Modal */}
+                    {activeSection && (
+                      <dialog className="modal modal-open">
+                        <div className="modal-box bg-gradient-to-br from-base-100 to-base-200 border border-base-300">
+                          <button
+                            onClick={() => setActiveSection(null)}
+                            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                          >✕</button>
+
+                          <div className="flex items-center gap-3 mb-4">
+                            {(() => {
+                              const Icon = sectionData[activeSection].icon
+                              return <Icon className={`w-8 h-8 text-${sectionData[activeSection].color}`} />
+                            })()}
+                            <h3 className="font-bold text-2xl">{sectionData[activeSection].title}</h3>
+                          </div>
+
+                          <div className={`stats shadow mb-6 ${sectionData[activeSection].bgColor} border ${sectionData[activeSection].borderColor}`}>
+                            <div className="stat">
+                              <div className="stat-title">{t('Questions')}</div>
+                              <div className="stat-value text-3xl">{sectionData[activeSection].count}</div>
+                              <div className="stat-desc">{sectionData[activeSection].percentage}% {t('of quiz')}</div>
+                            </div>
+                          </div>
+
+                          <p className="text-base-content/70 mb-6">{sectionData[activeSection].description}</p>
+
+                          <div className="modal-action flex-col sm:flex-row gap-3">
+                            <button
+                              className={`btn btn-${sectionData[activeSection].color} flex-1 gap-2`}
+                              onClick={() => {
+                                // Add your navigation logic here
+                                console.log(`Action: ${activeSection}`)
+                                setActiveSection(null)
+                              }}
+                            >
+                              {(() => {
+                                const Icon = sectionData[activeSection].icon
+                                return <Icon className="w-5 h-5" />
+                              })()}
+                              {sectionData[activeSection].action}
+                            </button>
+                            <button
+                              className="btn btn-ghost flex-1"
+                              onClick={() => setActiveSection(null)}
+                            >
+                              {t('Cancel')}
+                            </button>
+                          </div>
+                        </div>
+                        <div className="modal-backdrop" onClick={() => setActiveSection(null)} />
+                      </dialog>
+                    )}
                   </>
                 )
               })()}
