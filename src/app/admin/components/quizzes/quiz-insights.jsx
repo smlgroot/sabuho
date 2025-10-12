@@ -12,7 +12,7 @@ import {
 
 export function QuizInsights({ quiz, selected, idToName }) {
   const { t } = useTranslation()
-  const [selectedTypes, setSelectedTypes] = useState(new Set(['correct', 'wrong', 'unanswered']))
+  const [selectedTypes, setSelectedTypes] = useState(new Set([]))
   const [hoveredDotType, setHoveredDotType] = useState(null)
 
   const toggleSelection = (type) => {
@@ -265,6 +265,9 @@ export function QuizInsights({ quiz, selected, idToName }) {
 
               return (
                 <div className={`mb-6 ${bgColor} backdrop-blur-sm rounded-xl p-4 border ${borderColor}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-white/50 font-medium">{t('Selected questions breakdown')}</span>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {allData.map(item => {
                       const Icon = item.icon
