@@ -61,42 +61,36 @@ export function QuizInsights({ quiz, selected, idToName }) {
   return (
     <div className="space-y-6">
       {/* Hero Progress Card */}
-      <div className="card bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20">
-        <div className="card-body">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-3xl font-bold text-base-content mb-2">
-                {answeredQuestions}/{totalQuestions}
-              </h2>
-              <p className="text-base-content/70">{t('Questions Completed')}</p>
+      <div className="hero bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl shadow-xl">
+        <div className="hero-content text-center py-12">
+          <div className="max-w-xl">
+            {/* Circular Progress */}
+            <div className="flex justify-center mb-6">
+              <div className="radial-progress text-primary" style={{"--value": progressPercentage, "--size": "12rem", "--thickness": "1rem"}} role="progressbar">
+                <div className="flex flex-col">
+                  <span className="text-5xl font-bold">{progressPercentage}%</span>
+                  <span className="text-sm text-base-content/60">{t('complete')}</span>
+                </div>
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-success">{accuracyRate}%</div>
-              <p className="text-base-content/70 text-sm">{t('Accuracy')}</p>
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-base-content/70">{t('Overall Progress')}</span>
-              <span className="font-semibold">{progressPercentage}%</span>
-            </div>
-            <progress
-              className="progress progress-primary w-full h-3"
-              value={progressPercentage}
-              max="100"
-            />
-          </div>
+            {/* Progress Text */}
+            <h2 className="text-2xl font-bold mb-2">{t('Keep it up!')}</h2>
+            <p className="text-base-content/70 mb-8">
+              {answeredQuestions} {t('of')} {totalQuestions} {t('questions completed')}
+            </p>
 
-          <div className="flex gap-3 mt-4">
-            <button className="btn btn-primary flex-1">
-              <PlayCircle className="h-5 w-5" />
-              {t('Continue Practice')}
-            </button>
-            <button className="btn btn-outline flex-1">
-              <Target className="h-5 w-5" />
-              {t('Review Mistakes')}
-            </button>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button className="btn btn-primary btn-lg gap-2">
+                <PlayCircle className="w-5 h-5" />
+                {t('Continue Practice')}
+              </button>
+              <button className="btn btn-outline btn-primary btn-lg gap-2">
+                <Target className="w-5 h-5" />
+                {t('Review Mistakes')}
+              </button>
+            </div>
           </div>
         </div>
       </div>

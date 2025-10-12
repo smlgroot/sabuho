@@ -19,7 +19,12 @@
       "WebFetch(domain:www.material-react-table.com)",
       "WebFetch(domain:muhimasri.com)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:adazzle.github.io)"
+      "WebFetch(domain:adazzle.github.io)",
+      "WebFetch(domain:www.eleken.co)",
+      "WebFetch(domain:www.justinmind.com)",
+      "WebFetch(domain:blog.duolingo.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:userguiding.com)"
     ],
     "deny": [],
     "ask": []
