@@ -76,7 +76,7 @@ export function QuizInsights({ quiz, selected, idToName }) {
   return (
     <div className="space-y-6">
       {/* Hero Progress Card */}
-      <div className="relative overflow-hidden rounded-3xl shadow-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500">
+      <div className="relative overflow-hidden rounded-3xl shadow-2xl bg-[#1e293b]">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAgMi4yMSAxLjc5IDQgNCA0czQtMS43OSA0LTQtMS43OS00LTQtNC00IDEuNzktNCA0em0wIDI0YzAgMi4yMSAxLjc5IDQgNCA0czQtMS43OSA0LTQtMS43OS00LTQtNC00IDEuNzktNCA0eiIvPjwvZz48L2c+PC9zdmc+')] opacity-40"></div>
 
         <div className="relative p-10">
@@ -84,13 +84,6 @@ export function QuizInsights({ quiz, selected, idToName }) {
             {/* Top Section */}
             <div className="flex items-start justify-between mb-8">
               <div className="space-y-1">
-                <div className="badge badge-lg bg-white/20 backdrop-blur border-white/30 text-white gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  {progressPercentage < 25 && t('Getting Started')}
-                  {progressPercentage >= 25 && progressPercentage < 50 && t('Building Momentum')}
-                  {progressPercentage >= 50 && progressPercentage < 75 && t('On Fire!')}
-                  {progressPercentage >= 75 && t('Almost There!')}
-                </div>
                 <h2 className="text-4xl font-black text-white tracking-tight">
                   {answeredQuestions}<span className="text-white/60">/{totalQuestions}</span>
                 </h2>
@@ -169,23 +162,25 @@ export function QuizInsights({ quiz, selected, idToName }) {
 
                             if (dotState === 'correct') {
                               dotColor = 'bg-[#10b981]'
-                              if (isHovered) {
-                                borderStyle = 'ring-2 ring-white/70'
-                              } else if (isSelected) {
+                              // Normal + Hover = show ring (preview selected)
+                              // Selected + Hover = no ring (preview deselected)
+                              if (isSelected && !isHovered) {
+                                borderStyle = 'ring-2 ring-[#34d399]'
+                              } else if (!isSelected && isHovered) {
                                 borderStyle = 'ring-2 ring-[#34d399]'
                               }
                             } else if (dotState === 'wrong') {
                               dotColor = 'bg-[#f59e0b]'
-                              if (isHovered) {
-                                borderStyle = 'ring-2 ring-white/70'
-                              } else if (isSelected) {
+                              if (isSelected && !isHovered) {
+                                borderStyle = 'ring-2 ring-[#fbbf24]'
+                              } else if (!isSelected && isHovered) {
                                 borderStyle = 'ring-2 ring-[#fbbf24]'
                               }
                             } else {
                               dotColor = 'bg-[#8b5cf6]'
-                              if (isHovered) {
-                                borderStyle = 'ring-2 ring-white/70'
-                              } else if (isSelected) {
+                              if (isSelected && !isHovered) {
+                                borderStyle = 'ring-2 ring-[#a78bfa]'
+                              } else if (!isSelected && isHovered) {
                                 borderStyle = 'ring-2 ring-[#a78bfa]'
                               }
                             }
@@ -214,11 +209,6 @@ export function QuizInsights({ quiz, selected, idToName }) {
                         </div>
                       </div>
 
-                      {/* Progress overlay wave effect */}
-                      <div
-                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-success/20 via-success/10 to-transparent pointer-events-none transition-all duration-1000"
-                        style={{ width: `${progressPercentage}%` }}
-                      />
                     </div>
 
                   </>
