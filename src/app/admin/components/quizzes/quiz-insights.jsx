@@ -61,36 +61,86 @@ export function QuizInsights({ quiz, selected, idToName }) {
   return (
     <div className="space-y-6">
       {/* Hero Progress Card */}
-      <div className="hero bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl shadow-xl">
-        <div className="hero-content text-center py-12">
-          <div className="max-w-xl">
-            {/* Circular Progress */}
-            <div className="flex justify-center mb-6">
-              <div className="radial-progress text-primary" style={{"--value": progressPercentage, "--size": "12rem", "--thickness": "1rem"}} role="progressbar">
-                <div className="flex flex-col">
-                  <span className="text-5xl font-bold">{progressPercentage}%</span>
-                  <span className="text-sm text-base-content/60">{t('complete')}</span>
+      <div className="relative overflow-hidden rounded-3xl shadow-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAgMi4yMSAxLjc5IDQgNCA0czQtMS43OSA0LTQtMS43OS00LTQtNC00IDEuNzktNCA0em0wIDI0YzAgMi4yMSAxLjc5IDQgNCA0czQtMS43OSA0LTQtMS43OS00LTQtNC00IDEuNzktNCA0eiIvPjwvZz48L2c+PC9zdmc+')] opacity-40"></div>
+
+        <div className="relative p-10">
+          {/* Huge floating percentage */}
+          <div className="absolute top-0 right-0 text-[12rem] font-black text-white/5 leading-none pointer-events-none select-none">
+            {progressPercentage}%
+          </div>
+
+          <div className="relative z-10">
+            {/* Top Section */}
+            <div className="flex items-start justify-between mb-8">
+              <div className="space-y-1">
+                <div className="badge badge-lg bg-white/20 backdrop-blur border-white/30 text-white gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  {progressPercentage < 25 && t('Getting Started')}
+                  {progressPercentage >= 25 && progressPercentage < 50 && t('Building Momentum')}
+                  {progressPercentage >= 50 && progressPercentage < 75 && t('On Fire!')}
+                  {progressPercentage >= 75 && t('Almost There!')}
                 </div>
+                <h2 className="text-4xl font-black text-white tracking-tight">
+                  {answeredQuestions}<span className="text-white/60">/{totalQuestions}</span>
+                </h2>
+                <p className="text-white/80 text-sm font-medium">{t('Questions Conquered')}</p>
               </div>
             </div>
 
-            {/* Progress Text */}
-            <h2 className="text-2xl font-bold mb-2">{t('Keep it up!')}</h2>
-            <p className="text-base-content/70 mb-8">
-              {answeredQuestions} {t('of')} {totalQuestions} {t('questions completed')}
-            </p>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button className="btn btn-primary btn-lg gap-2">
-                <PlayCircle className="w-5 h-5" />
-                {t('Continue Practice')}
-              </button>
-              <button className="btn btn-outline btn-primary btn-lg gap-2">
-                <Target className="w-5 h-5" />
-                {t('Review Mistakes')}
-              </button>
+            {/* Visual Question Grid - The Innovation */}
+            <div className="mb-8 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-3 h-3 rounded-full bg-success"></div>
+                <span className="text-xs text-white/70 font-medium">{t('Each dot = 1 question')}</span>
+              </div>
+              <div className="grid grid-cols-20 gap-1.5">
+                {Array.from({ length: Math.min(totalQuestions, 100) }).map((_, i) => {
+                  const isAnswered = i < answeredQuestions
+                  const isCorrect = i < correctAnswers
+                  return (
+                    <div
+                      key={i}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        isAnswered
+                          ? isCorrect
+                            ? 'bg-success shadow-lg shadow-success/50 scale-110'
+                            : 'bg-warning shadow-lg shadow-warning/50'
+                          : 'bg-white/20'
+                      }`}
+                      style={{ transitionDelay: `${i * 2}ms` }}
+                    />
+                  )
+                })}
+              </div>
+              {totalQuestions > 100 && (
+                <p className="text-xs text-white/50 mt-3 text-center">
+                  {t('Showing first 100 questions')}
+                </p>
+              )}
             </div>
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="text-3xl font-bold text-white mb-1">{progressPercentage}%</div>
+                <div className="text-sm text-white/70">{t('Complete')}</div>
+              </div>
+              <div className="bg-success/20 backdrop-blur-sm rounded-xl p-4 border border-success/30">
+                <div className="flex items-center gap-2 text-3xl font-bold text-white mb-1">
+                  <CheckCircle2 className="w-6 h-6" />
+                  {accuracyRate}%
+                </div>
+                <div className="text-sm text-white/70">{t('Accuracy')}</div>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <button className="btn btn-lg w-full bg-white text-purple-600 hover:bg-white/90 border-none shadow-xl hover:shadow-2xl hover:scale-105 transition-all gap-2">
+              <PlayCircle className="w-6 h-6" />
+              <span className="font-bold">{t('Continue Your Journey')}</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
