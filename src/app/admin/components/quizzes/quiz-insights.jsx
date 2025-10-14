@@ -7,7 +7,7 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend
 } from 'recharts'
 import {
-  Target, Award, TrendingUp, AlertCircle, CheckCircle2, ArrowRight, PlayCircle, RefreshCw, SkipForward, Eye
+  Target, Award, TrendingUp, AlertCircle, CheckCircle2, ArrowRight, PlayCircle, RefreshCw, SkipForward, Eye, MousePointerClick
 } from 'lucide-react'
 
 export function QuizInsights({ quiz, selected, idToName }) {
@@ -107,24 +107,61 @@ export function QuizInsights({ quiz, selected, idToName }) {
 
                 return (
                   <>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></div>
-                          <span className="text-xs text-white/70 font-medium">{t('Correct')}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></div>
-                          <span className="text-xs text-white/70 font-medium">{t('Wrong')}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6]"></div>
-                          <span className="text-xs text-white/70 font-medium">{t('Not answered')}</span>
-                        </div>
-                      </div>
-                      <span className="text-xs text-white/50 font-medium">
-                        {t('Click dots to toggle selection')}
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <MousePointerClick className="w-4 h-4 text-white" />
+                      <span className="text-sm text-white font-semibold">
+                        {t('Click to select question types')}
                       </span>
+                    </div>
+                    <div className="flex items-center justify-between mb-6 gap-4">
+                      <button
+                        onClick={() => toggleSelection('correct')}
+                        className={`flex-1 flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all border-2 cursor-pointer ${
+                          selectedTypes.has('correct')
+                            ? 'bg-[#10b981] border-[#10b981] shadow-lg shadow-[#10b981]/50 scale-105'
+                            : 'bg-white/10 border-white/30 hover:border-[#10b981] hover:bg-white/20'
+                        }`}
+                      >
+                        <span className="text-xs text-white/90 font-medium">{t('Correct')}</span>
+                        <span className="text-2xl text-white font-bold">
+                          {correctAnswers}
+                        </span>
+                        {selectedTypes.has('correct') && (
+                          <CheckCircle2 className="w-4 h-4 text-white mt-1" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => toggleSelection('wrong')}
+                        className={`flex-1 flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all border-2 cursor-pointer ${
+                          selectedTypes.has('wrong')
+                            ? 'bg-[#f59e0b] border-[#f59e0b] shadow-lg shadow-[#f59e0b]/50 scale-105'
+                            : 'bg-white/10 border-white/30 hover:border-[#f59e0b] hover:bg-white/20'
+                        }`}
+                      >
+                        <span className="text-xs text-white/90 font-medium">{t('Wrong')}</span>
+                        <span className="text-2xl text-white font-bold">
+                          {answeredQuestions - correctAnswers}
+                        </span>
+                        {selectedTypes.has('wrong') && (
+                          <CheckCircle2 className="w-4 h-4 text-white mt-1" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => toggleSelection('unanswered')}
+                        className={`flex-1 flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all border-2 cursor-pointer ${
+                          selectedTypes.has('unanswered')
+                            ? 'bg-[#8b5cf6] border-[#8b5cf6] shadow-lg shadow-[#8b5cf6]/50 scale-105'
+                            : 'bg-white/10 border-white/30 hover:border-[#8b5cf6] hover:bg-white/20'
+                        }`}
+                      >
+                        <span className="text-xs text-white/90 font-medium">{t('Not answered')}</span>
+                        <span className="text-2xl text-white font-bold">
+                          {totalQuestions - answeredQuestions}
+                        </span>
+                        {selectedTypes.has('unanswered') && (
+                          <CheckCircle2 className="w-4 h-4 text-white mt-1" />
+                        )}
+                      </button>
                     </div>
 
                     {/* Flowing Progress River - 100 dots always */}
@@ -215,77 +252,6 @@ export function QuizInsights({ quiz, selected, idToName }) {
                 )
               })()}
             </div>
-
-            {/* Dynamic Stats Based on Selection */}
-            {(() => {
-              // Always show all types, with 0 for unselected
-              const allData = [
-                {
-                  type: 'correct',
-                  count: selectedTypes.has('correct') ? correctAnswers : 0,
-                  label: t('Correct'),
-                  icon: CheckCircle2,
-                  color: '#10b981',
-                  isSelected: selectedTypes.has('correct')
-                },
-                {
-                  type: 'wrong',
-                  count: selectedTypes.has('wrong') ? (answeredQuestions - correctAnswers) : 0,
-                  label: t('Wrong'),
-                  icon: RefreshCw,
-                  color: '#f59e0b',
-                  isSelected: selectedTypes.has('wrong')
-                },
-                {
-                  type: 'unanswered',
-                  count: selectedTypes.has('unanswered') ? (totalQuestions - answeredQuestions) : 0,
-                  label: t('Not Answered'),
-                  icon: SkipForward,
-                  color: '#8b5cf6',
-                  isSelected: selectedTypes.has('unanswered')
-                }
-              ]
-
-              // Determine color theme based on selection
-              let bgColor = 'bg-white/10'
-              let borderColor = 'border-white/20'
-
-              if (selectedTypes.size === 1) {
-                if (selectedTypes.has('correct')) {
-                  bgColor = 'bg-success/20'
-                  borderColor = 'border-success/30'
-                } else if (selectedTypes.has('wrong')) {
-                  bgColor = 'bg-warning/20'
-                  borderColor = 'border-warning/30'
-                } else if (selectedTypes.has('unanswered')) {
-                  bgColor = 'bg-violet-500/20'
-                  borderColor = 'border-violet-500/30'
-                }
-              }
-
-              return (
-                <div className={`mb-6 ${bgColor} backdrop-blur-sm rounded-xl p-4 border ${borderColor}`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-white/50 font-medium">{t('Selected questions breakdown')}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {allData.map(item => {
-                      const Icon = item.icon
-                      return (
-                        <div
-                          key={item.type}
-                          className={`flex items-center gap-1.5 bg-white/5 rounded-lg px-3 py-1.5 ${!item.isSelected ? 'opacity-50' : ''}`}
-                        >
-                          <Icon className="w-4 h-4" style={{ color: item.color }} />
-                          <span className="text-sm font-bold text-white">{item.count}</span>
-                          <span className="text-xs text-white/50">{item.label}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })()}
 
             {/* CTA */}
             {(() => {
