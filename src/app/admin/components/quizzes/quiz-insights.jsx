@@ -76,23 +76,27 @@ export function QuizInsights({ quiz, selected, idToName }) {
   return (
     <div className="space-y-6">
       {/* Hero Progress Card */}
-      <div className="relative overflow-hidden rounded-3xl shadow-2xl bg-[#1e293b]">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAgMi4yMSAxLjc5IDQgNCA0czQtMS43OSA0LTQtMS43OS00LTQtNC00IDEuNzktNCA0em0wIDI0YzAgMi4yMSAxLjc5IDQgNCA0czQtMS43OSA0LTQtMS43OS00LTQtNC00IDEuNzktNCA0eiIvPjwvZz48L2c+PC9zdmc+')] opacity-40"></div>
-
+      <div className="relative overflow-hidden rounded-md bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200">
         <div className="relative p-10">
           <div className="relative z-10">
+            {/* Card Title */}
+            <div className="flex items-center gap-2 mb-6">
+              <Target className="w-6 h-6 text-purple-600" />
+              <h2 className="text-2xl font-bold text-gray-900">{t('Quiz Composer')}</h2>
+            </div>
+
             {/* Top Section */}
             <div className="flex items-start justify-between mb-8">
               <div className="space-y-1">
-                <h2 className="text-4xl font-black text-white tracking-tight">
-                  {answeredQuestions}<span className="text-white/60">/{totalQuestions}</span>
-                </h2>
-                <p className="text-white/80 text-sm font-medium">{t('Questions Conquered')}</p>
+                <h3 className="text-4xl font-black text-gray-900 tracking-tight">
+                  {answeredQuestions}<span className="text-gray-500">/{totalQuestions}</span>
+                </h3>
+                <p className="text-gray-700 text-sm font-medium">{t('Questions Conquered')}</p>
               </div>
             </div>
 
             {/* Visual Question Grid - The Innovation */}
-            <div className="mb-8 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="mb-8 bg-white/80 backdrop-blur-sm rounded-md p-6 border border-purple-200">
               {(() => {
                 // ALWAYS show 100 dots - each represents 1% of the quiz
                 const TOTAL_DOTS = 100
@@ -108,68 +112,68 @@ export function QuizInsights({ quiz, selected, idToName }) {
                 return (
                   <>
                     <div className="flex items-center justify-center gap-2 mb-3">
-                      <MousePointerClick className="w-4 h-4 text-white" />
-                      <span className="text-sm text-white font-semibold">
+                      <MousePointerClick className="w-4 h-4 text-purple-600" />
+                      <span className="text-sm text-gray-900 font-semibold">
                         {t('Click to select question types')}
                       </span>
                     </div>
                     <div className="flex items-center justify-between mb-6 gap-4">
                       <button
                         onClick={() => toggleSelection('correct')}
-                        className={`flex-1 flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all border-2 cursor-pointer ${
+                        className={`flex-1 flex flex-col items-center gap-1 px-4 py-3 rounded-md transition-all border-2 cursor-pointer ${
                           selectedTypes.has('correct')
-                            ? 'bg-[#10b981] border-[#10b981] shadow-lg shadow-[#10b981]/50 scale-105'
-                            : 'bg-white/10 border-white/30 hover:border-[#10b981] hover:bg-white/20'
+                            ? 'bg-[#10b981] border-[#10b981] scale-105 text-white'
+                            : 'bg-white border-gray-200 hover:border-[#10b981] hover:bg-green-50 text-gray-900'
                         }`}
                       >
-                        <span className="text-xs text-white/90 font-medium">{t('Correct')}</span>
-                        <span className="text-2xl text-white font-bold">
+                        <span className="text-xs font-medium">{t('Correct')}</span>
+                        <span className="text-2xl font-bold">
                           {correctAnswers}
                         </span>
                         {selectedTypes.has('correct') && (
-                          <CheckCircle2 className="w-4 h-4 text-white mt-1" />
+                          <CheckCircle2 className="w-4 h-4 mt-1" />
                         )}
                       </button>
                       <button
                         onClick={() => toggleSelection('wrong')}
-                        className={`flex-1 flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all border-2 cursor-pointer ${
+                        className={`flex-1 flex flex-col items-center gap-1 px-4 py-3 rounded-md transition-all border-2 cursor-pointer ${
                           selectedTypes.has('wrong')
-                            ? 'bg-[#f59e0b] border-[#f59e0b] shadow-lg shadow-[#f59e0b]/50 scale-105'
-                            : 'bg-white/10 border-white/30 hover:border-[#f59e0b] hover:bg-white/20'
+                            ? 'bg-[#f59e0b] border-[#f59e0b] scale-105 text-white'
+                            : 'bg-white border-gray-200 hover:border-[#f59e0b] hover:bg-orange-50 text-gray-900'
                         }`}
                       >
-                        <span className="text-xs text-white/90 font-medium">{t('Wrong')}</span>
-                        <span className="text-2xl text-white font-bold">
+                        <span className="text-xs font-medium">{t('Wrong')}</span>
+                        <span className="text-2xl font-bold">
                           {answeredQuestions - correctAnswers}
                         </span>
                         {selectedTypes.has('wrong') && (
-                          <CheckCircle2 className="w-4 h-4 text-white mt-1" />
+                          <CheckCircle2 className="w-4 h-4 mt-1" />
                         )}
                       </button>
                       <button
                         onClick={() => toggleSelection('unanswered')}
-                        className={`flex-1 flex flex-col items-center gap-1 px-4 py-3 rounded-xl transition-all border-2 cursor-pointer ${
+                        className={`flex-1 flex flex-col items-center gap-1 px-4 py-3 rounded-md transition-all border-2 cursor-pointer ${
                           selectedTypes.has('unanswered')
-                            ? 'bg-[#8b5cf6] border-[#8b5cf6] shadow-lg shadow-[#8b5cf6]/50 scale-105'
-                            : 'bg-white/10 border-white/30 hover:border-[#8b5cf6] hover:bg-white/20'
+                            ? 'bg-[#8b5cf6] border-[#8b5cf6] scale-105 text-white'
+                            : 'bg-white border-gray-200 hover:border-[#8b5cf6] hover:bg-purple-50 text-gray-900'
                         }`}
                       >
-                        <span className="text-xs text-white/90 font-medium">{t('Not answered')}</span>
-                        <span className="text-2xl text-white font-bold">
+                        <span className="text-xs font-medium">{t('Not answered')}</span>
+                        <span className="text-2xl font-bold">
                           {totalQuestions - answeredQuestions}
                         </span>
                         {selectedTypes.has('unanswered') && (
-                          <CheckCircle2 className="w-4 h-4 text-white mt-1" />
+                          <CheckCircle2 className="w-4 h-4 mt-1" />
                         )}
                       </button>
                     </div>
 
                     {/* Flowing Progress River - 100 dots always */}
-                    <div className="relative h-24 rounded-xl bg-white/5 overflow-hidden group">
+                    <div className="relative h-24 rounded-md bg-gray-50 overflow-hidden group border border-gray-200">
                       {/* Background grid lines */}
                       <div className="absolute inset-0 opacity-20">
                         {[...Array(5)].map((_, i) => (
-                          <div key={i} className="absolute w-full h-px bg-white/30" style={{ top: `${(i + 1) * 20}%` }} />
+                          <div key={i} className="absolute w-full h-px bg-gray-300" style={{ top: `${(i + 1) * 20}%` }} />
                         ))}
                       </div>
 
@@ -230,10 +234,8 @@ export function QuizInsights({ quiz, selected, idToName }) {
                                 onClick={() => toggleSelection(dotState)}
                                 className={`w-2 h-2 rounded-full transition-all duration-200 cursor-pointer ${dotColor} ${borderStyle} ${
                                   dotState === 'correct'
-                                    ? 'shadow-lg shadow-success/50 scale-110'
-                                    : dotState === 'wrong'
-                                    ? 'shadow-md shadow-warning/50'
-                                    : 'shadow-md shadow-violet-500/50'
+                                    ? 'scale-110'
+                                    : ''
                                 }`}
                                 style={{
                                   transitionDelay: isHovered ? '0ms' : `${i * 5}ms`,
@@ -263,23 +265,40 @@ export function QuizInsights({ quiz, selected, idToName }) {
               const hasSelection = selectedCount > 0
 
               return (
-                <button
-                  className={`btn btn-lg w-full border-none shadow-xl transition-all gap-2 ${
-                    hasSelection
-                      ? 'bg-white text-purple-600 hover:bg-white/90 hover:shadow-2xl hover:scale-105'
-                      : 'bg-white/20 text-white/40 cursor-not-allowed'
-                  }`}
-                  disabled={!hasSelection}
-                >
-                  <PlayCircle className="w-6 h-6" />
-                  <span className="font-bold">
-                    {hasSelection
-                      ? `${t('Continue')} (${selectedCount} ${t('questions')})`
-                      : t('Select questions to continue')
-                    }
-                  </span>
-                  {hasSelection && <ArrowRight className="w-5 h-5" />}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    className={`flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm ${
+                      hasSelection
+                        ? 'bg-purple-600 text-white hover:bg-purple-700'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                    disabled={!hasSelection}
+                  >
+                    <Target className="w-4 h-4" />
+                    <span>
+                      {hasSelection
+                        ? `${t('Challenge')} (${selectedCount})`
+                        : t('Challenge')
+                      }
+                    </span>
+                  </button>
+                  <button
+                    className={`flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm ${
+                      hasSelection
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                    disabled={!hasSelection}
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>
+                      {hasSelection
+                        ? `${t('Review')} (${selectedCount})`
+                        : t('Review')
+                      }
+                    </span>
+                  </button>
+                </div>
               )
             })()}
           </div>
@@ -288,7 +307,7 @@ export function QuizInsights({ quiz, selected, idToName }) {
 
       {/* Performance Overview Radar */}
       {allDomains.length > 0 ? (
-        <div className="card bg-base-100 border border-primary/30 shadow-sm">
+        <div className="card bg-base-100 border border-primary/30">
           <div className="card-body">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
