@@ -262,40 +262,22 @@ export function QuizInsights({ quiz, selected, idToName }) {
               if (selectedTypes.has('wrong')) selectedCount += (answeredQuestions - correctAnswers)
               if (selectedTypes.has('unanswered')) selectedCount += (totalQuestions - answeredQuestions)
 
-              const hasSelection = selectedCount > 0
-
               return (
                 <div className="flex gap-2">
                   <button
-                    className={`flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm ${
-                      hasSelection
-                        ? 'bg-purple-600 text-white hover:bg-purple-700'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    }`}
-                    disabled={!hasSelection}
+                    className="flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm bg-purple-600 text-white hover:bg-purple-700"
                   >
                     <Target className="w-4 h-4" />
                     <span>
-                      {hasSelection
-                        ? `${t('Challenge')} (${selectedCount})`
-                        : t('Challenge')
-                      }
+                      {t('Challenge')} ({selectedCount})
                     </span>
                   </button>
                   <button
-                    className={`flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm ${
-                      hasSelection
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    }`}
-                    disabled={!hasSelection}
+                    className="flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700"
                   >
                     <Eye className="w-4 h-4" />
                     <span>
-                      {hasSelection
-                        ? `${t('Review')} (${selectedCount})`
-                        : t('Review')
-                      }
+                      {t('Review')} ({selectedCount})
                     </span>
                   </button>
                 </div>
@@ -307,16 +289,32 @@ export function QuizInsights({ quiz, selected, idToName }) {
 
       {/* Performance Overview Radar */}
       {allDomains.length > 0 ? (
-        <div className="card bg-base-100 border border-primary/30">
-          <div className="card-body">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold">{t('Performance Overview')}</h3>
+        <div className="relative overflow-hidden rounded-md bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200">
+          <div className="relative p-10">
+            <div className="relative z-10">
+              {/* Card Title */}
+              <div className="flex items-center gap-2 mb-6">
+                <Target className="w-6 h-6 text-purple-600" />
+                <h2 className="text-2xl font-bold text-gray-900">{t('Quiz Composer')}</h2>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Action Buttons */}
+              <div className="flex gap-2 mb-8">
+                <button
+                  className="flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm bg-orange-600 text-white hover:bg-orange-700"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{t('Practice Weak Areas')}</span>
+                </button>
+                <button
+                  className="flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm bg-green-600 text-white hover:bg-green-700"
+                >
+                  <Award className="w-4 h-4" />
+                  <span>{t('Review Strengths')}</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <ResponsiveContainer width="100%" height={400}>
                   <RadarChart data={radarData}>
@@ -370,50 +368,48 @@ export function QuizInsights({ quiz, selected, idToName }) {
                 </ResponsiveContainer>
               </div>
 
-              <div className="space-y-4">
-                {weakDomains.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <AlertCircle className="h-4 w-4 text-warning" />
-                      <h4 className="font-semibold text-sm">{t('Focus Areas')}</h4>
-                    </div>
-                    <div className="space-y-2">
-                      {weakDomains.map((domain) => (
-                        <div key={domain.id} className="flex items-center justify-between text-sm p-2 rounded bg-warning/5">
-                          <span className="truncate flex-1">{domain.name}</span>
-                          <span className="font-semibold ml-2 text-warning">
-                            {domain.accuracy}%
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <button className="btn btn-warning btn-sm btn-block mt-3">
-                      {t('Practice Weak Areas')}
-                    </button>
-                  </div>
-                )}
-
-                {strongDomains.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <CheckCircle2 className="h-4 w-4 text-success" />
-                      <h4 className="font-semibold text-sm">{t('Strengths')}</h4>
-                    </div>
-                    <div className="space-y-2">
-                      {strongDomains.map((domain) => (
-                        <div key={domain.id} className="flex items-center justify-between text-sm p-2 rounded bg-success/5">
-                          <span className="truncate flex-1">{domain.name}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-success">
+                <div className="space-y-4 bg-white/80 backdrop-blur-sm rounded-md p-6 border border-purple-200">
+                  {weakDomains.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <AlertCircle className="h-4 w-4 text-orange-600" />
+                        <h4 className="font-semibold text-sm text-gray-900">{t('Focus Areas')}</h4>
+                      </div>
+                      <div className="space-y-2">
+                        {weakDomains.map((domain) => (
+                          <div key={domain.id} className="flex items-center justify-between text-sm p-2 rounded bg-orange-50">
+                            <span className="truncate flex-1 text-gray-900">{domain.name}</span>
+                            <span className="font-semibold ml-2 text-orange-600">
                               {domain.accuracy}%
                             </span>
-                            <Award className="h-4 w-4 text-success" />
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {strongDomains.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <h4 className="font-semibold text-sm text-gray-900">{t('Strengths')}</h4>
+                      </div>
+                      <div className="space-y-2">
+                        {strongDomains.map((domain) => (
+                          <div key={domain.id} className="flex items-center justify-between text-sm p-2 rounded bg-green-50">
+                            <span className="truncate flex-1 text-gray-900">{domain.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-green-600">
+                                {domain.accuracy}%
+                              </span>
+                              <Award className="h-4 w-4 text-green-600" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
