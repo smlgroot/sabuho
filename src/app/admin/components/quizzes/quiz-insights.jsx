@@ -262,24 +262,46 @@ export function QuizInsights({ quiz, selected, idToName }) {
               if (selectedTypes.has('wrong')) selectedCount += (answeredQuestions - correctAnswers)
               if (selectedTypes.has('unanswered')) selectedCount += (totalQuestions - answeredQuestions)
 
+              const hasSelection = selectedCount > 0
+
               return (
-                <div className="flex gap-2">
-                  <button
-                    className="flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm bg-purple-600 text-white hover:bg-purple-700"
-                  >
-                    <Target className="w-4 h-4" />
-                    <span>
-                      {t('Challenge')} ({selectedCount})
-                    </span>
-                  </button>
-                  <button
-                    className="flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    <Eye className="w-4 h-4" />
-                    <span>
-                      {t('Review')} ({selectedCount})
-                    </span>
-                  </button>
+                <div className="space-y-2">
+                  {!hasSelection && (
+                    <div className="flex items-center justify-center gap-2 px-3 py-2 bg-purple-100 border border-purple-300 rounded-md">
+                      <AlertCircle className="w-4 h-4 text-purple-700" />
+                      <span className="text-xs text-purple-700 font-medium">
+                        {t('Select question types above to start')}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      className={`flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm ${
+                        hasSelection
+                          ? 'bg-purple-600 text-white hover:bg-purple-700'
+                          : 'bg-white text-purple-600 border-2 border-purple-600 hover:bg-purple-50'
+                      }`}
+                      title={!hasSelection ? t('Select question types above to start') : ''}
+                    >
+                      <Target className="w-4 h-4" />
+                      <span>
+                        {t('Challenge')} ({selectedCount})
+                      </span>
+                    </button>
+                    <button
+                      className={`flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm ${
+                        hasSelection
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
+                      }`}
+                      title={!hasSelection ? t('Select question types above to start') : ''}
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>
+                        {t('Review')} ({selectedCount})
+                      </span>
+                    </button>
+                  </div>
                 </div>
               )
             })()}
