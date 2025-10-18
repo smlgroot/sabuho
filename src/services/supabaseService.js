@@ -563,3 +563,88 @@ export async function fetchQuizLearningLevelNames() {
 
   return { data, error }
 }
+
+// ============================================================================
+// QUIZ ATTEMPTS OPERATIONS
+// ============================================================================
+
+export async function fetchQuizAttemptsByQuiz(quizId) {
+  const { data, error } = await supabase
+    .from('quiz_attempts')
+    .select('id, user_id, created_at, updated_at')
+    .eq('quiz_id', quizId)
+    .order('created_at', { ascending: false })
+
+  return { data, error }
+}
+
+export async function fetchQuizAttemptQuestions(quizAttemptIds) {
+  const { data, error } = await supabase
+    .from('quiz_attempt_questions')
+    .select(`
+      id,
+      quiz_attempt_id,
+      question_id,
+      is_correct,
+      is_skipped,
+      is_marked_for_review,
+      is_attempted,
+      response_time_ms,
+      confidence_level,
+      questions!inner(id, domain_id)
+    `)
+    .in('quiz_attempt_id', quizAttemptIds)
+
+  return { data, error }
+}
+
+export async function fetchQuizInsightsData(quizId, selectedDomainIds = []) {
+  // Fetch all attempts for this quiz
+  const { data: attempts, error: attemptsError } = await fetchQuizAttemptsByQuiz(quizId)
+
+  if (attemptsError) {
+    return { data: null, error: attemptsError }
+  }
+
+  // Count total questions available from selected domains (efficient count query)
+  let totalAvailableQuestions = 0
+  if (selectedDomainIds.length > 0) {
+    const { count, error: countError } = await supabase
+      .from('questions')
+      .select('*', { count: 'exact', head: true })
+      .in('domain_id', selectedDomainIds)
+
+    if (!countError && count !== null) {
+      totalAvailableQuestions = count
+    }
+  }
+
+  // If no attempts, return with total available questions
+  if (!attempts || attempts.length === 0) {
+    return {
+      data: {
+        attempts: [],
+        attemptQuestions: [],
+        totalAvailableQuestions
+      },
+      error: null
+    }
+  }
+
+  // Fetch all attempt questions
+  const attemptIds = attempts.map(a => a.id)
+  const { data: attemptQuestions, error: questionsError } = await fetchQuizAttemptQuestions(attemptIds)
+
+  if (questionsError) {
+    return { data: null, error: questionsError }
+  }
+
+  return {
+    data: {
+      attempts,
+      attemptQuestions,
+      totalAvailableQuestions
+    },
+    error: null
+  }
+}

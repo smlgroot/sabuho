@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -9,11 +9,14 @@ import {
 import {
   Target, Award, TrendingUp, AlertCircle, CheckCircle2, ArrowRight, PlayCircle, RefreshCw, SkipForward, Eye, MousePointerClick
 } from 'lucide-react'
+import * as supabaseService from '@/services/supabaseService'
 
 export function QuizInsights({ quiz, selected, idToName }) {
   const { t } = useTranslation()
   const [selectedTypes, setSelectedTypes] = useState(new Set([]))
   const [hoveredDotType, setHoveredDotType] = useState(null)
+  const [insightsData, setInsightsData] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   const toggleSelection = (type) => {
     setSelectedTypes(prev => {
@@ -27,34 +30,109 @@ export function QuizInsights({ quiz, selected, idToName }) {
     })
   }
 
-  // Mock data - replace with real data from your backend
-  const totalQuestions = 412
-  const answeredQuestions = 289
-  const correctAnswers = 237
-  const accuracyRate = Math.round((correctAnswers / answeredQuestions) * 100)
-  const progressPercentage = Math.round((answeredQuestions / totalQuestions) * 100)
+  // Fetch quiz insights data
+  useEffect(() => {
+    async function loadInsightsData() {
+      if (!quiz?.id) {
+        setIsLoading(false)
+        return
+      }
 
-  // All domains with realistic mock performance data
-  const allDomains = selected.map((id, index) => {
-    // Realistic accuracy patterns: weak areas (45-65%), medium (65-78%), strong (80-92%)
-    const patterns = [52, 88, 67, 48, 91, 73, 58, 85, 71, 64, 90, 55, 78, 83, 61, 75, 87, 69]
-    const accuracy = patterns[index % patterns.length]
+      setIsLoading(true)
+      try {
+        const { data, error } = await supabaseService.fetchQuizInsightsData(quiz.id, selected)
 
-    // Questions attempted correlates loosely with accuracy (better students attempt more)
-    const questionsAttempted = accuracy > 80
-      ? Math.floor(20 + index * 3)
-      : accuracy > 65
-        ? Math.floor(12 + index * 2)
-        : Math.floor(8 + index * 1.5)
+        if (error) {
+          console.error('Failed to fetch quiz insights:', error)
+          setInsightsData(null)
+        } else {
+          setInsightsData(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch quiz insights:', error)
+        setInsightsData(null)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadInsightsData()
+  }, [quiz?.id, selected])
+
+  // Calculate statistics from real data
+  const { totalQuestions, answeredQuestions, correctAnswers, accuracyRate, progressPercentage } = useMemo(() => {
+    if (!insightsData) {
+      return {
+        totalQuestions: 0,
+        answeredQuestions: 0,
+        correctAnswers: 0,
+        accuracyRate: 0,
+        progressPercentage: 0
+      }
+    }
+
+    const attemptQuestions = insightsData.attemptQuestions || []
+    const total = insightsData.totalAvailableQuestions || 0
+    const answered = attemptQuestions.filter(q => q.is_attempted).length
+    const correct = attemptQuestions.filter(q => q.is_correct).length
+    const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0
+    const progress = total > 0 ? Math.round((answered / total) * 100) : 0
 
     return {
-      id,
-      name: idToName?.get(id) || `Domain ${id}`,
-      accuracy,
-      questionsAttempted,
-      totalQuestions: Math.floor(questionsAttempted * (100 / Math.max(accuracy, 20)))
+      totalQuestions: total,
+      answeredQuestions: answered,
+      correctAnswers: correct,
+      accuracyRate: accuracy,
+      progressPercentage: progress
     }
-  })
+  }, [insightsData])
+
+  // Calculate domain-level performance from real data
+  const allDomains = useMemo(() => {
+    if (!insightsData || !insightsData.attemptQuestions || insightsData.attemptQuestions.length === 0) {
+      return []
+    }
+
+    // Group questions by domain
+    const domainStats = {}
+
+    insightsData.attemptQuestions.forEach(aq => {
+      const domainId = aq.questions?.domain_id
+      if (!domainId) return
+
+      if (!domainStats[domainId]) {
+        domainStats[domainId] = {
+          total: 0,
+          attempted: 0,
+          correct: 0
+        }
+      }
+
+      domainStats[domainId].total += 1
+      if (aq.is_attempted) {
+        domainStats[domainId].attempted += 1
+        if (aq.is_correct) {
+          domainStats[domainId].correct += 1
+        }
+      }
+    })
+
+    // Convert to array and calculate accuracy for selected domains
+    return selected.map(id => {
+      const stats = domainStats[id] || { total: 0, attempted: 0, correct: 0 }
+      const accuracy = stats.attempted > 0
+        ? Math.round((stats.correct / stats.attempted) * 100)
+        : 0
+
+      return {
+        id,
+        name: idToName?.get(id) || `Domain ${id}`,
+        accuracy,
+        questionsAttempted: stats.attempted,
+        totalQuestions: stats.total
+      }
+    }).filter(d => d.totalQuestions > 0) // Only show domains with questions
+  }, [insightsData, selected, idToName])
 
   const weakDomains = allDomains.filter(d => d.accuracy < 70).sort((a, b) => a.accuracy - b.accuracy)
   const strongDomains = allDomains.filter(d => d.accuracy >= 80).sort((a, b) => b.accuracy - a.accuracy)
@@ -71,6 +149,33 @@ export function QuizInsights({ quiz, selected, idToName }) {
     if (accuracy >= 80) return '#10b981' // green
     if (accuracy >= 60) return '#f59e0b' // orange
     return '#ef4444' // red
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-gray-600">{t('Loading insights...')}</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Empty state - no questions available in selected domains
+  if (totalQuestions === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <Target className="w-12 h-12 text-gray-400" />
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-700">{t('No questions in selected domains')}</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            {t('Add questions to the selected domains to see quiz insights')}
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -308,7 +413,7 @@ export function QuizInsights({ quiz, selected, idToName }) {
               {/* Card Title */}
               <div className="flex items-center gap-2 mb-6">
                 <Target className="w-6 h-6 text-purple-600" />
-                <h2 className="text-2xl font-bold text-gray-900">{t('Quiz Composer')}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{t('Focus & Strengths')}</h2>
               </div>
 
               {/* Action Buttons */}
