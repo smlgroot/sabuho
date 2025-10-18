@@ -130,9 +130,6 @@ export function QuizInsights({ quiz, selected, idToName }) {
                         <span className="text-2xl font-bold">
                           {correctAnswers}
                         </span>
-                        {selectedTypes.has('correct') && (
-                          <CheckCircle2 className="w-4 h-4 mt-1" />
-                        )}
                       </button>
                       <button
                         onClick={() => toggleSelection('wrong')}
@@ -146,9 +143,6 @@ export function QuizInsights({ quiz, selected, idToName }) {
                         <span className="text-2xl font-bold">
                           {answeredQuestions - correctAnswers}
                         </span>
-                        {selectedTypes.has('wrong') && (
-                          <CheckCircle2 className="w-4 h-4 mt-1" />
-                        )}
                       </button>
                       <button
                         onClick={() => toggleSelection('unanswered')}
@@ -162,9 +156,6 @@ export function QuizInsights({ quiz, selected, idToName }) {
                         <span className="text-2xl font-bold">
                           {totalQuestions - answeredQuestions}
                         </span>
-                        {selectedTypes.has('unanswered') && (
-                          <CheckCircle2 className="w-4 h-4 mt-1" />
-                        )}
                       </button>
                     </div>
 
