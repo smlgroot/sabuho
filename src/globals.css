@@ -33,7 +33,7 @@ b, strong, .font-bold, [class*="font-bold"] {
   html, body {
     -webkit-font-smoothing: subpixel-antialiased;
   }
-  
+
   /* Keep bold text crisp on retina displays */
   b, strong, .font-bold, [class*="font-bold"] {
     -webkit-font-smoothing: antialiased;
@@ -42,8 +42,8 @@ b, strong, .font-bold, [class*="font-bold"] {
 
 /* Theme transition animations */
 * {
-  transition: background-color 0.2s ease-in-out, 
-              border-color 0.2s ease-in-out, 
+  transition: background-color 0.2s ease-in-out,
+              border-color 0.2s ease-in-out,
               color 0.2s ease-in-out;
 }
 

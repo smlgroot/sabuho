@@ -11,12 +11,12 @@ import { DeleteDomainDialog } from "./components/domains/delete-domain-dialog";
 import { ResourceUpload } from "./components/resources/resource-upload";
 import { QuestionForm } from "./components/questions/question-form";
 import { SearchBar } from "./components/shared/search-bar";
-import { ProtectedRoute } from "../auth/components/protected-route";
+import { ProtectedRoute } from "@/pages/AuthPage/components/protected-route";
 import { useAuth } from "@/lib/admin/auth";
-import { UserMenu } from "../auth/components/user-menu";
+import { UserMenu } from "@/pages/AuthPage/components/user-menu";
 import { useStore } from "@/store/useStore";
 import { ProfileSidebar } from "./components/ProfileSidebar";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlausible } from "@/components/PlausibleProvider";
 import {
   fetchDomains,
@@ -69,7 +69,21 @@ export default function AdminPage() {
 
   const { user, userProfile, loadUserProfile } = useAuth();
   const { trackEvent } = usePlausible();
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // Sync activeView with URL path
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/admin' || path === '/admin/') {
+      // Redirect to domains by default
+      navigate('/admin/domains', { replace: true });
+    } else if (path.includes('/admin/domains')) {
+      setActiveView('domains');
+    } else if (path.includes('/admin/quizzes')) {
+      setActiveView('quizzes');
+    }
+  }, [location.pathname, navigate]);
 
   const loadDomains = useCallback(async () => {
     try {
@@ -288,7 +302,7 @@ export default function AdminPage() {
         // Navigate to existing quiz
         setCreatingQuiz(false);
         setSelectedQuiz(existingQuiz);
-        setActiveView('quizzes');
+        navigate('/admin/quizzes');
         toast.info(t('Opening existing quiz'));
         return;
       }
@@ -333,7 +347,7 @@ export default function AdminPage() {
       addQuiz(created);
       setCreatingQuiz(false);
       setSelectedQuiz(created);
-      setActiveView('quizzes');
+      navigate('/admin/quizzes');
       toast.success(t('Quiz created successfully'));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create quiz';
@@ -471,7 +485,7 @@ export default function AdminPage() {
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
             trackEvent('main_sidebar_navigation', { props: { section: 'domains', previous_view: activeView } });
-            setActiveView('domains');
+            navigate('/admin/domains');
             setProfileSidebarOpen(false);
             setSelectedQuiz(null);
             setCreatingQuiz(false);
@@ -487,7 +501,7 @@ export default function AdminPage() {
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'quizzes' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
             trackEvent('main_sidebar_navigation', { props: { section: 'quizzes', previous_view: activeView } });
-            setActiveView('quizzes');
+            navigate('/admin/quizzes');
             setProfileSidebarOpen(false);
             setSelectedDomain(null);
             if (!secondSidebarOpen) setSecondSidebarOpen(true);

@@ -1,6 +1,4 @@
-'use client'
-
-import { ConfirmEmail } from '../components/confirm-email'
+import { ConfirmEmail } from '@/pages/AuthPage/components/confirm-email'
 
 export default function ConfirmEmailPage() {
   return <ConfirmEmail />

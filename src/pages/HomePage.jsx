@@ -1,10 +1,8 @@
-"use client";
-
 import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from "react-router-dom";
 import { Globe } from "lucide-react";
 import { useState } from "react";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTranslation } from "react-i18next";
 import { usePlausible } from "@/components/PlausibleProvider";
 

@@ -24,7 +24,8 @@
       "WebFetch(domain:www.justinmind.com)",
       "WebFetch(domain:blog.duolingo.com)",
       "WebFetch(domain:medium.com)",
-      "WebFetch(domain:userguiding.com)"
+      "WebFetch(domain:userguiding.com)",
+      "Bash(xargs cat:*)"
     ],
     "deny": [],
     "ask": []

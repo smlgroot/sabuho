@@ -2,9 +2,9 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Check, X, Info, ChevronLeft, ChevronRight, Home } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import * as quizAttemptService from '../../services/quizAttemptService'
-import * as supabaseService from '../../services/supabaseService'
-import { supabase } from '../../lib/supabase'
+import * as quizAttemptService from '@/services/quizAttemptService'
+import * as supabaseService from '@/services/supabaseService'
+import { supabase } from '@/lib/supabase'
 
 function OnlineQuizScreen() {
   const { attemptId } = useParams()
