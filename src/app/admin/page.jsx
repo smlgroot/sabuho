@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, X, GraduationCap, Folder, FileText, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Menu, ShoppingBag, DollarSign, Settings, HelpCircle, LogOut, Moon, Sun, Languages } from "lucide-react";
+import { Plus, X, Folder, FileText, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Menu, DollarSign, Settings, HelpCircle, LogOut, Moon, Sun, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { DomainTree } from "./components/domains/domain-tree";
 import { QuizList } from "./components/quizzes/quiz-list";
@@ -28,10 +28,6 @@ import {
 import { uploadResource } from "@/lib/admin/resources";
 import { createQuestion } from "@/lib/admin/questions";
 import { fetchQuizzes, createQuiz as createQuizApi, updateQuiz as updateQuizApi, deleteQuiz as deleteQuizApi } from "@/lib/admin/quizzes";
-import LearningPath from '../game/LearningPath';
-import Quizzes from '../game/Quizzes';
-import QuizScreen from '../game/QuizScreen';
-import UserQuizDetail from '../game/QuizDetail';
 
 export default function AdminPage() {
   const {
@@ -69,7 +65,7 @@ export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [secondSidebarOpen, setSecondSidebarOpen] = useState(true);
   const [creatorOpen, setCreatorOpen] = useState(false);
-  const [activeView, setActiveView] = useState('learning-hub'); // 'learning-hub', 'domains', 'quizzes', 'shop'
+  const [activeView, setActiveView] = useState('creator'); // 'creator', 'creator-onboarding', 'domains', 'quizzes'
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState({
@@ -79,14 +75,6 @@ export default function AdminPage() {
     goal: ''
   });
   const hasLoadedData = useRef(false);
-  
-  // Quiz modal state
-  const [quizModalOpen, setQuizModalOpen] = useState(false);
-  const [quizModalData, setQuizModalData] = useState({ quizId: null, levelId: null, readonly: false });
-  const learningPathRef = useRef(null);
-  
-  // User quiz detail state
-  const [selectedUserQuiz, setSelectedUserQuiz] = useState(null);
 
   const { user, userProfile, loadUserProfile } = useAuth();
   const { trackEvent } = usePlausible();
@@ -438,40 +426,6 @@ export default function AdminPage() {
     }
   };
 
-  // Handle level click from learning path
-  const handleLevelClick = (quizId, levelId, isCompleted) => {
-    setQuizModalData({
-      quizId,
-      levelId,
-      readonly: isCompleted
-    });
-    setQuizModalOpen(true);
-  };
-
-  // Handle quiz modal close
-  const handleQuizModalClose = () => {
-    setQuizModalOpen(false);
-    // Reload levels to show updated unlock status if not in readonly mode
-    if (!quizModalData.readonly && learningPathRef.current) {
-      learningPathRef.current.reloadLevels();
-    }
-    // Reset quiz modal data after a brief delay to allow for animations
-    setTimeout(() => {
-      setQuizModalData({ quizId: null, levelId: null, readonly: false });
-    }, 300);
-  };
-
-  // Handle user quiz selection (from shop/store)
-  const handleUserQuizSelect = (quiz) => {
-    setSelectedUserQuiz(quiz);
-  };
-
-  // Handle back from user quiz detail
-  const handleUserQuizBack = () => {
-    setSelectedUserQuiz(null);
-  };
-
-
   const getBreadcrumbPath = (domainId) => {
     const path = [];
 
@@ -507,7 +461,7 @@ export default function AdminPage() {
   };
 
   const handleOnboardingCancel = () => {
-    setActiveView('learning-hub');
+    setActiveView('creator');
     setOnboardingStep(0);
   };
 
@@ -535,45 +489,6 @@ export default function AdminPage() {
           <Menu className="h-6 w-6" />
         </button>
 
-        {/* Learning Hub */}
-        <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'learning-hub' ? 'btn-active bg-primary/10 text-primary' : ''}`}
-          onClick={() => {
-            trackEvent('main_sidebar_navigation', { props: { section: 'learning-hub', previous_view: activeView } });
-            setActiveView('learning-hub');
-            setProfileSidebarOpen(false);
-            setSelectedDomain(null);
-            setSelectedQuiz(null);
-            setSelectedUserQuiz(null);
-            setCreatingQuiz(false);
-            if (!secondSidebarOpen) setSecondSidebarOpen(true);
-          }}
-        >
-          <GraduationCap className="h-6 w-6" />
-          <span className="text-xs whitespace-nowrap">{t("Learning")}</span>
-        </button>
-        
-        {/* Shop */}
-        <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'shop' ? 'btn-active bg-primary/10 text-primary' : ''}`}
-          onClick={() => {
-            trackEvent('main_sidebar_navigation', { props: { section: 'shop', previous_view: activeView } });
-            setActiveView('shop');
-            setProfileSidebarOpen(false);
-            setSelectedDomain(null);
-            setSelectedQuiz(null);
-            setSelectedUserQuiz(null);
-            setCreatingQuiz(false);
-            if (!secondSidebarOpen) setSecondSidebarOpen(true);
-          }}
-        >
-          <ShoppingBag className="h-6 w-6" />
-          <span className="text-xs whitespace-nowrap">{t("Store")}</span>
-        </button>
-        
-        {/* Separator */}
-        <div className="divider w-12 my-2 mx-auto"></div>
-        
         {/* Creator */}
         <button 
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${creatorOpen ? 'btn-active bg-primary/10 text-primary' : ''}`}
@@ -586,7 +501,6 @@ export default function AdminPage() {
               if (!creatorOpen) {
                 setActiveView('creator');
                 setProfileSidebarOpen(false);
-                setSelectedUserQuiz(null);
                 if (!secondSidebarOpen) setSecondSidebarOpen(true);
               }
             } else {
@@ -595,7 +509,6 @@ export default function AdminPage() {
               setActiveView('creator-onboarding');
               setOnboardingStep(0);
               setProfileSidebarOpen(false);
-              setSelectedUserQuiz(null);
               if (!secondSidebarOpen) setSecondSidebarOpen(true);
             }
           }}
@@ -621,7 +534,6 @@ export default function AdminPage() {
               setActiveView('domains');
               setProfileSidebarOpen(false);
               setSelectedQuiz(null);
-              setSelectedUserQuiz(null);
               setCreatingQuiz(false);
               if (!secondSidebarOpen) setSecondSidebarOpen(true);
             }}
@@ -640,7 +552,6 @@ export default function AdminPage() {
               setActiveView('quizzes');
               setProfileSidebarOpen(false);
               setSelectedDomain(null);
-              setSelectedUserQuiz(null);
               if (!secondSidebarOpen) setSecondSidebarOpen(true);
             }}
           >
@@ -665,18 +576,6 @@ export default function AdminPage() {
   const SecondSidebar = () => (
 
     <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-full">
-      {activeView === 'learning-hub' && (
-        <LearningPath 
-          ref={learningPathRef}
-          onNavigateToShop={() => setActiveView('shop')} 
-          onLevelClick={handleLevelClick}
-        />
-      )}
-      
-      {activeView === 'shop' && (
-        <Quizzes onQuizSelect={handleUserQuizSelect} selectedQuiz={selectedUserQuiz} />
-      )}
-
       {activeView === 'creator' && (
         <div className="flex flex-col h-full">
           <div className="p-4 border-b">
@@ -771,43 +670,7 @@ export default function AdminPage() {
         <div className="flex-1 flex flex-col">
           {/* Content */}
           <main className="flex-1 overflow-y-auto p-6">
-            {activeView === 'learning-hub' && !selectedDomain && !selectedQuiz && !creatingQuiz ? (
-              <div className="text-center py-20">
-                <h2 className="text-xl font-semibold mb-2">
-                  {t("Learning Hub")}
-                </h2>
-                <p className="text-muted-foreground mb-6">
-                  {t("Access your personalized learning dashboard")}
-                </p>
-                <div className="bg-base-200 rounded-lg p-8 max-w-md mx-auto">
-                  <p className="text-sm text-gray-600">
-                    {t("Organize your quiz topics and subjects")}
-                  </p>
-                </div>
-              </div>
-            ) : activeView === 'shop' ? (
-              selectedUserQuiz ? (
-                <UserQuizDetail 
-                  quiz={selectedUserQuiz}
-                  onBack={handleUserQuizBack}
-                />
-              ) : (
-                <div className="text-center py-20">
-                  <h2 className="text-xl font-semibold mb-2">
-                    {t("Store")}
-                  </h2>
-                  <p className="text-muted-foreground mb-6">
-                    {t("Explore and purchase additional quiz content")}
-                  </p>
-                  <div className="bg-base-200 rounded-lg p-8 max-w-md mx-auto">
-                    <ShoppingBag className="h-16 w-16 text-base-300 mx-auto mb-4" />
-                    <p className="text-sm text-gray-600">
-                      {t("Select a quiz from the sidebar to view details and start learning")}
-                    </p>
-                  </div>
-                </div>
-              )
-            ) : selectedDomain ? (
+            {selectedDomain ? (
               <DomainDetail
                 domain={selectedDomain}
                 onUploadResource={() => setResourceUploadOpen(true)}
@@ -888,17 +751,6 @@ export default function AdminPage() {
           domain={deletingDomain}
           onConfirm={handleConfirmDeleteDomain}
         />
-
-        {/* Quiz Modal */}
-        {quizModalOpen && quizModalData.quizId && quizModalData.levelId && (
-          <QuizScreen
-            quizId={quizModalData.quizId}
-            levelId={quizModalData.levelId}
-            readonly={quizModalData.readonly}
-            onClose={handleQuizModalClose}
-            isModal={true}
-          />
-        )}
       </div>
     </ProtectedRoute>
   );

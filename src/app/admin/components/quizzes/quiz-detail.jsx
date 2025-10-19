@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight, ChevronDown, FolderOpen, Folder, Settings, Plus, CheckCircle, XCircle, Copy, TicketSlash, Trash2, AlertTriangle, BarChart3 } from 'lucide-react'
 import * as supabaseService from '@/services/supabaseService'
 import { useTranslation } from 'react-i18next'
-import { quizClaimService } from '@/services/quizClaimService'
 import { QuizInsights } from './quiz-insights'
 
 export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
@@ -314,35 +313,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
 
   // Handle quiz publish
   const handlePublishQuiz = async () => {
-    if (!quiz?.id || isPublishing) return
-
-    setIsPublishing(true)
-    try {
-      const result = await quizClaimService.publishQuiz(quiz.id)
-
-      if (result.success) {
-        showToast(
-          result.message ||
-          (result.action === 'updated'
-            ? t('Quiz published and updated in offline storage')
-            : t('Quiz published and downloaded to offline storage')
-          ),
-          'success'
-        )
-
-        // Refresh quiz data to update published_at
-        if (onQuizUpdate) {
-          await onQuizUpdate()
-        }
-      } else {
-        showToast(result.error || t('Failed to publish quiz'), 'error')
-      }
-    } catch (error) {
-      console.error('Failed to publish quiz:', error)
-      showToast(t('Failed to publish quiz. Please try again.'), 'error')
-    } finally {
-      setIsPublishing(false)
-    }
+    console.log('handlePublishQuiz');
   }
 
   // Handle quiz deletion

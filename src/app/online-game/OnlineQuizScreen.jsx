@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 import * as quizAttemptService from '../../services/quizAttemptService'
 import * as supabaseService from '../../services/supabaseService'
 import { supabase } from '../../lib/supabase'
-import { quizLoadingService } from '../../services/quizLoadingService'
 
 function OnlineQuizScreen() {
   const { attemptId } = useParams()
@@ -122,7 +121,7 @@ function OnlineQuizScreen() {
   const getQuestionOptions = () => {
     const question = getCurrentQuestion()
     const attemptQuestion = getCurrentAttemptQuestion()
-    const originalOptions = quizLoadingService.getQuestionOptions(question)
+    const originalOptions = getOriginalQuestionOptions(question)
 
     // If we have a scrambled order, apply it
     if (attemptQuestion?.scrambled_order && Array.isArray(attemptQuestion.scrambled_order)) {
@@ -134,10 +133,106 @@ function OnlineQuizScreen() {
     return originalOptions
   }
 
+  /**
+   * Gets questions for display (removes [correct] markers from options for display)
+   */
+  const getOriginalQuestionOptions = (question) => {
+    if (!question) {
+      return []
+    }
+    
+    if (!question.options) {
+      return []
+    }
+
+    try {
+      const options = parseOptionsString(question.options)
+      if (!Array.isArray(options)) {
+        return []
+      }
+      const processedOptions = options.map(option => {
+        if (typeof option !== 'string') {
+          return String(option)
+        }
+        return option.replace(/\s*\[correct\]\s*$/, '')
+      })
+      return processedOptions
+    } catch (error) {
+      console.error('getOriginalQuestionOptions: Error parsing options', error, question.options)
+      return []
+    }
+  }
+
+  /**
+   * Parses options data that could be a string or already parsed array
+   */
+  const parseOptionsString = (options) => {
+    if (!options) {
+      return []
+    }
+        
+    // FIRST: Check if it's already an array - this should handle the current issue
+    if (Array.isArray(options)) {
+      return options
+    }
+    
+    // SECOND: If it's a string, try to parse it as JSON
+    if (typeof options === 'string') {
+      try {
+        const result = JSON.parse(options)
+        if (Array.isArray(result)) {
+          return result
+        } else {
+          return []
+        }
+      } catch (jsonError) {
+        
+        // Fallback for malformed array-like strings
+        try {
+          let cleaned = options.trim()
+          if (cleaned.startsWith('[') && cleaned.endsWith(']')) {
+            cleaned = cleaned.slice(1, -1)
+          }
+          
+          const parsedOptions = cleaned.split("', '").map(option => {
+            return option.replace(/^'|'$/g, '')
+          })
+          
+          return parsedOptions
+        } catch (fallbackError) {
+          return []
+        }
+      }
+    }
+    
+    return []
+  }
+
+  /**
+   * Finds the correct answer index in the original (unscrambled) options
+   */
+  const getCorrectAnswerIndexFromQuestion = (question) => {
+    if (!question || !question.options) {
+      return -1
+    }
+
+    try {
+      const options = parseOptionsString(question.options)
+      if (!Array.isArray(options)) {
+        return -1
+      }
+      const correctIndex = options.findIndex(option => String(option).includes('[correct]'))
+      return correctIndex
+    } catch (error) {
+      console.error('getCorrectAnswerIndexFromQuestion: Error parsing options', error, question.options)
+      return -1
+    }
+  }
+
   const getCorrectAnswerIndex = () => {
     const question = getCurrentQuestion()
     const attemptQuestion = getCurrentAttemptQuestion()
-    const originalCorrectIndex = quizLoadingService.getCorrectAnswerIndex(question)
+    const originalCorrectIndex = getCorrectAnswerIndexFromQuestion(question)
 
     // If we have a scrambled order, find where the correct answer appears in scrambled display
     if (attemptQuestion?.scrambled_order && Array.isArray(attemptQuestion.scrambled_order)) {
