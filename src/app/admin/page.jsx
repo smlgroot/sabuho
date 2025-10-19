@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, X, Folder, FileText, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Menu, DollarSign, Settings, HelpCircle, LogOut, Moon, Sun, Languages } from "lucide-react";
+import { Plus, X, Folder, FileText, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Menu, Settings, HelpCircle, LogOut, Moon, Sun, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { DomainTree } from "./components/domains/domain-tree";
 import { QuizList } from "./components/quizzes/quiz-list";
@@ -16,7 +16,6 @@ import { useAuth } from "@/lib/admin/auth";
 import { UserMenu } from "../auth/components/user-menu";
 import { useStore } from "@/store/useStore";
 import { ProfileSidebar } from "./components/ProfileSidebar";
-import { CreatorOnboarding } from "./components/CreatorOnboarding";
 import { useNavigate } from 'react-router-dom';
 import { usePlausible } from "@/components/PlausibleProvider";
 import {
@@ -64,16 +63,8 @@ export default function AdminPage() {
   const [creatingQuiz, setCreatingQuiz] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [secondSidebarOpen, setSecondSidebarOpen] = useState(true);
-  const [creatorOpen, setCreatorOpen] = useState(false);
-  const [activeView, setActiveView] = useState('creator'); // 'creator', 'creator-onboarding', 'domains', 'quizzes'
+  const [activeView, setActiveView] = useState('domains'); // 'domains', 'quizzes'
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(0);
-  const [onboardingData, setOnboardingData] = useState({
-    displayName: '',
-    bio: '',
-    interests: [],
-    goal: ''
-  });
   const hasLoadedData = useRef(false);
 
   const { user, userProfile, loadUserProfile } = useAuth();
@@ -450,20 +441,6 @@ export default function AdminPage() {
     return path;
   };
 
-  const handleOnboardingComplete = async () => {
-    // Force refresh user profile to get updated creator status
-    if (user) {
-      await loadUserProfile(user.id);
-    }
-    setActiveView('creator');
-    setCreatorOpen(true);
-    setOnboardingStep(0);
-  };
-
-  const handleOnboardingCancel = () => {
-    setActiveView('creator');
-    setOnboardingStep(0);
-  };
 
   const MainSidebar = () => (
     <aside className="min-w-20 bg-base-200 text-base-content flex flex-col h-full border-r border-base-300">
@@ -489,76 +466,36 @@ export default function AdminPage() {
           <Menu className="h-6 w-6" />
         </button>
 
-        {/* Creator */}
-        <button 
-          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${creatorOpen ? 'btn-active bg-primary/10 text-primary' : ''}`}
+        {/* Domains */}
+        <button
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
           onClick={() => {
-            const isCreatorEnabled = userProfile?.terms_accepted && userProfile?.is_creator_enabled;
-            if (isCreatorEnabled) {
-              // Creator is enabled - normal toggle behavior
-              trackEvent('main_sidebar_navigation', { props: { section: 'creator', action: creatorOpen ? 'collapse' : 'expand', previous_view: activeView } });
-              setCreatorOpen(!creatorOpen);
-              if (!creatorOpen) {
-                setActiveView('creator');
-                setProfileSidebarOpen(false);
-                if (!secondSidebarOpen) setSecondSidebarOpen(true);
-              }
-            } else {
-              // Creator not enabled - show onboarding
-              trackEvent('creator_onboarding_started', { props: { source: 'main_sidebar' } });
-              setActiveView('creator-onboarding');
-              setOnboardingStep(0);
-              setProfileSidebarOpen(false);
-              if (!secondSidebarOpen) setSecondSidebarOpen(true);
-            }
+            trackEvent('main_sidebar_navigation', { props: { section: 'domains', previous_view: activeView } });
+            setActiveView('domains');
+            setProfileSidebarOpen(false);
+            setSelectedQuiz(null);
+            setCreatingQuiz(false);
+            if (!secondSidebarOpen) setSecondSidebarOpen(true);
           }}
         >
-          <DollarSign className="h-6 w-6" />
-          <span className="text-xs whitespace-nowrap">{t("Creator")}</span>
-          {(() => {
-            const isCreatorEnabled = userProfile?.terms_accepted && userProfile?.is_creator_enabled;
-            return isCreatorEnabled && creatorOpen ? (
-              <ChevronUp className="h-3 w-3" />
-            ) : isCreatorEnabled && !creatorOpen ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : null;
-          })()}
+          <Folder className="h-6 w-6" />
+          <span className="text-xs whitespace-nowrap">{t("Domains")}</span>
         </button>
-        
-        {/* Domains - only show when creator is enabled and open */}
-        {(userProfile?.terms_accepted && userProfile?.is_creator_enabled) && creatorOpen && (
-          <button 
-            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
-            onClick={() => {
-              trackEvent('main_sidebar_navigation', { props: { section: 'domains', previous_view: activeView } });
-              setActiveView('domains');
-              setProfileSidebarOpen(false);
-              setSelectedQuiz(null);
-              setCreatingQuiz(false);
-              if (!secondSidebarOpen) setSecondSidebarOpen(true);
-            }}
-          >
-            <Folder className="h-6 w-6" />
-            <span className="text-xs whitespace-nowrap">{t("Domains")}</span>
-          </button>
-        )}
-        
-        {/* Quizzes - only show when creator is enabled and open */}
-        {(userProfile?.terms_accepted && userProfile?.is_creator_enabled) && creatorOpen && (
-          <button 
-            className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'quizzes' ? 'btn-active bg-primary/10 text-primary' : ''}`}
-            onClick={() => {
-              trackEvent('main_sidebar_navigation', { props: { section: 'quizzes', previous_view: activeView } });
-              setActiveView('quizzes');
-              setProfileSidebarOpen(false);
-              setSelectedDomain(null);
-              if (!secondSidebarOpen) setSecondSidebarOpen(true);
-            }}
-          >
-            <FileText className="h-6 w-6" />
-            <span className="text-xs whitespace-nowrap">{t("Quizzes")}</span>
-          </button>
-        )}
+
+        {/* Quizzes */}
+        <button
+          className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'quizzes' ? 'btn-active bg-primary/10 text-primary' : ''}`}
+          onClick={() => {
+            trackEvent('main_sidebar_navigation', { props: { section: 'quizzes', previous_view: activeView } });
+            setActiveView('quizzes');
+            setProfileSidebarOpen(false);
+            setSelectedDomain(null);
+            if (!secondSidebarOpen) setSecondSidebarOpen(true);
+          }}
+        >
+          <FileText className="h-6 w-6" />
+          <span className="text-xs whitespace-nowrap">{t("Quizzes")}</span>
+        </button>
       </div>
       
       {/* User Menu at bottom */}
@@ -574,37 +511,7 @@ export default function AdminPage() {
   const { t, i18n } = useTranslation();
 
   const SecondSidebar = () => (
-
     <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-full">
-      {activeView === 'creator' && (
-        <div className="flex flex-col h-full">
-          <div className="p-4 border-b">
-            <h3 className="text-lg font-semibold">{t("Quiz Creator")}</h3>
-          </div>
-          <div className="flex-1 p-6 flex items-center justify-center">
-            <div className="text-center max-w-sm">
-              <DollarSign className="h-16 w-16 text-accent mx-auto mb-6" />
-              <h4 className="text-xl font-semibold mb-4">{t("Welcome to Quiz Creator")}</h4>
-              <p className="text-base-content/70 mb-6 leading-relaxed">
-                {t("Create engaging quizzes with our intuitive builder. Add questions, set difficulty levels, and track student progress - all from one powerful interface.")}
-              </p>
-              <div className="bg-base-200 rounded-lg p-4">
-                <p className="text-sm text-base-content/60">
-                  💡 {t("Get started by creating your first domain, then add quizzes and questions to build comprehensive learning experiences.")}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeView === 'creator-onboarding' && (
-        <CreatorOnboarding
-          onComplete={handleOnboardingComplete}
-          onCancel={handleOnboardingCancel}
-        />
-      )}
-
       {activeView === 'domains' && (
         <div className="flex flex-col h-full">
           <div className="flex-1 p-4 overflow-y-auto">
