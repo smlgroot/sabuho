@@ -66,7 +66,8 @@ export function AuthProvider({ children }) {
     )
 
     return () => subscription.unsubscribe()
-  }, [navigate, location.pathname])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const signUp = async (email, password) => {
     const { error } = await supabaseService.signUp(email, password)
