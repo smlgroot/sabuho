@@ -7,6 +7,7 @@ import HomePage from '@/app/page'
 import AdminPage from '@/app/admin/page'
 import AuthPage from '@/app/auth/page'
 import ConfirmEmailPage from '@/app/auth/confirm-email/page'
+import OnlineQuizScreen from '@/app/online-game/OnlineQuizScreen'
 import NotFoundPage from '@/app/not-found'
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/auth/confirm-email" element={<ConfirmEmailPage />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/online-game/:attemptId" element={<OnlineQuizScreen />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </AuthProvider>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend
@@ -10,13 +11,16 @@ import {
   Target, Award, TrendingUp, AlertCircle, CheckCircle2, ArrowRight, PlayCircle, RefreshCw, SkipForward, Eye, MousePointerClick
 } from 'lucide-react'
 import * as supabaseService from '@/services/supabaseService'
+import { supabase } from '@/lib/supabase'
 
 export function QuizInsights({ quiz, selected, idToName }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [selectedTypes, setSelectedTypes] = useState(new Set([]))
   const [hoveredDotType, setHoveredDotType] = useState(null)
   const [insightsData, setInsightsData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isCreatingAttempt, setIsCreatingAttempt] = useState(false)
 
   const toggleSelection = (type) => {
     setSelectedTypes(prev => {
@@ -28,6 +32,48 @@ export function QuizInsights({ quiz, selected, idToName }) {
       }
       return newSet
     })
+  }
+
+  const handleChallengeClick = async () => {
+    if (selectedTypes.size === 0 || !quiz?.id) {
+      return
+    }
+
+    setIsCreatingAttempt(true)
+    try {
+      // Get current session for auth token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session) {
+        console.error('Failed to get session:', sessionError)
+        alert(t('Please sign in to start a challenge'))
+        setIsCreatingAttempt(false)
+        return
+      }
+
+      // Call edge function to create quiz attempt
+      const { data, error } = await supabase.functions.invoke('create-quiz-attempt', {
+        body: {
+          quizId: quiz.id,
+          selectedTypes: Array.from(selectedTypes),
+          selectedDomainIds: selected
+        }
+      })
+
+      if (error) {
+        console.error('Failed to create quiz attempt:', error)
+        alert(t('Failed to create challenge. Please try again.'))
+        setIsCreatingAttempt(false)
+        return
+      }
+
+      // Navigate to online quiz screen
+      navigate(`/online-game/${data.quizAttempt.id}`)
+    } catch (error) {
+      console.error('Error creating challenge:', error)
+      alert(t('An error occurred. Please try again.'))
+      setIsCreatingAttempt(false)
+    }
   }
 
   // Fetch quiz insights data
@@ -372,17 +418,28 @@ export function QuizInsights({ quiz, selected, idToName }) {
                   )}
                   <div className="flex gap-2">
                     <button
+                      onClick={handleChallengeClick}
+                      disabled={!hasSelection || isCreatingAttempt}
                       className={`flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm ${
-                        hasSelection
+                        hasSelection && !isCreatingAttempt
                           ? 'bg-purple-600 text-white hover:bg-purple-700'
-                          : 'bg-white text-purple-600 border-2 border-purple-600 hover:bg-purple-50'
+                          : 'bg-white text-purple-600 border-2 border-purple-600 hover:bg-purple-50 opacity-50 cursor-not-allowed'
                       }`}
                       title={!hasSelection ? t('Select question types above to start') : ''}
                     >
-                      <Target className="w-4 h-4" />
-                      <span>
-                        {t('Challenge')} ({selectedCount})
-                      </span>
+                      {isCreatingAttempt ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>{t('Creating...')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Target className="w-4 h-4" />
+                          <span>
+                            {t('Challenge')} ({selectedCount})
+                          </span>
+                        </>
+                      )}
                     </button>
                     <button
                       className={`flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm ${
