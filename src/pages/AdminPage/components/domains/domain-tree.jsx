@@ -1,12 +1,14 @@
 'use client'
 
 import React from 'react'
-import { Plus, FolderOpen, Folder, File, Trash2, ChevronRight, ChevronDown, Play, GraduationCap } from 'lucide-react'
+import { Plus, FolderOpen, Folder, File, Trash2, ChevronRight, ChevronDown, Play, GraduationCap, Edit2 } from 'lucide-react'
 // DaisyUI components used directly
 import { useStore } from '@/store/useStore'
 import { useTranslation } from 'react-i18next'
+import { updateDomain } from '@/lib/admin/domains'
+import { toast } from 'sonner'
 
-function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain, allDomains, selectedDomains, toggleDomainSelection, showCheckboxes }) {
+function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain, allDomains, selectedDomains, toggleDomainSelection, showCheckboxes, onDomainUpdate }) {
   const { t } = useTranslation()
   const { selectedDomain, toggleDomainCollapsed, isDomainCollapsed } = useStore()
   const isSelected = selectedDomain?.id === domain.id
@@ -20,6 +22,9 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
   const [isDragging, setIsDragging] = React.useState(false)
   const [isDropTarget, setIsDropTarget] = React.useState(false)
   const nodeRef = React.useRef(null)
+  const [isRenaming, setIsRenaming] = React.useState(false)
+  const [renamingValue, setRenamingValue] = React.useState(domain.name)
+  const inputRef = React.useRef(null)
 
   // Close context menu when clicking outside
   React.useEffect(() => {
@@ -35,11 +40,65 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
     }
   }, [contextMenuOpen])
 
+  // Focus input when entering rename mode
+  React.useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [isRenaming])
+
   const handleContextMenu = (e) => {
     e.preventDefault()
     e.stopPropagation()
     setContextMenuPosition({ x: e.clientX, y: e.clientY })
     setContextMenuOpen(true)
+  }
+
+  const startRename = () => {
+    setIsRenaming(true)
+    setRenamingValue(domain.name)
+    setContextMenuOpen(false)
+  }
+
+  const cancelRename = () => {
+    setIsRenaming(false)
+    setRenamingValue(domain.name)
+  }
+
+  const saveRename = async () => {
+    if (renamingValue.trim() === '') {
+      toast.error(t("Name cannot be empty"))
+      return
+    }
+
+    if (renamingValue.trim() === domain.name) {
+      setIsRenaming(false)
+      return
+    }
+
+    try {
+      const updated = await updateDomain(domain.id, { name: renamingValue.trim() })
+      if (onDomainUpdate) {
+        onDomainUpdate(updated)
+      }
+      setIsRenaming(false)
+      toast.success(t("Domain renamed successfully"))
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to rename domain"
+      toast.error(errorMessage)
+      setRenamingValue(domain.name)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      saveRename()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      cancelRename()
+    }
   }
 
   // Helper to find a domain in the tree by ID
@@ -210,45 +269,71 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
               <div className="w-4 h-4 mr-1 flex-shrink-0" />
             )}
             <button
-              className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${isSelected ? 'btn-active bg-primary/10 text-primary' : ''}`}
+              className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${
+                isRenaming
+                  ? 'bg-base-200 !border-0 !outline-none'
+                  : isSelected
+                    ? 'btn-active bg-primary/10 text-primary'
+                    : ''
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
                 onSelectDomain(domain);
               }}
             >
-            <div className="flex items-center mr-2">
-              {domain.domain_type === 'file' ? (
-                // File type domains - show file icon
-                level === 0 ? (
-                  <File className="h-4 w-4 text-primary mr-2" />
+              <div className="flex items-center mr-2">
+                {domain.domain_type === 'file' ? (
+                  // File type domains - show file icon
+                  level === 0 ? (
+                    <File className="h-4 w-4 text-primary mr-2" />
+                  ) : (
+                    <File className="h-3.5 w-3.5 opacity-70 mr-2" />
+                  )
+                ) : level === 0 ? (
+                  // Root level folder domains - always show folder icons
+                  hasChildren ? (
+                    <FolderOpen className="h-4 w-4 text-primary mr-2" />
+                  ) : (
+                    <Folder className="h-4 w-4 text-primary mr-2" />
+                  )
                 ) : (
-                  <File className="h-3.5 w-3.5 opacity-70 mr-2" />
-                )
-              ) : level === 0 ? (
-                // Root level folder domains - always show folder icons
-                hasChildren ? (
-                  <FolderOpen className="h-4 w-4 text-primary mr-2" />
-                ) : (
-                  <Folder className="h-4 w-4 text-primary mr-2" />
-                )
-              ) : (
-                // Child folder domains - show smaller, muted folder icons
-                hasChildren ? (
-                  <FolderOpen className="h-3.5 w-3.5 opacity-70 mr-2" />
-                ) : (
-                  <Folder className="h-3.5 w-3.5 opacity-70 mr-2" />
-                )
-              )}
-            </div>
-            <span className={`flex-1 truncate min-w-0 ${level === 0 ? 'font-medium' : ''}`}>
-              {domain.name}
-            </span>
-            {domain.domain_type === 'file' && (
-              <div className="badge badge-neutral badge-sm ml-2">
-                {domain.questions?.length || 0}
+                  // Child folder domains - show smaller, muted folder icons
+                  hasChildren ? (
+                    <FolderOpen className="h-3.5 w-3.5 opacity-70 mr-2" />
+                  ) : (
+                    <Folder className="h-3.5 w-3.5 opacity-70 mr-2" />
+                  )
+                )}
               </div>
-            )}
-          </button>
+              {isRenaming ? (
+                <input
+                  ref={inputRef}
+                  type="text"
+                  style={{
+                    border: 'none',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    borderWidth: '0',
+                    borderStyle: 'none'
+                  }}
+                  className={`flex-1 min-w-0 bg-transparent px-0.5 focus:outline-none focus:ring-0 focus:border-0 ${level === 0 ? 'font-medium' : ''}`}
+                  value={renamingValue}
+                  onChange={(e) => setRenamingValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onBlur={saveRename}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <span className={`flex-1 truncate min-w-0 ${level === 0 ? 'font-medium' : ''}`}>
+                  {domain.name}
+                </span>
+              )}
+              {domain.domain_type === 'file' && (
+                <div className="badge badge-neutral badge-sm ml-2">
+                  {domain.questions?.length || 0}
+                </div>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -296,6 +381,18 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
             <button
               onClick={(e) => {
                 e.stopPropagation()
+                startRename()
+              }}
+            >
+              <Edit2 className="h-4 w-4 mr-2" />
+              {t("Rename")}
+            </button>
+          </li>
+          <li className="border-t border-base-300 my-1"></li>
+          <li>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
                 onDeleteDomain(domain)
                 setContextMenuOpen(false)
               }}
@@ -321,13 +418,14 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
           selectedDomains={selectedDomains}
           toggleDomainSelection={toggleDomainSelection}
           showCheckboxes={showCheckboxes}
+          onDomainUpdate={onDomainUpdate}
         />
       ))}
     </>
   )
 }
 
-export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain, onCreateQuiz }) {
+export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDomain, onDeleteDomain, onMoveDomain, onCreateQuiz, onDomainUpdate }) {
   const { t } = useTranslation()
   const dropZoneRef = React.useRef(null)
   const [selectedDomains, setSelectedDomains] = React.useState(new Set())
@@ -502,6 +600,7 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
               selectedDomains={selectedDomains}
               toggleDomainSelection={toggleDomainSelection}
               showCheckboxes={isLearnMode}
+              onDomainUpdate={onDomainUpdate}
             />
           ))
         )}

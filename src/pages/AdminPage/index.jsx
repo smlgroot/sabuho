@@ -541,6 +541,7 @@ export default function AdminPage() {
               onDeleteDomain={handleDeleteDomain}
               onMoveDomain={handleMoveDomain}
               onCreateQuiz={handleQuizCreateFromDomains}
+              onDomainUpdate={updateDomainInStore}
             />
           </div>
         </div>
