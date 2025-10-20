@@ -404,17 +404,6 @@ export default function AdminPage() {
       
       {/* Main Navigation Menu */}
       <div className="flex-1 flex flex-col items-center py-4 gap-2">
-        {/* Sidebar Toggle */}
-        <button
-          className="btn btn-ghost p-3 h-auto min-w-16"
-          onClick={() => {
-            trackEvent('sidebar_toggle_clicked', { props: { action: secondSidebarOpen ? 'close' : 'open' } });
-            setSecondSidebarOpen(!secondSidebarOpen);
-          }}
-        >
-          <Menu className="h-6 w-6" />
-        </button>
-
         {/* Domains */}
         <button
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
@@ -460,7 +449,18 @@ export default function AdminPage() {
   const { t, i18n } = useTranslation();
 
   const SecondSidebar = () => (
-    <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-full">
+    <aside className="w-80 bg-base-100 border-r border-base-300 flex flex-col h-full relative">
+      {/* Floating Toggle Button */}
+      <button
+        className="btn btn-ghost btn-sm btn-circle absolute top-4 -right-4 z-10 shadow-md"
+        onClick={() => {
+          trackEvent('sidebar_toggle_clicked', { props: { action: secondSidebarOpen ? 'close' : 'open' } });
+          setSecondSidebarOpen(!secondSidebarOpen);
+        }}
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
       {activeView === 'domains' && (
         <div className="flex flex-col h-full">
           <div className="flex-1 p-4 overflow-y-auto">
