@@ -205,18 +205,6 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
           </div>
         </div>
       </div>
-      {/* Add Quiz Button */}
-      <button
-        className="btn btn-primary w-full"
-        onClick={() => {
-          setSelectedDomain(null)
-          setSelectedQuiz(null)
-          onCreateQuiz()
-        }}
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        {t("Add Quiz")}
-      </button>
       
       {/* Quizzes List */}
       <div className="space-y-1 overflow-x-hidden">
