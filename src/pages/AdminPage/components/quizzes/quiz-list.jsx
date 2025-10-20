@@ -186,7 +186,7 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
   return (
     <div className="space-y-4">
       {/* Credits Header */}
-      <div className="card border">
+      <div className="card border hover:bg-primary/10 transition-colors cursor-pointer">
         <div className="card-body p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

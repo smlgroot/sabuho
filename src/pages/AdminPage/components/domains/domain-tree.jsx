@@ -493,44 +493,51 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
     <div className="space-y-4">
       {/* Header with Learn/Start Buttons */}
       {domains.length > 0 && (
-        <div className="flex gap-2">
-          {!isLearnMode ? (
-            <button
-              className="btn btn-success btn-lg flex-1"
-              onClick={() => setIsLearnMode(true)}
-            >
-              <Play className="h-5 w-5 mr-2" />
-              {t("Learn")}
-            </button>
-          ) : (
-            <>
-              <button
-                className="btn btn-outline"
-                onClick={() => {
-                  setIsLearnMode(false)
-                  setSelectedDomains(new Set())
-                }}
-              >
-                {t("Cancel")}
-              </button>
-              <button
-                className="btn btn-success flex-1"
-                disabled={totalQuestions === 0}
-                onClick={() => {
-                  // Create quiz with selected domains
-                  if (onCreateQuiz && selectedDomains.size > 0) {
-                    onCreateQuiz(Array.from(selectedDomains))
-                    // Reset selection after creating quiz
+        <div
+          className={`card border transition-colors ${!isLearnMode ? 'hover:bg-success/10 cursor-pointer' : 'bg-success/10'}`}
+          onClick={!isLearnMode ? () => setIsLearnMode(true) : undefined}
+        >
+          <div className="card-body p-4">
+            {!isLearnMode ? (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
+                    <GraduationCap className="h-5 w-5 text-success" />
+                  </div>
+                  <h3 className="font-semibold">{t("Learn")}</h3>
+                </div>
+                <Play className="h-5 w-5 text-success" />
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  className="btn"
+                  onClick={() => {
                     setIsLearnMode(false)
                     setSelectedDomains(new Set())
-                  }
-                }}
-              >
-                <Play className="h-4 w-4 mr-2" />
-                {t("Start")} ({totalQuestions})
-              </button>
-            </>
-          )}
+                  }}
+                >
+                  {t("Cancel")}
+                </button>
+                <button
+                  className="btn btn-success flex-1"
+                  disabled={totalQuestions === 0}
+                  onClick={() => {
+                    // Create quiz with selected domains
+                    if (onCreateQuiz && selectedDomains.size > 0) {
+                      onCreateQuiz(Array.from(selectedDomains))
+                      // Reset selection after creating quiz
+                      setIsLearnMode(false)
+                      setSelectedDomains(new Set())
+                    }
+                  }}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  {t("Start")} ({totalQuestions})
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
