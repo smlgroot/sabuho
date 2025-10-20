@@ -27,7 +27,12 @@ export async function updateQuestion(questionId, updates) {
 }
 
 export async function deleteQuestion(questionId) {
-  const { error } = await supabaseService.deleteQuestion(questionId)
+  const { user, error: authError } = await supabaseService.getCurrentUser()
+  if (authError || !user) {
+    throw new Error('User must be authenticated to delete questions')
+  }
+
+  const { error } = await supabaseService.deleteQuestion(questionId, user.id)
 
   if (error) {
     throw new Error(`Failed to delete question: ${error.message}`)

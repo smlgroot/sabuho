@@ -162,6 +162,7 @@ export async function fetchDomains(authorId) {
     `)
     .eq('author_id', authorId)
     .order('created_at', { ascending: true })
+    .order('created_at', { foreignTable: 'questions', ascending: false })
 
   return { data, error }
 }
@@ -435,11 +436,12 @@ export async function updateQuestion(questionId, updates) {
   return { data, error }
 }
 
-export async function deleteQuestion(questionId) {
+export async function deleteQuestion(questionId, authorId) {
   const { error } = await supabase
     .from('questions')
     .delete()
     .eq('id', questionId)
+    .eq('author_id', authorId)
 
   return { error }
 }
