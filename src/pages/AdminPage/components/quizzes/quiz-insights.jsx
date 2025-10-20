@@ -191,12 +191,6 @@ export function QuizInsights({ quiz, selected, idToName }) {
     strength: domain.accuracy >= 80 ? domain.accuracy : BASELINE
   }))
 
-  const getAccuracyColor = (accuracy) => {
-    if (accuracy >= 80) return '#10b981' // green
-    if (accuracy >= 60) return '#f59e0b' // orange
-    return '#ef4444' // red
-  }
-
   // Loading state
   if (isLoading) {
     return (
