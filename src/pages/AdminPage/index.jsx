@@ -6,7 +6,6 @@ import { DomainTree } from "./components/domains/domain-tree";
 import { QuizList } from "./components/quizzes/quiz-list";
 import { QuizDetail } from "./components/quizzes/quiz-detail";
 import { DomainDetail } from "./components/domains/domain-detail";
-import { DomainForm } from "./components/domains/domain-form";
 import { DeleteDomainDialog } from "./components/domains/delete-domain-dialog";
 import { ResourceUpload } from "./components/resources/resource-upload";
 import { SearchBar } from "./components/shared/search-bar";
@@ -51,13 +50,10 @@ export default function AdminPage() {
     deleteQuiz: deleteQuizFromStore,
   } = useStore();
 
-  const [domainFormOpen, setDomainFormOpen] = useState(false);
   const [deleteDomainDialogOpen, setDeleteDomainDialogOpen] = useState(false);
   const [resourceUploadOpen, setResourceUploadOpen] = useState(false);
-  const [editingDomain, setEditingDomain] = useState(null);
   const [deletingDomain, setDeletingDomain] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
-  const [parentDomainId, setParentDomainId] = useState(undefined);
   const [creatingQuiz, setCreatingQuiz] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [secondSidebarOpen, setSecondSidebarOpen] = useState(true);
@@ -144,12 +140,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleEditDomain = (domain) => {
-    setEditingDomain(domain);
-    setParentDomainId(domain.parent_id || undefined);
-    setDomainFormOpen(true);
-  };
-
   const handleDeleteDomain = (domain) => {
     setDeletingDomain(domain);
     setDeleteDomainDialogOpen(true);
@@ -182,26 +172,6 @@ export default function AdminPage() {
       const errorMessage = err instanceof Error ? err.message : "Failed to move domain";
       setError(errorMessage);
       toast.error(errorMessage);
-    }
-  };
-
-  const handleDomainSubmit = async (domainData) => {
-    try {
-      if (editingDomain) {
-        const updated = await updateDomain(editingDomain.id, domainData);
-        updateDomainInStore(updated);
-      } else {
-        const created = await createDomain(domainData);
-        addDomain(created);
-      }
-      setDomainFormOpen(false);
-      setEditingDomain(null);
-      toast.success(editingDomain ? t("Domain updated successfully") : t("Domain created successfully"));
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to save domain";
-      setError(errorMessage);
-      toast.error(errorMessage);
-      throw err;
     }
   };
 
@@ -503,7 +473,6 @@ export default function AdminPage() {
                 setSelectedDomain(domain);
               }}
               onCreateDomain={handleCreateDomain}
-              onEditDomain={handleEditDomain}
               onDeleteDomain={handleDeleteDomain}
               onMoveDomain={handleMoveDomain}
               onCreateQuiz={handleQuizCreateFromDomains}
@@ -605,14 +574,6 @@ export default function AdminPage() {
         </div>
 
         {/* Dialogs */}
-        <DomainForm
-          isOpen={domainFormOpen}
-          onClose={() => setDomainFormOpen(false)}
-          domain={editingDomain}
-          parentId={parentDomainId}
-          onSubmit={handleDomainSubmit}
-        />
-
         <ResourceUpload
           isOpen={resourceUploadOpen}
           onClose={() => setResourceUploadOpen(false)}
