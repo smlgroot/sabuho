@@ -9,7 +9,6 @@ import { DomainDetail } from "./components/domains/domain-detail";
 import { DomainForm } from "./components/domains/domain-form";
 import { DeleteDomainDialog } from "./components/domains/delete-domain-dialog";
 import { ResourceUpload } from "./components/resources/resource-upload";
-import { QuestionForm } from "./components/questions/question-form";
 import { SearchBar } from "./components/shared/search-bar";
 import { ProtectedRoute } from "@/pages/AuthPage/components/protected-route";
 import { useAuth } from "@/lib/admin/auth";
@@ -55,7 +54,6 @@ export default function AdminPage() {
   const [domainFormOpen, setDomainFormOpen] = useState(false);
   const [deleteDomainDialogOpen, setDeleteDomainDialogOpen] = useState(false);
   const [resourceUploadOpen, setResourceUploadOpen] = useState(false);
-  const [questionFormOpen, setQuestionFormOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState(null);
   const [deletingDomain, setDeletingDomain] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
@@ -230,38 +228,6 @@ export default function AdminPage() {
       setError(errorMessage);
       toast.error(errorMessage);
       throw err;
-    }
-  };
-
-  const handleQuestionSubmit = async (questionData) => {
-    try {
-      const question = await createQuestion(questionData);
-      addQuestion(question);
-      setQuestionFormOpen(false);
-      setEditingQuestion(null);
-      toast.success(t("Question created successfully"));
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to create question";
-      setError(errorMessage);
-      toast.error(errorMessage);
-      throw err;
-    }
-  };
-
-  const handleEditQuestion = (question) => {
-    setEditingQuestion(question);
-    setQuestionFormOpen(true);
-  };
-
-  const handleDeleteQuestion = async (question) => {
-    if (confirm(t("Are you sure you want to delete this question?"))) {
-      try {
-        // TODO: Implement deleteQuestion in lib/questions.ts
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to delete question";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      }
     }
   };
 
@@ -596,7 +562,6 @@ export default function AdminPage() {
               <DomainDetail
                 domain={selectedDomain}
                 onUploadResource={() => setResourceUploadOpen(true)}
-                onCreateQuestion={() => setQuestionFormOpen(true)}
                 onDomainUpdate={(updatedDomain) => {
                   updateDomainInStore(updatedDomain);
                 }}
@@ -653,15 +618,6 @@ export default function AdminPage() {
           onClose={() => setResourceUploadOpen(false)}
           domainId={selectedDomain?.id || ""}
           onUpload={handleResourceUpload}
-        />
-
-        <QuestionForm
-          isOpen={questionFormOpen}
-          onClose={() => setQuestionFormOpen(false)}
-          domainId={selectedDomain?.id || ""}
-          resources={selectedDomain?.resources || []}
-          question={editingQuestion}
-          onSubmit={handleQuestionSubmit}
         />
 
         <DeleteDomainDialog

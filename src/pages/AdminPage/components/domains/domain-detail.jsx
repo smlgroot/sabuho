@@ -8,7 +8,7 @@ import { ResourcesSection } from './resources-section'
 import { DomainTabs } from './domain-tabs'
 import { useTranslation } from 'react-i18next'
 
-export function DomainDetail({ domain, onUploadResource, onCreateQuestion, onDomainUpdate }) {
+export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
   const { t } = useTranslation()
   const [localDomain, setLocalDomain] = useState(domain)
   const [activeTab, setActiveTab] = useState('questions')
