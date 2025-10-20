@@ -70,9 +70,7 @@ function QuizItem({ quiz, isSelected, onEditQuiz, onDeleteQuiz, onQuizUpdate }) 
 
     try {
       const updated = await updateQuiz(quiz.id, {
-        name: renamingValue.trim(),
-        description: quiz.description,
-        domains: quiz.domains?.map(d => d.id) || []
+        name: renamingValue.trim()
       })
       if (onQuizUpdate) {
         onQuizUpdate(updated)
