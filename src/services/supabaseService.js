@@ -181,8 +181,7 @@ export async function createDomain(domain, authorId) {
     author_id: authorId,
     parent_id: domain.parent_id,
     name: domain.name,
-    description: domain.description,
-    domain_type: domain.domain_type
+    description: domain.description
   }
 
   const { data, error } = await supabase

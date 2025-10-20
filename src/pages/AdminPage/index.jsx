@@ -119,20 +119,19 @@ export default function AdminPage() {
     }
   }, [user?.id, loadDomains, loadQuizzes]);
 
-  const handleCreateDomain = async (parentId, type = 'folder') => {
+  const handleCreateDomain = async (parentId) => {
     try {
       const domainData = {
-        name: type === 'folder' ? 'New Folder' : 'New File',
+        name: 'New Folder',
         description: null,
-        parent_id: parentId || null,
-        domain_type: type
+        parent_id: parentId || null
       };
 
       const created = await createDomain(domainData);
       addDomain(created);
       setSelectedDomain(created);
 
-      toast.success(t(type === 'folder' ? "Folder created successfully" : "File created successfully"));
+      toast.success(t("Folder created successfully"));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to create domain";
       setError(errorMessage);

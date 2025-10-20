@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Plus, FolderOpen, Folder, File, Trash2, ChevronRight, ChevronDown, Play, GraduationCap, Edit2 } from 'lucide-react'
+import { Plus, FolderOpen, Folder, Trash2, ChevronRight, ChevronDown, Play, GraduationCap, Edit2 } from 'lucide-react'
 // DaisyUI components used directly
 import { useStore } from '@/store/useStore'
 import { useTranslation } from 'react-i18next'
@@ -135,7 +135,6 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
     e.dataTransfer.setData('application/json', JSON.stringify({
       id: domain.id,
       name: domain.name,
-      type: domain.domain_type,
       parent_id: domain.parent_id
     }))
 
@@ -168,9 +167,6 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
   }
 
   const handleDragOver = (e) => {
-    // Only folders can be drop targets
-    if (domain.domain_type !== 'folder') return
-
     e.preventDefault()
     e.stopPropagation()
     e.dataTransfer.dropEffect = 'move'
@@ -188,9 +184,6 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
     e.preventDefault()
     e.stopPropagation()
     setIsDropTarget(false)
-
-    // Only folders can be drop targets
-    if (domain.domain_type !== 'folder') return
 
     try {
       const draggedData = JSON.parse(e.dataTransfer.getData('application/json'))
@@ -282,22 +275,15 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
               }}
             >
               <div className="flex items-center mr-2">
-                {domain.domain_type === 'file' ? (
-                  // File type domains - show file icon
-                  level === 0 ? (
-                    <File className="h-4 w-4 text-primary mr-2" />
-                  ) : (
-                    <File className="h-3.5 w-3.5 opacity-70 mr-2" />
-                  )
-                ) : level === 0 ? (
-                  // Root level folder domains - always show folder icons
+                {level === 0 ? (
+                  // Root level folder - show larger folder icon
                   hasChildren ? (
                     <FolderOpen className="h-4 w-4 text-primary mr-2" />
                   ) : (
                     <Folder className="h-4 w-4 text-primary mr-2" />
                   )
                 ) : (
-                  // Child folder domains - show smaller, muted folder icons
+                  // Child folder - show smaller, muted folder icon
                   hasChildren ? (
                     <FolderOpen className="h-3.5 w-3.5 opacity-70 mr-2" />
                   ) : (
@@ -328,9 +314,9 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
                   {domain.name}
                 </span>
               )}
-              {domain.domain_type === 'file' && (
+              {domain.questions && domain.questions.length > 0 && (
                 <div className="badge badge-neutral badge-sm ml-2">
-                  {domain.questions?.length || 0}
+                  {domain.questions.length}
                 </div>
               )}
             </button>
@@ -348,35 +334,19 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
             top: `${contextMenuPosition.y}px`,
           }}
         >
-          {domain.domain_type === 'folder' && (
-            <>
-              <li>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onCreateDomain(domain.id, 'folder')
-                    setContextMenuOpen(false)
-                  }}
-                >
-                  <Folder className="h-4 w-4 mr-2" />
-                  {t("Add Sub Folder")}
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onCreateDomain(domain.id, 'file')
-                    setContextMenuOpen(false)
-                  }}
-                >
-                  <File className="h-4 w-4 mr-2" />
-                  {t("Add File")}
-                </button>
-              </li>
-              <li className="border-t border-base-300 my-1"></li>
-            </>
-          )}
+          <li>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onCreateDomain(domain.id, 'folder')
+                setContextMenuOpen(false)
+              }}
+            >
+              <Folder className="h-4 w-4 mr-2" />
+              {t("Add Sub Folder")}
+            </button>
+          </li>
+          <li className="border-t border-base-300 my-1"></li>
           <li>
             <button
               onClick={(e) => {
@@ -459,9 +429,9 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
   // Count questions from selected domains
   const countQuestionsFromDomain = (domain) => {
     let count = 0
-    if (domain.domain_type === 'file') {
-      count += domain.questions?.length || 0
-    }
+    // Count questions directly in this domain
+    count += domain.questions?.length || 0
+    // Count questions in child domains
     if (domain.children) {
       for (const child of domain.children) {
         count += countQuestionsFromDomain(child)

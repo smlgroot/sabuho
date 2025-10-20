@@ -10,8 +10,7 @@ export const DomainShape = {
   name: '',
   description: null,
   created_at: '',
-  updated_at: '',
-  domain_type: 'folder' // 'folder' | 'file'
+  updated_at: ''
 }
 
 export const QuestionShape = {
