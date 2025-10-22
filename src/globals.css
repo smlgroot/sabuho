@@ -21,6 +21,8 @@ html, body {
   font-synthesis: none;
   font-optical-sizing: auto;
   font-weight: 400; /* Default to regular weight */
+  letter-spacing: -0.01em; /* Tighter letter spacing for Roboto */
+  font-size: 14px; /* Gmail's default body text size */
 }
 
 /* Bold text rendering fix for Safari */
@@ -53,6 +55,7 @@ b, strong, .font-bold, [class*="font-bold"] {
 /* Reset font weights to normal/regular by default */
 body, p, span, div, button, input, textarea, select, a {
   font-weight: 400;
+  letter-spacing: -0.01em; /* Slightly tighter for more compact look */
 }
 
 /* Only use medium weight for specific elements */
