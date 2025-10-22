@@ -392,9 +392,9 @@ export default function AdminPage() {
 
 
   const MainSidebar = () => (
-    <aside className="min-w-20 bg-base-200 text-base-content flex flex-col h-full border-r border-base-300">
+    <aside className="min-w-20 bg-base-200 text-base-content flex flex-col h-full">
       {/* App Logo */}
-      <div className="p-3 border-b border-base-300">
+      <div className="p-3">
         <img
           src="/sabuho_logo_3.png"
           alt="Sabuho"
@@ -449,7 +449,7 @@ export default function AdminPage() {
   const { t, i18n } = useTranslation();
 
   const SecondSidebar = () => (
-    <aside className="w-64 bg-base-100 border-r border-base-300 flex flex-col h-full relative">
+    <aside className="w-64 bg-base-100 flex flex-col h-full relative">
       {/* Floating Toggle Button */}
       <button
         className="btn btn-ghost btn-sm btn-circle absolute top-3 -right-4 z-10 shadow-md"

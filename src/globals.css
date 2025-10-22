@@ -96,22 +96,58 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .border-base-300 {
-  border-color: hsl(var(--bc) / 0.05); /* Much lighter - barely visible */
+  border-color: hsl(var(--bc) / 0.05) !important; /* Much lighter - barely visible */
 }
 
 /* Remove borders from cards - Gmail style uses background differences instead */
 .card {
-  border: none;
+  border: none !important;
 }
 
 /* Keep only very subtle divider lines where needed */
-.border-t, .border-b, .border-l, .border-r {
-  border-color: hsl(var(--bc) / 0.06);
+.border-t {
+  border-top-color: hsl(var(--bc) / 0.06) !important;
+}
+
+.border-b {
+  border-bottom-color: hsl(var(--bc) / 0.06) !important;
+}
+
+.border-l {
+  border-left-color: hsl(var(--bc) / 0.06) !important;
+}
+
+.border-r {
+  border-right-color: hsl(var(--bc) / 0.06) !important;
 }
 
 /* Sidebar borders - very subtle */
 aside.border-r {
-  border-right-color: hsl(var(--bc) / 0.06);
+  border-right-color: hsl(var(--bc) / 0.06) !important;
+}
+
+aside .border-b {
+  border-bottom-color: hsl(var(--bc) / 0.06) !important;
+}
+
+aside.border-base-300,
+aside .border-base-300,
+.border-base-300.border-r,
+.border-base-300.border-b,
+.border-base-300.border-t,
+.border-base-300.border-l {
+  border-color: hsl(var(--bc) / 0.06) !important;
+}
+
+/* Target specific DaisyUI components with borders */
+.menu, .dropdown-content, .modal-box, .alert, .input, .textarea, .select {
+  border-color: hsl(var(--bc) / 0.06) !important;
+}
+
+/* Dividers in lists and menus */
+.menu li.border-t,
+li.border-t {
+  border-top-color: hsl(var(--bc) / 0.06) !important;
 }
 
 /* Reduced shadow intensity */
