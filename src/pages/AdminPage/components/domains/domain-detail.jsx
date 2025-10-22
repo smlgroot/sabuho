@@ -229,7 +229,7 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
       />
 
       {activeTab === 'questions' ? (
-        <div className="px-6 py-6">
+        <div className="px-6 py-0">
           <QuestionsSectionCustomTable
             domain={localDomain}
             onDomainUpdate={handleDomainUpdate}

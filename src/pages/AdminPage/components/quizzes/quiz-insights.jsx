@@ -414,21 +414,17 @@ export function QuizInsights({ quiz, selected, idToName }) {
                     <button
                       onClick={handleChallengeClick}
                       disabled={!hasSelection || isCreatingAttempt}
-                      className={`flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm ${
-                        hasSelection && !isCreatingAttempt
-                          ? 'bg-purple-600 text-white hover:bg-purple-700'
-                          : 'bg-white text-purple-600 border-2 border-purple-600 hover:bg-purple-50 opacity-50 cursor-not-allowed'
-                      }`}
+                      className="btn btn-primary flex-1"
                       title={!hasSelection ? t('Select question types above to start') : ''}
                     >
                       {isCreatingAttempt ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span className="loading loading-spinner loading-sm"></span>
                           <span>{t('Creating...')}</span>
                         </>
                       ) : (
                         <>
-                          <Target className="w-4 h-4" />
+                          <Target className="w-4 h-4 text-purple-600" />
                           <span>
                             {t('Challenge')} ({selectedCount})
                           </span>
@@ -436,14 +432,11 @@ export function QuizInsights({ quiz, selected, idToName }) {
                       )}
                     </button>
                     <button
-                      className={`flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm ${
-                        hasSelection
-                          ? 'bg-blue-600 text-white hover:bg-blue-700'
-                          : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
-                      }`}
+                      disabled={!hasSelection}
+                      className="btn btn-outline flex-1"
                       title={!hasSelection ? t('Select question types above to start') : ''}
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-4 h-4 text-blue-600" />
                       <span>
                         {t('Review')} ({selectedCount})
                       </span>
@@ -469,16 +462,12 @@ export function QuizInsights({ quiz, selected, idToName }) {
 
               {/* Action Buttons */}
               <div className="flex gap-2 mb-8">
-                <button
-                  className="flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm bg-orange-600 text-white hover:bg-orange-700"
-                >
-                  <AlertCircle className="w-4 h-4" />
+                <button className="btn btn-outline flex-1">
+                  <AlertCircle className="w-4 h-4 text-orange-600" />
                   <span>{t('Practice Weak Areas')}</span>
                 </button>
-                <button
-                  className="flex-1 px-4 py-3 rounded-md transition-all flex items-center justify-center gap-2 font-semibold text-sm bg-green-600 text-white hover:bg-green-700"
-                >
-                  <Award className="w-4 h-4" />
+                <button className="btn btn-outline flex-1">
+                  <Award className="w-4 h-4 text-green-600" />
                   <span>{t('Review Strengths')}</span>
                 </button>
               </div>

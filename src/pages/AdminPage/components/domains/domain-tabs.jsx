@@ -6,14 +6,14 @@ import { useTranslation } from 'react-i18next'
 export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCount }) {
   const { t } = useTranslation()
   return (
-    <div className="mb-6 bg-[#f6f8fc]"
-    style={{ borderBottom: '1px solid oklch(45% 0.24 277.023)' }}
+    <div className="mb-0 bg-[#f6f8fc]"
+    style={{ borderBottom: '1px solid oklch(80% 0.05 277.023)' }}
     >
       <div className="flex gap-0">
         <button
           className={`
             flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
-            -mb-[2px] mx-2 rounded-t-md
+            -mb-[2px] mr-2 rounded-t-md cursor-pointer
             ${activeTab === 'questions'
               ? 'text-primary border-primary bg-primary/10'
               : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
@@ -32,7 +32,7 @@ export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCo
         <button
           className={`
             flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
-            -mb-[2px] rounded-t-md
+            -mb-[2px] rounded-t-md cursor-pointer
             ${activeTab === 'resources'
               ? 'text-primary border-primary bg-primary/10'
               : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'

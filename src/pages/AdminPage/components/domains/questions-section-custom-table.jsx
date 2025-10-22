@@ -637,7 +637,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
 
   return (
     <div ref={containerRef} className="relative overflow-auto">
-      <div className="sticky top-0 z-20 bg-base-100 border-b border-base-300 p-4 flex items-center gap-2">
+      <div className="sticky top-0 z-20 bg-base-100 py-4 flex items-center gap-2">
         {isSelectingOptions() ? (
           <>
             <button onClick={() => handleInsertOption()} className="btn btn-primary btn-sm" disabled={isDeletingQuestions}>
