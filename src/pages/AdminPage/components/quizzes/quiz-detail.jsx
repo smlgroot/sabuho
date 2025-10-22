@@ -459,13 +459,14 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
       <div className="flex gap-0 ">
         <button
           className={`
-            flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
+            flex items-center gap-2 px-6 py-3 font-medium transition-colors
              -mb-[2px] mr-2 rounded-t-md cursor-pointer
             ${activeTab === 'insights'
               ? 'text-primary bg-primary/10'
               : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
             }
           `}
+          style={{ fontSize: '12.25px' }}
           onClick={() => setActiveTab('insights')}
         >
           <BarChart3 className="h-4 w-4" />
@@ -473,13 +474,14 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
         </button>
         <button
           className={`
-            flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
+            flex items-center gap-2 px-6 py-3 font-medium transition-colors
             -mb-[2px] rounded-t-md cursor-pointer
             ${activeTab === 'domains'
               ? 'text-primary bg-primary/10'
               : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
             }
           `}
+          style={{ fontSize: '12.25px' }}
           onClick={() => setActiveTab('domains')}
         >
           <Settings className="h-4 w-4" />
@@ -492,13 +494,14 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
         </button>
         <button
           className={`
-            flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
+            flex items-center gap-2 px-6 py-3 font-medium transition-colors
             -mb-[2px] rounded-t-md cursor-pointer
             ${activeTab === 'codes'
               ? 'text-primary bg-primary/10'
               : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
             }
           `}
+          style={{ fontSize: '12.25px' }}
           onClick={() => setActiveTab('codes')}
         >
           <TicketSlash className="h-4 w-4" />

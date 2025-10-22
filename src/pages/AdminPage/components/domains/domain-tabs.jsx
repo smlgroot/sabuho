@@ -12,13 +12,14 @@ export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCo
       <div className="flex gap-0">
         <button
           className={`
-            flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
+            flex items-center gap-2 px-6 py-3 font-medium transition-colors
             -mb-[2px] mr-2 rounded-t-md cursor-pointer
             ${activeTab === 'questions'
               ? 'text-primary border-primary bg-primary/10'
               : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
             }
           `}
+          style={{ fontSize: '12.25px' }}
           onClick={() => onTabChange('questions')}
         >
           <HelpCircle className="h-4 w-4" />
@@ -31,13 +32,14 @@ export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCo
         </button>
         <button
           className={`
-            flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
+            flex items-center gap-2 px-6 py-3 font-medium transition-colors
             -mb-[2px] rounded-t-md cursor-pointer
             ${activeTab === 'resources'
               ? 'text-primary border-primary bg-primary/10'
               : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
             }
           `}
+          style={{ fontSize: '12.25px' }}
           onClick={() => onTabChange('resources')}
         >
           <FileText className="h-4 w-4" />
