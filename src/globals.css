@@ -21,7 +21,7 @@ html, body {
   font-synthesis: none;
   font-optical-sizing: auto;
   font-weight: 400; /* Default to regular weight */
-  letter-spacing: -0.01em; /* Tighter letter spacing for Roboto */
+  letter-spacing: 0.02em; /* Increased letter spacing for better readability */
   font-size: 14px; /* Gmail's default body text size */
 }
 
@@ -65,7 +65,7 @@ b, strong, .font-bold, [class*="font-bold"] {
 /* Reset font weights to normal/regular by default */
 body, p, span, div, button, input, textarea, select, a {
   font-weight: 400;
-  letter-spacing: -0.01em; /* Slightly tighter for more compact look */
+  letter-spacing: 0.02em; /* Increased letter spacing for better readability */
 }
 
 /* Only use medium weight for specific elements */
@@ -117,7 +117,7 @@ h1, h2, h3, h4, h5, h6 {
 .btn {
   border-radius: 0.5rem;
   font-weight: 400;
-  letter-spacing: 0;
+  letter-spacing: 0.02em;
 }
 
 .btn-circle {
