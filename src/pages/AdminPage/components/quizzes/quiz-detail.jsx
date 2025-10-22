@@ -453,36 +453,61 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
 
   // Tabs component
   const QuizTabs = () => (
-    <div className="tabs tabs-box mb-6">
-      <button
-        className={`tab ${activeTab === 'insights' ? 'tab-active' : ''}`}
-        onClick={() => setActiveTab('insights')}
-      >
-        <BarChart3 className="h-4 w-4 mr-2" />
-        {t('Insights')}
-      </button>
-      <button
-        className={`tab ${activeTab === 'domains' ? 'tab-active' : ''}`}
-        onClick={() => setActiveTab('domains')}
-      >
-        <Settings className="h-4 w-4 mr-2" />
-        {t('Config')}
-        {selected.length > 0 && (
-          <span className="badge badge-secondary ml-2 text-xs px-2">
-            {selected.length}
+    <div className="mb-6 bg-[#f6f8fc]"
+    style={{ borderBottom: '1px solid oklch(45% 0.24 277.023)' }}
+    >
+      <div className="flex gap-0 ">
+        <button
+          className={`
+            flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
+             -mb-[2px] mx-2 rounded-t-md
+            ${activeTab === 'insights'
+              ? 'text-primary bg-primary/10'
+              : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
+            }
+          `}
+          onClick={() => setActiveTab('insights')}
+        >
+          <BarChart3 className="h-4 w-4" />
+          <span>{t('Insights')}</span>
+        </button>
+        <button
+          className={`
+            flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
+            -mb-[2px] rounded-t-md
+            ${activeTab === 'domains'
+              ? 'text-primary bg-primary/10'
+              : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
+            }
+          `}
+          onClick={() => setActiveTab('domains')}
+        >
+          <Settings className="h-4 w-4" />
+          <span>{t('Config')}</span>
+          {selected.length > 0 && (
+            <span className="px-2 py-0.5 text-xs rounded-full font-medium bg-base-200 text-base-content">
+              {selected.length}
+            </span>
+          )}
+        </button>
+        <button
+          className={`
+            flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors
+            -mb-[2px] rounded-t-md
+            ${activeTab === 'codes'
+              ? 'text-primary bg-primary/10'
+              : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
+            }
+          `}
+          onClick={() => setActiveTab('codes')}
+        >
+          <TicketSlash className="h-4 w-4" />
+          <span>{t('Codes')}</span>
+          <span className="px-2 py-0.5 text-xs rounded-full font-medium bg-base-200 text-base-content">
+            {quizCodes.length}
           </span>
-        )}
-      </button>
-      <button
-        className={`tab ${activeTab === 'codes' ? 'tab-active' : ''}`}
-        onClick={() => setActiveTab('codes')}
-      >
-        <TicketSlash className="h-4 w-4 mr-2" />
-        {t('Codes')}
-        <span className="badge badge-secondary ml-2 text-xs px-2">
-          {quizCodes.length}
-        </span>
-      </button>
+        </button>
+      </div>
     </div>
   )
 
