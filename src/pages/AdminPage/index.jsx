@@ -449,7 +449,7 @@ export default function AdminPage() {
   const { t, i18n } = useTranslation();
 
   const SecondSidebar = () => (
-    <aside className="w-64 bg-base-100 flex flex-col h-full relative">
+    <aside className="w-64 gmail-sidebar-bg flex flex-col h-full relative">
       {/* Floating Toggle Button */}
       <button
         className="btn btn-ghost btn-sm btn-circle absolute top-3 -right-4 z-10 shadow-md"

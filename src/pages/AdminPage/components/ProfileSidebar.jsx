@@ -37,7 +37,7 @@ export function ProfileSidebar({ onClose }) {
   };
 
   return (
-    <aside className="w-80 bg-base-100 flex flex-col h-full">
+    <aside className="w-80 gmail-sidebar-bg flex flex-col h-full">
       {/* Header */}
       <div className="p-6">
         <div className="flex items-center justify-between">
@@ -57,7 +57,7 @@ export function ProfileSidebar({ onClose }) {
           {/* Theme Selection */}
           <div className="mb-8">
             <h3 className="text-sm font-medium mb-4 text-base-content/70">{t('Appearance')}</h3>
-            <div className="flex items-center justify-between p-4 rounded-lg bg-base-200">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-white">
               <div className="flex items-center gap-3">
                 {isDark ? <Moon className="h-5 w-5 text-base-content/60" /> : <Sun className="h-5 w-5 text-base-content/60" />}
                 <span className="font-medium">{isDark ? t('Dark Mode') : t('Light Mode')}</span>
@@ -73,7 +73,7 @@ export function ProfileSidebar({ onClose }) {
               <button
                 onClick={() => handleLanguageChange('en')}
                 className={`w-full flex items-center justify-between p-4 rounded-lg transition-colors ${
-                  i18n.language === 'en' ? 'bg-primary/10' : 'bg-base-200 hover:bg-base-300'
+                  i18n.language === 'en' ? 'bg-primary/10' : 'bg-white hover:bg-gray-50'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -87,7 +87,7 @@ export function ProfileSidebar({ onClose }) {
               <button
                 onClick={() => handleLanguageChange('es')}
                 className={`w-full flex items-center justify-between p-4 rounded-lg transition-colors ${
-                  i18n.language === 'es' ? 'bg-primary/10' : 'bg-base-200 hover:bg-base-300'
+                  i18n.language === 'es' ? 'bg-primary/10' : 'bg-white hover:bg-gray-50'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -104,7 +104,7 @@ export function ProfileSidebar({ onClose }) {
           {/* Profile Settings - Placeholder */}
           <div className="mb-8">
             <h3 className="text-sm font-medium mb-4 text-base-content/70">{t('Account')}</h3>
-            <button className="w-full flex items-center gap-3 p-4 rounded-lg bg-base-200 hover:bg-base-300 transition-colors">
+            <button className="w-full flex items-center gap-3 p-4 rounded-lg bg-white hover:bg-gray-50 transition-colors">
               <User className="h-5 w-5 text-base-content/60" />
               <span className="font-medium">{t('Profile Settings')}</span>
             </button>
@@ -113,7 +113,7 @@ export function ProfileSidebar({ onClose }) {
           {/* Help and Support - Placeholder */}
           <div className="mb-8">
             <h3 className="text-sm font-medium mb-4 text-base-content/70">{t('Support')}</h3>
-            <button className="w-full flex items-center gap-3 p-4 rounded-lg bg-base-200 hover:bg-base-300 transition-colors">
+            <button className="w-full flex items-center gap-3 p-4 rounded-lg bg-white hover:bg-gray-50 transition-colors">
               <HelpCircle className="h-5 w-5 text-base-content/60" />
               <span className="font-medium">{t('Help & Support')}</span>
             </button>

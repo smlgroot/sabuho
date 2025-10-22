@@ -494,7 +494,7 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
       {/* Header with Learn/Start Buttons */}
       {domains.length > 0 && (
         <div
-          className={`card bg-base-200 transition-colors ${!isLearnMode ? 'hover:bg-success/10 cursor-pointer' : 'bg-success/10'}`}
+          className={`card bg-white transition-colors ${!isLearnMode ? 'hover:bg-success/10 cursor-pointer' : 'bg-success/10'}`}
           onClick={!isLearnMode ? () => setIsLearnMode(true) : undefined}
         >
           <div className="card-body p-3">

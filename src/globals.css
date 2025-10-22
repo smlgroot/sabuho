@@ -52,6 +52,11 @@ b, strong, .font-bold, [class*="font-bold"] {
 
 /* Material Design 3 inspired overrides for professional look */
 
+/* Gmail-style sidebar background - light gray */
+.gmail-sidebar-bg {
+  background-color: #f6f8fc; /* Gmail's light gray-blue sidebar color */
+}
+
 /* Reset font weights to normal/regular by default */
 body, p, span, div, button, input, textarea, select, a {
   font-weight: 400;
@@ -69,6 +74,39 @@ h1, h2, h3, h4, h5, h6 {
 
 .font-medium {
   font-weight: 500;
+}
+
+/* Gmail-like text size scale - much smaller and more compact */
+.text-xs {
+  font-size: 11px !important; /* Gmail's smallest text */
+}
+
+.text-sm {
+  font-size: 13px !important; /* Gmail's secondary text */
+}
+
+.text-base {
+  font-size: 14px !important; /* Gmail's default body text */
+}
+
+.text-lg {
+  font-size: 16px !important; /* Gmail's slightly larger text */
+}
+
+.text-xl {
+  font-size: 18px !important; /* Gmail's section headers */
+}
+
+.text-2xl {
+  font-size: 20px !important; /* Compact for headings */
+}
+
+.text-3xl {
+  font-size: 24px !important; /* Reduced from default 30px */
+}
+
+.text-4xl {
+  font-size: 28px !important; /* Reduced from default 36px */
 }
 
 .btn {
