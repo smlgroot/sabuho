@@ -140,7 +140,7 @@ function QuizItem({ quiz, isSelected, onEditQuiz, onDeleteQuiz, onQuizUpdate }) 
       {contextMenuOpen && (
         <ul
           ref={contextMenuRef}
-          className="menu bg-base-100 rounded-box w-48 p-2 shadow-lg border border-base-300 fixed z-50"
+          className="menu bg-base-100 rounded-box w-48 p-2 shadow-lg fixed z-50"
           style={{
             left: `${contextMenuPosition.x}px`,
             top: `${contextMenuPosition.y}px`,
@@ -184,10 +184,10 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
   const [isLoadingCredits, setIsLoadingCredits] = useState(false)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Credits Header */}
-      <div className="card border hover:bg-primary/10 transition-colors cursor-pointer">
-        <div className="card-body p-4">
+      <div className="card bg-base-200 hover:bg-primary/10 transition-colors cursor-pointer">
+        <div className="card-body p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">

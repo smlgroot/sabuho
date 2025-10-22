@@ -154,7 +154,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
     dragImage.style.color = '#000000'
     dragImage.style.whiteSpace = 'nowrap'
     dragImage.style.zIndex = '9999'
-    dragImage.innerHTML = `📁 ${domain.name}`
+    dragImage.innerHTML = domain.name
 
     document.body.appendChild(dragImage)
     e.dataTransfer.setDragImage(dragImage, dragImage.offsetWidth / 2, dragImage.offsetHeight / 2)
@@ -328,7 +328,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
       {contextMenuOpen && (
         <ul
           ref={contextMenuRef}
-          className="menu bg-base-100 rounded-box w-48 p-2 shadow-lg border border-base-300 fixed z-50"
+          className="menu bg-base-100 rounded-box w-48 p-2 shadow-lg fixed z-50"
           style={{
             left: `${contextMenuPosition.x}px`,
             top: `${contextMenuPosition.y}px`,
@@ -490,14 +490,14 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header with Learn/Start Buttons */}
       {domains.length > 0 && (
         <div
-          className={`card border transition-colors ${!isLearnMode ? 'hover:bg-success/10 cursor-pointer' : 'bg-success/10'}`}
+          className={`card bg-base-200 transition-colors ${!isLearnMode ? 'hover:bg-success/10 cursor-pointer' : 'bg-success/10'}`}
           onClick={!isLearnMode ? () => setIsLearnMode(true) : undefined}
         >
-          <div className="card-body p-4">
+          <div className="card-body p-3">
             {!isLearnMode ? (
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-3">

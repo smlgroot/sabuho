@@ -394,16 +394,16 @@ export default function AdminPage() {
   const MainSidebar = () => (
     <aside className="min-w-20 bg-base-200 text-base-content flex flex-col h-full border-r border-base-300">
       {/* App Logo */}
-      <div className="p-4 border-b border-base-300">
-        <img 
-          src="/sabuho_logo_3.png" 
-          alt="Sabuho" 
+      <div className="p-3 border-b border-base-300">
+        <img
+          src="/sabuho_logo_3.png"
+          alt="Sabuho"
           className="w-12 h-12 mx-auto object-contain"
         />
       </div>
-      
+
       {/* Main Navigation Menu */}
-      <div className="flex-1 flex flex-col items-center py-4 gap-2">
+      <div className="flex-1 flex flex-col items-center py-3 gap-1">
         {/* Domains */}
         <button
           className={`btn btn-ghost flex flex-col items-center gap-1 p-3 h-auto min-w-16 hover:bg-primary/10 hover:text-primary transition-colors ${activeView === 'domains' ? 'btn-active bg-primary/10 text-primary' : ''}`}
@@ -452,7 +452,7 @@ export default function AdminPage() {
     <aside className="w-64 bg-base-100 border-r border-base-300 flex flex-col h-full relative">
       {/* Floating Toggle Button */}
       <button
-        className="btn btn-ghost btn-sm btn-circle absolute top-4 -right-4 z-10 shadow-md"
+        className="btn btn-ghost btn-sm btn-circle absolute top-3 -right-4 z-10 shadow-md"
         onClick={() => {
           trackEvent('sidebar_toggle_clicked', { props: { action: secondSidebarOpen ? 'close' : 'open' } });
           setSecondSidebarOpen(!secondSidebarOpen);
@@ -463,7 +463,7 @@ export default function AdminPage() {
 
       {activeView === 'domains' && (
         <div className="flex flex-col h-full">
-          <div className="flex-1 p-4 overflow-y-auto">
+          <div className="flex-1 p-3 overflow-y-auto">
             <DomainTree
               domains={domains}
               onSelectDomain={(domain) => {
@@ -483,7 +483,7 @@ export default function AdminPage() {
       
       {activeView === 'quizzes' && (
         <div className="flex flex-col h-full">
-          <div className="flex-1 p-4 overflow-y-auto">
+          <div className="flex-1 p-3 overflow-y-auto">
             <QuizList
               quizzes={quizzes}
               onCreateQuiz={() => {
@@ -525,7 +525,7 @@ export default function AdminPage() {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
           {/* Content */}
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className="flex-1 overflow-y-auto p-4">
             {selectedDomain ? (
               <DomainDetail
                 domain={selectedDomain}

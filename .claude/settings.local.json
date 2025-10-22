@@ -26,7 +26,8 @@
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:userguiding.com)",
       "Bash(xargs cat:*)",
-      "Bash(yarn remove:*)"
+      "Bash(yarn remove:*)",
+      "WebFetch(domain:www.gmail.com)"
     ],
     "deny": [],
     "ask": []

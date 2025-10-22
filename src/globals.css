@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Varela+Round:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
 @import "tailwindcss";
 
 @plugin "daisyui" {
@@ -6,8 +6,8 @@
 }
 
 @theme {
-  --font-sans: 'Varela Round', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --radius: 0.625rem;
+  --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --radius: 0.5rem;
 }
 
 /* Safari font rendering optimizations */
@@ -20,6 +20,7 @@ html, body {
   font-feature-settings: "kern" 1, "liga" 1;
   font-synthesis: none;
   font-optical-sizing: auto;
+  font-weight: 400; /* Default to regular weight */
 }
 
 /* Bold text rendering fix for Safari */
@@ -45,6 +46,81 @@ b, strong, .font-bold, [class*="font-bold"] {
   transition: background-color 0.2s ease-in-out,
               border-color 0.2s ease-in-out,
               color 0.2s ease-in-out;
+}
+
+/* Material Design 3 inspired overrides for professional look */
+
+/* Reset font weights to normal/regular by default */
+body, p, span, div, button, input, textarea, select, a {
+  font-weight: 400;
+}
+
+/* Only use medium weight for specific elements */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.btn {
+  border-radius: 0.5rem;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.btn-circle {
+  border-radius: 0.5rem; /* Less extreme rounding for circles */
+}
+
+.card, .menu, .modal-box, .alert, .dropdown-content {
+  border-radius: 0.5rem;
+}
+
+.rounded-box {
+  border-radius: 0.5rem;
+}
+
+.rounded-full {
+  border-radius: 9999px; /* Keep truly circular elements */
+}
+
+/* Subtle borders - Material Design style (Gmail uses very light or no borders) */
+.border {
+  border-width: 1px;
+}
+
+.border-base-300 {
+  border-color: hsl(var(--bc) / 0.05); /* Much lighter - barely visible */
+}
+
+/* Remove borders from cards - Gmail style uses background differences instead */
+.card {
+  border: none;
+}
+
+/* Keep only very subtle divider lines where needed */
+.border-t, .border-b, .border-l, .border-r {
+  border-color: hsl(var(--bc) / 0.06);
+}
+
+/* Sidebar borders - very subtle */
+aside.border-r {
+  border-right-color: hsl(var(--bc) / 0.06);
+}
+
+/* Reduced shadow intensity */
+.shadow-lg {
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+}
+
+.shadow-md {
+  box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
 }
 
 /* Domain selection styling */
