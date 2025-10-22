@@ -15,7 +15,7 @@ import { UserMenu } from "@/pages/AuthPage/components/user-menu";
 import { useStore } from "@/store/useStore";
 import { ProfileSidebar } from "./components/ProfileSidebar";
 import { useNavigate, useLocation } from 'react-router-dom';
-import { usePlausible } from "@/components/PlausibleProvider";
+import { usePostHog } from "@/components/PostHogProvider";
 import {
   fetchDomains,
   createDomain,
@@ -62,7 +62,7 @@ export default function AdminPage() {
   const hasLoadedData = useRef(false);
 
   const { user, userProfile, loadUserProfile } = useAuth();
-  const { trackEvent } = usePlausible();
+  const { trackEvent } = usePostHog();
   const navigate = useNavigate();
   const location = useLocation();
 

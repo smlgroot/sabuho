@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/lib/admin/auth'
 import { useTranslation } from 'react-i18next'
-import { usePlausible } from '@/components/PlausibleProvider'
+import { usePostHog } from '@/components/PostHogProvider'
 
 export function Login({ onToggleMode }) {
   const [email, setEmail] = useState('')
@@ -12,7 +12,7 @@ export function Login({ onToggleMode }) {
   const [error, setError] = useState(null)
   const { signIn } = useAuth()
   const { t } = useTranslation()
-  const { trackEvent } = usePlausible()
+  const { trackEvent } = usePostHog()
 
   const handleSubmit = async (e) => {
     e.preventDefault()

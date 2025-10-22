@@ -25,7 +25,8 @@
       "WebFetch(domain:blog.duolingo.com)",
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:userguiding.com)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(yarn remove:*)"
     ],
     "deny": [],
     "ask": []

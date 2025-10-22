@@ -4,14 +4,14 @@ import { Globe } from "lucide-react";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTranslation } from "react-i18next";
-import { usePlausible } from "@/components/PlausibleProvider";
+import { usePostHog } from "@/components/PostHogProvider";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [language, setLanguage] = useState("en");
   const { t } = useTranslation();
-  const { trackEvent } = usePlausible();
+  const { trackEvent } = usePostHog();
 
   const handleMainButton = () => {
     if (user) {

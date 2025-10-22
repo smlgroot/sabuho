@@ -4,7 +4,7 @@ import { X, Moon, Sun, Languages, User, HelpCircle, LogOut } from "lucide-react"
 import { toast } from "sonner";
 import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from 'react-router-dom';
-import { usePlausible } from "@/components/PlausibleProvider";
+import { usePostHog } from "@/components/PostHogProvider";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { useThemeContext } from "../../../components/ThemeProvider";
 
@@ -13,7 +13,7 @@ export function ProfileSidebar({ onClose }) {
   const { isDark } = useThemeContext();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { trackEvent } = usePlausible();
+  const { trackEvent } = usePostHog();
 
   const handleSignOut = async () => {
     trackEvent('logout_clicked', { props: { source: 'profile_sidebar' } });
