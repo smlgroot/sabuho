@@ -733,7 +733,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                       handleDoubleClick(rowIndex, question.body, e, 'question')
                     }
                     onContextMenu={(e) => handleContextMenu(e, rowIndex, 'question')}
-                    className={`cursor-cell relative select-none hover:bg-base-300 ${
+                    className={`cursor-cell relative select-none hover:bg-base-300 text-sm p-2 align-top ${
                       selectedCells.has(`q-${rowIndex}`)
                         ? 'ring-2 ring-blue-500 ring-inset bg-blue-50'
                         : ''
@@ -755,7 +755,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                       onDoubleClick={(e) =>
                         handleDoubleClick(rowIndex, question.explanation, e, 'explanation', null, question.id)
                       }
-                      className={`cursor-cell italic hover:bg-base-300 ${question.explanation ? 'text-base-content/70' : 'text-base-content/40'}`}
+                      className={`cursor-cell italic hover:bg-base-300 text-sm p-2 align-top ${question.explanation ? 'text-base-content/70' : 'text-base-content/40'}`}
                     >
                       {question.explanation || 'Add question explanation'}
                     </td>
@@ -819,7 +819,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
                           )
                         }
                         onContextMenu={(e) => handleContextMenu(e, rowIndex, 'option', optionIndex)}
-                        className={`cursor-cell relative select-none hover:bg-base-300 ${
+                        className={`cursor-cell relative select-none hover:bg-base-300 text-sm p-2 align-top ${
                           selectedCells.has(`o-${rowIndex}-${optionIndex}`)
                             ? 'ring-2 ring-blue-500 ring-inset bg-blue-50'
                             : ''
@@ -847,20 +847,17 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           disabled={isSaving}
-          className={`absolute z-10 resize-none overflow-hidden bg-white ${isSaving ? 'opacity-50 cursor-wait' : ''}`}
+          className={`absolute z-10 resize-none overflow-hidden bg-white text-sm ${isSaving ? 'opacity-50 cursor-wait' : ''}`}
           style={{
-            position: 'absolute',
-            top: `${editingCell.position.top + 1}px`,
-            left: `${editingCell.position.left + 1}px`,
-            width: `${editingCell.position.width - 2}px`,
-            height: `${editingCell.position.height - 2}px`,
-            padding: '0',
+            top: `${editingCell.position.top}px`,
+            left: `${editingCell.position.left}px`,
+            width: `${editingCell.position.width}px`,
+            height: `${editingCell.position.height}px`,
+            padding: '0.5rem',
             margin: 0,
             border: '2px solid rgb(59, 130, 246)',
-            fontSize: 'inherit',
-            fontFamily: 'inherit',
-            lineHeight: 'inherit',
             boxSizing: 'border-box',
+            lineHeight: '1.25',
           }}
         />
       )}
