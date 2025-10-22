@@ -512,83 +512,88 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   )
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {isSaving && (
-            <span className="inline-flex items-center text-xs text-accent-foreground bg-accent border border-border rounded px-2 py-0.5">
-              <span className="w-2 h-2 bg-primary rounded-full animate-pulse mr-1" />
-              Saving...
-            </span>
+    <div className="space-y-0">
+      {/* Header Section with Name and Description */}
+      <div className="bg-white px-6 pt-0 pb-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-2">
+            {isSaving && (
+              <span className="inline-flex items-center text-xs text-accent-foreground bg-accent border border-border rounded px-2 py-0.5">
+                <span className="w-2 h-2 bg-primary rounded-full animate-pulse mr-1" />
+                Saving...
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {editingField === 'name' ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={values.name}
+              onChange={(e) => setValues(v => ({ ...v, name: e.target.value }))}
+              onBlur={() => handleFieldSave('name')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleFieldSave('name')
+                } else if (e.key === 'Escape') {
+                  setValues(v => ({ ...v, name: initialName }))
+                  setEditingField(null)
+                }
+              }}
+              disabled={isSaving}
+              className="text-3xl font-bold bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+              placeholder={t("Enter quiz name")}
+            />
+          ) : (
+            <h1
+              className={`text-3xl font-bold cursor-pointer hover:bg-gray-50 rounded px-3 py-2 transition-colors ${isSaving ? 'opacity-50' : ''}`}
+              title="Click to edit name"
+              onClick={() => !isSaving && setEditingField('name')}
+            >
+              {values.name || 'Click to set quiz name...'}
+            </h1>
+          )}
+
+          {editingField === 'description' ? (
+            <textarea
+              ref={textareaRef}
+              value={values.description}
+              onChange={(e) => setValues(v => ({ ...v, description: e.target.value }))}
+              onBlur={() => handleFieldSave('description')}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setValues(v => ({ ...v, description: initialDesc }))
+                  setEditingField(null)
+                }
+              }}
+              disabled={isSaving}
+              className="text-base text-muted-foreground w-full bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              placeholder="Add description..."
+              rows={2}
+            />
+          ) : (
+            <p
+              className={`text-base text-muted-foreground cursor-pointer hover:bg-gray-50 rounded px-3 py-2 transition-colors ${!values.description ? 'italic' : ''} ${isSaving ? 'opacity-50' : ''}`}
+              title="Click to edit description"
+              onClick={() => !isSaving && setEditingField('description')}
+            >
+              {values.description || 'Click to add description...'}
+            </p>
           )}
         </div>
-      </div>
-
-      <div className="space-y-4">
-        {editingField === 'name' ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={values.name}
-            onChange={(e) => setValues(v => ({ ...v, name: e.target.value }))}
-            onBlur={() => handleFieldSave('name')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                handleFieldSave('name')
-              } else if (e.key === 'Escape') {
-                setValues(v => ({ ...v, name: initialName }))
-                setEditingField(null)
-              }
-            }}
-            disabled={isSaving}
-            className="text-3xl font-bold bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
-            placeholder={t("Enter quiz name")}
-          />
-        ) : (
-          <h1
-            className={`text-3xl font-bold cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors ${isSaving ? 'opacity-50' : ''}`}
-            title="Click to edit name"
-            onClick={() => !isSaving && setEditingField('name')}
-          >
-            {values.name || 'Click to set quiz name...'}
-          </h1>
-        )}
-
-        {editingField === 'description' ? (
-          <textarea
-            ref={textareaRef}
-            value={values.description}
-            onChange={(e) => setValues(v => ({ ...v, description: e.target.value }))}
-            onBlur={() => handleFieldSave('description')}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setValues(v => ({ ...v, description: initialDesc }))
-                setEditingField(null)
-              }
-            }}
-            disabled={isSaving}
-            className="text-muted-foreground mt-2 w-full bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            placeholder="Add description..."
-            rows={2}
-          />
-        ) : (
-          <p
-            className={`text-muted-foreground mt-2 cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors ${!values.description ? 'italic' : ''} ${isSaving ? 'opacity-50' : ''}`}
-            title="Click to edit description"
-            onClick={() => !isSaving && setEditingField('description')}
-          >
-            {values.description || 'Click to add description...'}
-          </p>
-        )}
       </div>
 
       <QuizTabs />
 
       {activeTab === 'insights' ? (
-        <QuizInsights quiz={quiz} selected={selected} idToName={idToName} />
+        <div className="px-6 py-6">
+          <QuizInsights quiz={quiz} selected={selected} idToName={idToName} />
+        </div>
       ) : activeTab === 'domains' ? (
-        <div className="space-y-3">
+        <div className="space-y-3 px-6 py-6">
           {/* Publish Section */}
           <div className={`card border ${hasUnpublishedChanges ? 'border-warning bg-warning/5' : 'border-base-300 bg-base-100'}`}>
             <div className="card-body">
@@ -704,7 +709,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 px-6 py-6">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-medium flex items-center gap-2">
               {t("Quiz Codes")}

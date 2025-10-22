@@ -146,9 +146,21 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
 
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start gap-4">
-        <div className="flex-1">
+    <div className="space-y-0">
+      {/* Header Section with Name and Description */}
+      <div className="bg-white px-6 pt-0 pb-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-2">
+            {isUpdatingDomain && (
+              <span className="inline-flex items-center text-xs text-accent-foreground bg-accent border border-border rounded px-2 py-0.5">
+                <span className="w-2 h-2 bg-primary rounded-full animate-pulse mr-1" />
+                Saving...
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-3">
           {editingField === 'name' ? (
             <input
               ref={inputRef}
@@ -157,13 +169,13 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
               onChange={(e) => handleDomainValueChange(e.target.value)}
               onKeyDown={handleDomainKeyDown}
               onBlur={handleDomainEditSave}
-              className="text-3xl font-bold bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+              className="text-3xl font-bold bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
               disabled={isUpdatingDomain}
             />
           ) : (
-            <h1 
+            <h1
               className={`text-3xl font-bold ${
-                'cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors'
+                'cursor-pointer hover:bg-gray-50 rounded px-3 py-2 transition-colors'
               } ${isUpdatingDomain ? 'opacity-50' : ''}`}
               onClick={() => handleDomainEditStart('name')}
               title={t("Click to edit domain name")}
@@ -171,7 +183,7 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
               {localDomain.name}
             </h1>
           )}
-          
+
           {editingField === 'description' ? (
             <textarea
               ref={textareaRef}
@@ -184,15 +196,15 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
                 }
               }}
               onBlur={handleDomainEditSave}
-              className="text-muted-foreground mt-2 w-full bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="text-base text-muted-foreground w-full bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               disabled={isUpdatingDomain}
               placeholder={t("Add description...")}
               rows={2}
             />
           ) : (
-            <p 
-              className={`text-muted-foreground mt-2 ${
-                'cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors'
+            <p
+              className={`text-base text-muted-foreground ${
+                'cursor-pointer hover:bg-gray-50 rounded px-3 py-2 transition-colors'
               } ${isUpdatingDomain ? 'opacity-50' : ''} ${!localDomain.description ? 'italic' : ''}`}
               onClick={() => handleDomainEditStart('description')}
               title={t("Click to edit description")}
@@ -200,7 +212,7 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
               {localDomain.description || t('Click to add description...')}
             </p>
           )}
-          <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground px-3">
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               {new Date(localDomain.created_at).toLocaleDateString()}
@@ -217,16 +229,20 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
       />
 
       {activeTab === 'questions' ? (
-        <QuestionsSectionCustomTable
-          domain={localDomain}
-          onDomainUpdate={handleDomainUpdate}
-        />
+        <div className="px-6 py-6">
+          <QuestionsSectionCustomTable
+            domain={localDomain}
+            onDomainUpdate={handleDomainUpdate}
+          />
+        </div>
       ) : (
-        <ResourcesSection
-          domain={localDomain}
-          onUploadResource={onUploadResource}
-          onDomainUpdate={handleDomainUpdate}
-        />
+        <div className="px-6 py-6">
+          <ResourcesSection
+            domain={localDomain}
+            onUploadResource={onUploadResource}
+            onDomainUpdate={handleDomainUpdate}
+          />
+        </div>
       )}
     </div>
   )
