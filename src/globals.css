@@ -52,9 +52,14 @@ b, strong, .font-bold, [class*="font-bold"] {
 
 /* Material Design 3 inspired overrides for professional look */
 
-/* Gmail-style sidebar background - light gray */
+/* Gmail-style sidebar backgrounds */
 .gmail-sidebar-bg {
   background-color: #f6f8fc; /* Gmail's light gray-blue sidebar color */
+}
+
+/* Darker main sidebar for primary navigation */
+.sidebar-dark {
+  background-color: #e8eaf0 !important; /* Slightly darker than secondary sidebar */
 }
 
 /* Reset font weights to normal/regular by default */

@@ -392,7 +392,7 @@ export default function AdminPage() {
 
 
   const MainSidebar = () => (
-    <aside className="min-w-20 bg-base-200 text-base-content flex flex-col h-full">
+    <aside className="min-w-20 sidebar-dark text-base-content flex flex-col h-full">
       {/* App Logo */}
       <div className="p-3">
         <img
