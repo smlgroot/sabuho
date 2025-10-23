@@ -244,23 +244,22 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
             onDrop={handleDrop}
             onContextMenu={handleContextMenu}
           >
-            {hasChildren ? (
-              <button
-                onClick={(e) => {
+            <button
+              onClick={(e) => {
+                if (hasChildren) {
                   e.stopPropagation()
                   toggleDomainCollapsed(domain.id)
-                }}
-                className="btn btn-ghost btn-xs p-0.5 mr-1 flex-shrink-0"
-              >
-                {isCollapsed ? (
-                  <ChevronRight className="h-3 w-3" />
-                ) : (
-                  <ChevronDown className="h-3 w-3" />
-                )}
-              </button>
-            ) : (
-              <div className="w-4 h-4 mr-1 flex-shrink-0" />
-            )}
+                }
+              }}
+              className={`btn btn-ghost btn-xs p-0.5 mr-1 flex-shrink-0 ${!hasChildren ? 'opacity-40 cursor-default' : ''}`}
+              disabled={!hasChildren}
+            >
+              {hasChildren && !isCollapsed ? (
+                <FolderOpen className="h-4 w-4" />
+              ) : (
+                <Folder className="h-4 w-4" />
+              )}
+            </button>
             <button
               className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${
                 isRenaming
@@ -274,23 +273,6 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
                 onSelectDomain(domain);
               }}
             >
-              <div className="flex items-center mr-2">
-                {level === 0 ? (
-                  // Root level folder - show larger folder icon
-                  hasChildren ? (
-                    <FolderOpen className="h-4 w-4 text-primary mr-2" />
-                  ) : (
-                    <Folder className="h-4 w-4 text-primary mr-2" />
-                  )
-                ) : (
-                  // Child folder - show smaller, muted folder icon
-                  hasChildren ? (
-                    <FolderOpen className="h-3.5 w-3.5 opacity-70 mr-2" />
-                  ) : (
-                    <Folder className="h-3.5 w-3.5 opacity-70 mr-2" />
-                  )
-                )}
-              </div>
               {isRenaming ? (
                 <input
                   ref={inputRef}
@@ -563,23 +545,32 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
             </div>
           </div>
         ) : (
-          domains.map((domain) => (
-            <DomainNode
-              key={domain.id}
-              domain={domain}
-              level={0}
-              onSelectDomain={onSelectDomain}
-              onCreateDomain={onCreateDomain}
-              onEditDomain={onEditDomain}
-              onDeleteDomain={onDeleteDomain}
-              onMoveDomain={onMoveDomain}
-              allDomains={domains}
-              selectedDomains={selectedDomains}
-              toggleDomainSelection={toggleDomainSelection}
-              showCheckboxes={isLearnMode}
-              onDomainUpdate={onDomainUpdate}
-            />
-          ))
+          <>
+            <button
+              className="btn btn-ghost btn-sm w-full justify-start mb-2"
+              onClick={() => onCreateDomain(null, 'folder')}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t("Add Folder")}
+            </button>
+            {domains.map((domain) => (
+              <DomainNode
+                key={domain.id}
+                domain={domain}
+                level={0}
+                onSelectDomain={onSelectDomain}
+                onCreateDomain={onCreateDomain}
+                onEditDomain={onEditDomain}
+                onDeleteDomain={onDeleteDomain}
+                onMoveDomain={onMoveDomain}
+                allDomains={domains}
+                selectedDomains={selectedDomains}
+                toggleDomainSelection={toggleDomainSelection}
+                showCheckboxes={isLearnMode}
+                onDomainUpdate={onDomainUpdate}
+              />
+            ))}
+          </>
         )}
       </div>
     </div>
