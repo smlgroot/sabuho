@@ -160,14 +160,14 @@ function OnlineQuizScreen() {
     setNextTrophyProgress(progress)
   }
 
-  const checkAndAwardTrophies = async () => {
-    if (!quizAttempt || !attemptQuestions.length) {
+  const checkAndAwardTrophies = async (questionsToCheck = attemptQuestions) => {
+    if (!quizAttempt || !questionsToCheck.length) {
       return
     }
 
     try {
       // Calculate current stats
-      const stats = trophyService.calculateQuizStats(attemptQuestions, attemptQuestions.length)
+      const stats = trophyService.calculateQuizStats(questionsToCheck, questionsToCheck.length)
 
       // Check for new trophies
       const newTrophies = trophyService.checkForNewTrophies(stats, unlockedTrophies)
@@ -404,9 +404,9 @@ function OnlineQuizScreen() {
         setShowAnswers(true)
 
         // Check for trophy unlocks after answer is recorded
-        // Use setTimeout to allow state to update before checking
+        // Pass the updated questions directly to avoid stale state
         setTimeout(() => {
-          checkAndAwardTrophies()
+          checkAndAwardTrophies(updatedAttemptQuestions)
         }, 100)
       } catch (error) {
         console.error('Error submitting answer:', error)

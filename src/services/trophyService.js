@@ -16,7 +16,7 @@ export const TROPHY_TYPES = {
     description: 'Answered your first question correctly',
     icon: 'target',
     checkCriteria: (stats) => {
-      return stats.correctCount === 1 && stats.totalAnswered === 1
+      return stats.correctCount === 1
     }
   },
 
