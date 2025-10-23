@@ -519,8 +519,8 @@ function OnlineQuizScreen() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6">
           {/* Question Card */}
-          <div className="bg-base-200/30 border border-base-300 rounded-lg p-8 mb-6">
-              <h2 className="text-2xl font-semibold mb-6 text-base-content">
+          <div className="bg-base-200/30 rounded-lg p-8 mb-6">
+              <h2 className="text-xl font-medium mb-6 text-base-content">
                 {currentQuestion?.body}
               </h2>
 
@@ -530,17 +530,17 @@ function OnlineQuizScreen() {
                   const isCorrect = index === correctAnswerIndex
                   const showBadge = showAnswers
 
-                  let optionClass = 'btn btn-lg justify-start text-left h-auto min-h-16 py-4 px-6 transition-all duration-200 w-full'
+                  let optionClass = 'btn btn-md justify-start text-left h-auto min-h-14 py-3 px-5 transition-all duration-200 w-full'
 
                   if (isSelected && !showBadge) {
                     optionClass += ' btn-primary'
                   } else if (showBadge) {
                     if (isCorrect) {
-                      optionClass += ' bg-green-50 text-green-800 border-green-200 hover:bg-green-50 hover:text-green-800 cursor-default'
+                      optionClass += ' btn-success cursor-default'
                     } else if (isSelected && !isCorrect) {
-                      optionClass += ' bg-red-50 text-red-800 border-red-200 hover:bg-red-50 hover:text-red-800 cursor-default'
+                      optionClass += ' btn-error cursor-default'
                     } else {
-                      optionClass += ' bg-base-200 text-base-content border-base-300 hover:bg-base-200 hover:text-base-content cursor-default'
+                      optionClass += ' btn-ghost cursor-default opacity-60'
                     }
                   } else {
                     optionClass += ' btn-outline hover:btn-primary'
@@ -557,15 +557,15 @@ function OnlineQuizScreen() {
                       <div className="w-full">
                         {/* Main answer text */}
                         <div className="flex items-start justify-between mb-2">
-                          <span className="flex-1 font-medium leading-relaxed">{option}</span>
+                          <span className="flex-1 leading-relaxed">{option}</span>
                           {showBadge && isCorrect && (
-                            <div className="bg-green-600 rounded-full p-1.5 ml-3 flex-shrink-0">
-                              <Check className="w-4 h-4 text-white" />
+                            <div className="rounded-full p-1 ml-3 flex-shrink-0">
+                              <Check className="w-4 h-4" />
                             </div>
                           )}
                           {showBadge && isSelected && !isCorrect && (
-                            <div className="bg-red-600 rounded-full p-1.5 ml-3 flex-shrink-0">
-                              <X className="w-4 h-4 text-white" />
+                            <div className="rounded-full p-1 ml-3 flex-shrink-0">
+                              <X className="w-4 h-4" />
                             </div>
                           )}
                         </div>
@@ -573,7 +573,7 @@ function OnlineQuizScreen() {
                         {/* Your choice indicator */}
                         {showBadge && isSelected && (
                           <div className="flex justify-start">
-                            <div className={`badge badge-sm px-3 ${
+                            <div className={`badge badge-sm px-2 ${
                               isCorrect
                                 ? 'badge-success'
                                 : 'badge-error'
@@ -665,8 +665,8 @@ function OnlineQuizScreen() {
       <div className="modal modal-bottom sm:modal-middle">
         <div className="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-4 sticky top-0 bg-base-100 z-10 pb-2">
-            <h3 className="text-xl font-semibold flex items-center gap-2">
-              <Info className="w-6 h-6 text-info" />
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <Info className="w-5 h-5 text-info" />
               {t('Answer Review')}
             </h3>
             <button
@@ -687,12 +687,12 @@ function OnlineQuizScreen() {
                 // Only show if it's selected or correct
                 if (!isSelected && !isCorrect) return null
 
-                let optionClass = 'btn btn-lg justify-start text-left h-auto min-h-16 py-4 px-6 cursor-default w-full'
+                let optionClass = 'btn btn-md justify-start text-left h-auto min-h-14 py-3 px-5 cursor-default w-full'
 
                 if (isCorrect) {
-                  optionClass += ' bg-green-50 text-green-800 border-green-200'
+                  optionClass += ' btn-success'
                 } else if (isSelected && !isCorrect) {
-                  optionClass += ' bg-red-50 text-red-800 border-red-200'
+                  optionClass += ' btn-error'
                 }
 
                 return (
@@ -700,15 +700,15 @@ function OnlineQuizScreen() {
                     <div className="w-full">
                       {/* Main answer text */}
                       <div className="flex items-start justify-between mb-2">
-                        <span className="flex-1 font-medium leading-relaxed">{option}</span>
+                        <span className="flex-1 leading-relaxed">{option}</span>
                         {isCorrect && (
-                          <div className="bg-green-600 rounded-full p-1.5 ml-3 flex-shrink-0">
-                            <Check className="w-4 h-4 text-white" />
+                          <div className="rounded-full p-1 ml-3 flex-shrink-0">
+                            <Check className="w-4 h-4" />
                           </div>
                         )}
                         {isSelected && !isCorrect && (
-                          <div className="bg-red-600 rounded-full p-1.5 ml-3 flex-shrink-0">
-                            <X className="w-4 h-4 text-white" />
+                          <div className="rounded-full p-1 ml-3 flex-shrink-0">
+                            <X className="w-4 h-4" />
                           </div>
                         )}
                       </div>
@@ -716,12 +716,12 @@ function OnlineQuizScreen() {
                       {/* Status badges */}
                       <div className="flex gap-2 justify-start">
                         {isCorrect && (
-                          <div className="badge badge-success px-3">
+                          <div className="badge badge-success px-2">
                             {t('Correct Answer')}
                           </div>
                         )}
                         {isSelected && (
-                          <div className={`badge px-3 ${
+                          <div className={`badge px-2 ${
                             isCorrect
                               ? 'badge-success'
                               : 'badge-error'
@@ -738,8 +738,8 @@ function OnlineQuizScreen() {
 
             {/* Explanation Section */}
             {currentQuestion?.explanation && (
-              <div className="bg-base-200/30 border border-base-300 rounded-lg p-6">
-                <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <div className="bg-base-200/30 rounded-lg p-6">
+                <h4 className="text-base font-medium mb-4 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-info/10 flex items-center justify-center">
                     <Info className="w-4 h-4 text-info" />
                   </div>
@@ -771,7 +771,7 @@ function OnlineQuizScreen() {
       <div className="modal modal-bottom sm:modal-middle">
         <div className="modal-box">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">{t('Exit Quiz?')}</h3>
+            <h3 className="text-lg font-medium">{t('Exit Quiz?')}</h3>
             <button
               className="btn btn-sm btn-circle btn-ghost"
               onClick={() => setShowExitModal(false)}

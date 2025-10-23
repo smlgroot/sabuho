@@ -196,13 +196,13 @@ function TrophyDashboard({ stats, unlockedTrophies, nextTrophyProgress }) {
 
   return (
     <>
-      <div className="bg-base-200/30 border border-base-300 rounded-lg p-3 mb-4">
+      <div className="bg-base-200/30 rounded-lg p-3 mb-4">
         {/* Header with Tab Toggle */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowCompleted(false)}
-              className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
+              className={`text-sm font-medium transition-colors flex items-center gap-1 ${
                 !showCompleted
                   ? 'text-base-content'
                   : 'text-base-content/50 hover:text-base-content/70'
@@ -218,7 +218,7 @@ function TrophyDashboard({ stats, unlockedTrophies, nextTrophyProgress }) {
             <span className="text-base-content/30">|</span>
             <button
               onClick={() => setShowCompleted(true)}
-              className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
+              className={`text-sm font-medium transition-colors flex items-center gap-1 ${
                 showCompleted
                   ? 'text-base-content'
                   : 'text-base-content/50 hover:text-base-content/70'
@@ -335,7 +335,7 @@ function TrophyDashboard({ stats, unlockedTrophies, nextTrophyProgress }) {
                     )
                   })()}
                   <div>
-                    <h3 className="text-xl font-bold text-base-content">{selectedTrophy.name}</h3>
+                    <h3 className="text-lg font-medium text-base-content">{selectedTrophy.name}</h3>
                     <p className="text-sm text-base-content/70">{selectedTrophy.description}</p>
                   </div>
                 </div>
