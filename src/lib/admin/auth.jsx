@@ -49,11 +49,6 @@ export function AuthProvider({ children }) {
         if (event === 'SIGNED_IN' && session?.user) {
           // Make user profile update non-blocking to avoid interfering with auth flow
           setTimeout(() => loadUserProfile(session.user.id), 0)
-
-          // Redirect to admin after successful login
-          if (location.pathname === '/auth') {
-            navigate('/admin')
-          }
         }
 
         // Clear user profile on sign out
@@ -68,6 +63,13 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Handle redirect after successful login in a separate effect
+  useEffect(() => {
+    if (user && location.pathname === '/auth') {
+      navigate('/admin/domains', { replace: true })
+    }
+  }, [user, location.pathname, navigate])
 
   const signUp = async (email, password) => {
     const { error } = await supabaseService.signUp(email, password)

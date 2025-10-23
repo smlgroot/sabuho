@@ -287,7 +287,7 @@ const resources = {
       "Create Domain Code": "Crear Código de Dominio",
       "Your domain code has been generated:": "Tu código de dominio ha sido generado:",
       "Credits": "Créditos",
-      "Click the button above to create your first quiz": "Haz clic en el botón de arriba para crear tu primer cuestionario",
+      "Go to domains and select domains to create a quiz": "Ve a dominios y selecciona los dominios para crear un cuestionario",
       "More options": "Más opciones",
       "Add Subdomain": "Agregar Subdominio",
       "Add Domain": "Agregar Dominio",

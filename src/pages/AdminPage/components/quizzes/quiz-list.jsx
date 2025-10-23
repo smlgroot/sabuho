@@ -212,7 +212,7 @@ export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
           <div className="alert alert-info">
             <div className="text-center w-full">
               <p>No quizzes yet</p>
-              <p className="text-sm opacity-70 mt-1">{t("Click the button above to create your first quiz")}</p>
+              <p className="text-sm opacity-70 mt-1">{t("Go to domains and select domains to create a quiz")}</p>
             </div>
           </div>
         ) : (
