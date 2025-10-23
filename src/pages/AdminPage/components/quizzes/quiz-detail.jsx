@@ -344,7 +344,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
 
   // Tabs component
   const QuizTabs = () => (
-    <div className="mb-6 bg-[#f6f8fc]"
+    <div className="mx-6 mb-6 bg-[#f6f8fc]"
     style={{ borderBottom: '1px solid oklch(80% 0.05 277.023)' }}
     >
       <div className="flex gap-0 ">

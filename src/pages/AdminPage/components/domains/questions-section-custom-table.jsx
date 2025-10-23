@@ -652,7 +652,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
           <>
             <button
               onClick={handleAddQuestionAboveSelected}
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-md"
               disabled={isCreatingQuestion}
             >
               {isCreatingQuestion ? <span className="loading loading-spinner loading-xs"></span> : 'Insert question'}
@@ -660,7 +660,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
             <div className="divider divider-horizontal mx-0"></div>
             <button
               onClick={handleDeleteRows}
-              className="btn btn-error btn-sm"
+              className="btn btn-error btn-md"
               disabled={selectedCells.size === 0 || isDeletingQuestions}
             >
               {isDeletingQuestions ? <span className="loading loading-spinner loading-xs"></span> : `Delete (${getSelectedRowIndices().length})`}

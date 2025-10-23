@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCount, codesCount }) {
   const { t } = useTranslation()
   return (
-    <div className="mb-0 bg-[#f6f8fc]"
+    <div className="mx-6 mb-0 bg-[#f6f8fc]"
     style={{ borderBottom: '1px solid oklch(80% 0.05 277.023)' }}
     >
       <div className="flex gap-0">
