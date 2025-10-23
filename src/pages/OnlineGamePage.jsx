@@ -6,7 +6,7 @@ import * as quizAttemptService from '@/services/quizAttemptService'
 import * as supabaseService from '@/services/supabaseService'
 import * as trophyService from '@/services/trophyService'
 import { supabase } from '@/lib/supabase'
-import TrophyProgressBar from '@/components/TrophyProgressBar'
+import TrophyDashboard from '@/components/TrophyDashboard'
 import TrophyUnlockModal from '@/components/TrophyUnlockModal'
 
 function OnlineQuizScreen() {
@@ -505,11 +505,12 @@ function OnlineQuizScreen() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          {/* Trophy Progress Bar */}
-          {nextTrophyProgress && (
-            <TrophyProgressBar
+          {/* Trophy Dashboard */}
+          {quizStats && (
+            <TrophyDashboard
+              stats={quizStats}
+              unlockedTrophies={unlockedTrophies}
               nextTrophyProgress={nextTrophyProgress}
-              trophyCount={unlockedTrophies.length}
             />
           )}
 
