@@ -4,7 +4,10 @@ import { Check, X, Info, ChevronLeft, ChevronRight, Home } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import * as quizAttemptService from '@/services/quizAttemptService'
 import * as supabaseService from '@/services/supabaseService'
+import * as trophyService from '@/services/trophyService'
 import { supabase } from '@/lib/supabase'
+import TrophyProgressBar from '@/components/TrophyProgressBar'
+import TrophyUnlockModal from '@/components/TrophyUnlockModal'
 
 function OnlineQuizScreen() {
   const { attemptId } = useParams()
@@ -23,6 +26,13 @@ function OnlineQuizScreen() {
   const [questionStartTime, setQuestionStartTime] = useState(Date.now())
   const loadingRef = useRef(false)
 
+  // Trophy system state
+  const [unlockedTrophies, setUnlockedTrophies] = useState([])
+  const [pendingTrophy, setPendingTrophy] = useState(null)
+  const [showTrophyModal, setShowTrophyModal] = useState(false)
+  const [quizStats, setQuizStats] = useState(null)
+  const [nextTrophyProgress, setNextTrophyProgress] = useState(null)
+
   useEffect(() => {
     loadQuizAttemptData()
   }, [attemptId])
@@ -30,6 +40,20 @@ function OnlineQuizScreen() {
   useEffect(() => {
     setQuestionStartTime(Date.now())
   }, [currentQuestionIndex])
+
+  // Update trophy progress whenever questions are answered
+  useEffect(() => {
+    if (attemptQuestions.length > 0) {
+      updateTrophyProgress()
+    }
+  }, [attemptQuestions])
+
+  // Load existing trophies on mount
+  useEffect(() => {
+    if (attemptId) {
+      loadExistingTrophies()
+    }
+  }, [attemptId])
 
   // Sync selected answer when navigating between questions
   useEffect(() => {
@@ -109,6 +133,76 @@ function OnlineQuizScreen() {
       setLoading(false)
       loadingRef.current = false
     }
+  }
+
+  const loadExistingTrophies = async () => {
+    try {
+      const { data, error } = await trophyService.getTrophiesForAttempt(attemptId)
+      if (error) {
+        console.error('Error loading trophies:', error)
+        return
+      }
+      if (data) {
+        setUnlockedTrophies(data.map(t => t.trophy_type))
+      }
+    } catch (error) {
+      console.error('Error loading existing trophies:', error)
+    }
+  }
+
+  const updateTrophyProgress = () => {
+    // Calculate current quiz stats
+    const stats = trophyService.calculateQuizStats(attemptQuestions, attemptQuestions.length)
+    setQuizStats(stats)
+
+    // Get progress toward next trophy
+    const progress = trophyService.getNextTrophyProgress(stats, unlockedTrophies)
+    setNextTrophyProgress(progress)
+  }
+
+  const checkAndAwardTrophies = async () => {
+    if (!quizAttempt || !attemptQuestions.length) {
+      return
+    }
+
+    try {
+      // Calculate current stats
+      const stats = trophyService.calculateQuizStats(attemptQuestions, attemptQuestions.length)
+
+      // Check for new trophies
+      const newTrophies = trophyService.checkForNewTrophies(stats, unlockedTrophies)
+
+      if (newTrophies.length > 0) {
+        // Award the first new trophy
+        const trophy = newTrophies[0]
+
+        // Save to database
+        const { data, error } = await trophyService.saveTrophy(
+          quizAttempt.user_id,
+          attemptId,
+          trophy
+        )
+
+        if (error) {
+          console.error('Error saving trophy:', error)
+          return
+        }
+
+        // Update local state
+        setUnlockedTrophies(prev => [...prev, trophy.type])
+        setPendingTrophy(trophy)
+        setShowTrophyModal(true)
+      }
+    } catch (error) {
+      console.error('Error checking trophies:', error)
+    }
+  }
+
+  const handleTrophyModalClose = () => {
+    setShowTrophyModal(false)
+    setPendingTrophy(null)
+    // Recalculate progress after closing modal
+    updateTrophyProgress()
   }
 
   const getCurrentAttemptQuestion = () => attemptQuestions[currentQuestionIndex]
@@ -308,6 +402,12 @@ function OnlineQuizScreen() {
         setAttemptQuestions(updatedAttemptQuestions)
 
         setShowAnswers(true)
+
+        // Check for trophy unlocks after answer is recorded
+        // Use setTimeout to allow state to update before checking
+        setTimeout(() => {
+          checkAndAwardTrophies()
+        }, 100)
       } catch (error) {
         console.error('Error submitting answer:', error)
         alert(t('An error occurred. Please try again.'))
@@ -359,9 +459,6 @@ function OnlineQuizScreen() {
     return getCorrectAnswerIndex()
   }, [currentQuestion, attemptQuestions.length])
 
-  const answeredCount = attemptQuestions.filter(aq => aq.is_attempted).length
-  const progress = attemptQuestions.length > 0 ? (answeredCount / attemptQuestions.length) * 100 : 0
-
   if (loading) {
     return (
       <div className="fixed inset-0 bg-base-100 z-50 flex justify-center items-center">
@@ -398,7 +495,6 @@ function OnlineQuizScreen() {
         <div className="flex-1">
           <h1 className="text-lg font-semibold">
             {quiz?.name || t('Quiz Challenge')}
-            <span className="badge badge-primary badge-sm ml-2 px-3">{t('Online Mode')}</span>
           </h1>
         </div>
         <div className="flex-none">
@@ -409,22 +505,13 @@ function OnlineQuizScreen() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          {/* Progress Section */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-base-content">
-                {t('Question')} {currentQuestionIndex + 1} {t('of')} {attemptQuestions.length}
-              </span>
-              <span className="text-sm text-base-content/70">
-                {Math.round(progress)}% {t('Complete')}
-              </span>
-            </div>
-            <progress
-              className="progress progress-primary w-full"
-              value={progress}
-              max="100"
-            ></progress>
-          </div>
+          {/* Trophy Progress Bar */}
+          {nextTrophyProgress && (
+            <TrophyProgressBar
+              nextTrophyProgress={nextTrophyProgress}
+              trophyCount={unlockedTrophies.length}
+            />
+          )}
 
           {/* Question Card */}
           <div className="bg-base-200/30 border border-base-300 rounded-lg p-8 mb-6">
@@ -728,6 +815,13 @@ function OnlineQuizScreen() {
         >
         </label>
       </div>
+
+      {/* Trophy Unlock Modal */}
+      <TrophyUnlockModal
+        trophy={pendingTrophy}
+        isOpen={showTrophyModal}
+        onClose={handleTrophyModalClose}
+      />
     </>
   )
 }
