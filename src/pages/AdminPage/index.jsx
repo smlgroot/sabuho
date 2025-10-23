@@ -26,6 +26,7 @@ import {
 import { uploadResource } from "@/lib/admin/resources";
 import { createQuestion } from "@/lib/admin/questions";
 import { fetchQuizzes, createQuiz as createQuizApi, updateQuiz as updateQuizApi, deleteQuiz as deleteQuizApi } from "@/lib/admin/quizzes";
+import * as supabaseService from '@/services/supabaseService';
 
 export default function AdminPage() {
   const {
@@ -60,6 +61,8 @@ export default function AdminPage() {
   const [secondSidebarOpen, setSecondSidebarOpen] = useState(true);
   const [activeView, setActiveView] = useState('domains'); // 'domains', 'quizzes'
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
+  const [userCredits, setUserCredits] = useState(0);
+  const [isLoadingCredits, setIsLoadingCredits] = useState(false);
   const hasLoadedData = useRef(false);
 
   const { user, userProfile, loadUserProfile } = useAuth();
@@ -108,6 +111,21 @@ export default function AdminPage() {
     }
   }, [setQuizzes, setLoading, setError]);
 
+  const loadUserCredits = useCallback(async () => {
+    setIsLoadingCredits(true);
+    try {
+      const { user: currentUser } = await supabaseService.getCurrentUser();
+      const { data: credits, error } = await supabaseService.getUserCredits(currentUser.id);
+      if (error) throw error;
+      setUserCredits(credits?.credits || 0);
+    } catch (error) {
+      console.error('Failed to load user credits:', error);
+      setUserCredits(0);
+    } finally {
+      setIsLoadingCredits(false);
+    }
+  }, []);
+
   // Load domains only after the user is authenticated and only once per user
   useEffect(() => {
     if (user && !hasLoadedData.current) {
@@ -119,6 +137,13 @@ export default function AdminPage() {
       hasLoadedData.current = false;
     }
   }, [user?.id, loadDomains, loadQuizzes]);
+
+  // Load credits when domains view is active
+  useEffect(() => {
+    if (user && activeView === 'domains') {
+      loadUserCredits();
+    }
+  }, [user, activeView, loadUserCredits]);
 
   const handleCreateDomain = async (parentId) => {
     try {
@@ -466,7 +491,7 @@ export default function AdminPage() {
         <div className="flex flex-col h-full">
           <div className="flex-1 p-3 overflow-y-auto">
             <div className="space-y-3">
-              <CreditsCounter />
+              <CreditsCounter credits={userCredits} isLoading={isLoadingCredits} />
               <DomainTree
                 domains={domains}
                 onSelectDomain={(domain) => {
