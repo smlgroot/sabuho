@@ -1,6 +1,6 @@
 'use client'
 
-import { Plus, FileText, Coins, Edit2, Trash2 } from 'lucide-react'
+import { Plus, FileText, Edit2, Trash2 } from 'lucide-react'
 // DaisyUI components used directly
 import { useStore } from '@/store/useStore'
 import { useState, useRef, useEffect } from 'react'
@@ -180,32 +180,9 @@ function QuizItem({ quiz, isSelected, onEditQuiz, onDeleteQuiz, onQuizUpdate }) 
 export function QuizList({ quizzes, onCreateQuiz, onEditQuiz, onDeleteQuiz }) {
   const { t } = useTranslation()
   const { selectedQuiz, setSelectedQuiz, setSelectedDomain, updateQuiz: updateQuizInStore } = useStore()
-  const [userCredits, setUserCredits] = useState(0)
-  const [isLoadingCredits, setIsLoadingCredits] = useState(false)
 
   return (
     <div className="space-y-3">
-      {/* Credits Header */}
-      <div className="card bg-white hover:bg-primary/10 transition-colors cursor-pointer">
-        <div className="card-body p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <Coins className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-semibold">{t("Credits")}</h3>
-            </div>
-            <div className="text-right">
-              {isLoadingCredits ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : (
-                <div className="text-3xl font-bold text-primary">{userCredits}</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-      
       {/* Quizzes List */}
       <div className="space-y-1 overflow-x-hidden">
         {quizzes.length === 0 ? (

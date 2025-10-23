@@ -6,6 +6,7 @@ import { DomainTree } from "./components/domains/domain-tree";
 import { QuizList } from "./components/quizzes/quiz-list";
 import { QuizDetail } from "./components/quizzes/quiz-detail";
 import { DomainDetail } from "./components/domains/domain-detail";
+import { CreditsCounter } from "./components/domains/credits-counter";
 import { DeleteDomainDialog } from "./components/domains/delete-domain-dialog";
 import { ResourceUpload } from "./components/resources/resource-upload";
 import { SearchBar } from "./components/shared/search-bar";
@@ -464,19 +465,22 @@ export default function AdminPage() {
       {activeView === 'domains' && (
         <div className="flex flex-col h-full">
           <div className="flex-1 p-3 overflow-y-auto">
-            <DomainTree
-              domains={domains}
-              onSelectDomain={(domain) => {
-                setSelectedQuiz(null);
-                setCreatingQuiz(false);
-                setSelectedDomain(domain);
-              }}
-              onCreateDomain={handleCreateDomain}
-              onDeleteDomain={handleDeleteDomain}
-              onMoveDomain={handleMoveDomain}
-              onCreateQuiz={handleQuizCreateFromDomains}
-              onDomainUpdate={updateDomainInStore}
-            />
+            <div className="space-y-3">
+              <CreditsCounter />
+              <DomainTree
+                domains={domains}
+                onSelectDomain={(domain) => {
+                  setSelectedQuiz(null);
+                  setCreatingQuiz(false);
+                  setSelectedDomain(domain);
+                }}
+                onCreateDomain={handleCreateDomain}
+                onDeleteDomain={handleDeleteDomain}
+                onMoveDomain={handleMoveDomain}
+                onCreateQuiz={handleQuizCreateFromDomains}
+                onDomainUpdate={updateDomainInStore}
+              />
+            </div>
           </div>
         </div>
       )}
