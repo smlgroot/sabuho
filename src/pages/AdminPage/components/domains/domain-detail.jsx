@@ -51,21 +51,10 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
     loadDomains()
   }, [])
 
-  // Load domain codes count
-  useEffect(() => {
-    const loadCodesCount = async () => {
-      if (!domain?.id) return
-      try {
-        const { data: codes, error } = await supabaseService.fetchDomainCodes(domain.id)
-        if (!error && codes) {
-          setDomainCodesCount(codes.length)
-        }
-      } catch (error) {
-        console.error('Failed to load domain codes count:', error)
-      }
-    }
-    loadCodesCount()
-  }, [domain?.id])
+  // Callback to receive codes count from DomainCodesSection
+  const handleCodesCountUpdate = useCallback((count) => {
+    setDomainCodesCount(count)
+  }, [])
 
   const handleDomainUpdate = useCallback((updatedDomain) => {
     setLocalDomain(updatedDomain)
@@ -265,7 +254,10 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
         </div>
       ) : activeTab === 'codes' ? (
         <div className="px-6 py-6">
-          <DomainCodesSection domain={localDomain} />
+          <DomainCodesSection
+            domain={localDomain}
+            onCodesCountUpdate={handleCodesCountUpdate}
+          />
         </div>
       ) : null}
     </div>

@@ -5,7 +5,7 @@ import { Plus, TicketSlash } from 'lucide-react'
 import * as supabaseService from '@/services/supabaseService'
 import { useTranslation } from 'react-i18next'
 
-export function DomainCodesSection({ domain }) {
+export function DomainCodesSection({ domain, onCodesCountUpdate }) {
   const { t } = useTranslation()
   const [domainCodes, setDomainCodes] = useState([])
   const [userCredits, setUserCredits] = useState(0)
@@ -25,6 +25,10 @@ export function DomainCodesSection({ domain }) {
         await supabaseService.fetchDomainCodes(domain.id)
       if (codesError) throw codesError
       setDomainCodes(codes || [])
+      // Update parent with codes count
+      if (onCodesCountUpdate) {
+        onCodesCountUpdate(codes?.length || 0)
+      }
     } catch (error) {
       console.error('Failed to load domain codes:', error)
     } finally {
