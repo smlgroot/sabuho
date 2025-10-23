@@ -215,7 +215,9 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
     <>
       <div className="w-full">
         <div
-          className={`flex items-center group relative min-w-0 transition-all cursor-move select-none ${
+          className={`flex items-center group relative min-w-0 transition-all select-none ${
+            hasChildren ? 'cursor-move' : 'cursor-pointer'
+          } ${
             isDragging ? 'scale-105 shadow-lg ring-2 ring-primary bg-base-200 rounded-lg' : ''
           } ${
             isDropTarget ? 'bg-primary/20 rounded-lg' : ''
