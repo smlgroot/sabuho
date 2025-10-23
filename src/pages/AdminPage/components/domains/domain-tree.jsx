@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Plus, FolderOpen, Folder, Trash2, ChevronRight, ChevronDown, Play, GraduationCap, Edit2 } from 'lucide-react'
+import { Plus, FolderOpen, Folder, Trash2, ChevronRight, ChevronDown, Play, GraduationCap, Edit2, Circle } from 'lucide-react'
 // DaisyUI components used directly
 import { useStore } from '@/store/useStore'
 import { useTranslation } from 'react-i18next'
@@ -244,22 +244,25 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
             onDrop={handleDrop}
             onContextMenu={handleContextMenu}
           >
-            <button
-              onClick={(e) => {
-                if (hasChildren) {
+            {hasChildren ? (
+              <button
+                onClick={(e) => {
                   e.stopPropagation()
                   toggleDomainCollapsed(domain.id)
-                }
-              }}
-              className={`btn btn-ghost btn-xs p-0.5 mr-1 flex-shrink-0 ${!hasChildren ? 'opacity-40 cursor-default' : ''}`}
-              disabled={!hasChildren}
-            >
-              {hasChildren && !isCollapsed ? (
-                <FolderOpen className="h-4 w-4" />
-              ) : (
-                <Folder className="h-4 w-4" />
-              )}
-            </button>
+                }}
+                className="btn btn-ghost btn-xs p-0.5 mr-1 flex-shrink-0"
+              >
+                {isCollapsed ? (
+                  <Folder className="h-4 w-4" />
+                ) : (
+                  <FolderOpen className="h-4 w-4" />
+                )}
+              </button>
+            ) : (
+              <div className="flex items-center justify-center w-4 h-4 mr-1 flex-shrink-0">
+                <Circle className="h-2 w-2 opacity-40" />
+              </div>
+            )}
             <button
               className={`btn btn-ghost flex-1 justify-start pr-8 text-left min-w-0 ${
                 isRenaming
