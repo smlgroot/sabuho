@@ -3,8 +3,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Calendar, FileText, HelpCircle } from 'lucide-react'
 import { updateDomain, fetchDomains } from '@/lib/admin/domains'
+import * as supabaseService from '@/services/supabaseService'
 import QuestionsSectionCustomTable from './questions-section-custom-table'
 import { ResourcesSection } from './resources-section'
+import { DomainCodesSection } from './domain-codes-section'
 import { DomainTabs } from './domain-tabs'
 import { useTranslation } from 'react-i18next'
 
@@ -13,7 +15,8 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
   const [localDomain, setLocalDomain] = useState(domain)
   const [activeTab, setActiveTab] = useState('questions')
   const [availableDomains, setAvailableDomains] = useState([])
-  
+  const [domainCodesCount, setDomainCodesCount] = useState(0)
+
   // Domain inline editing state
   const [editingField, setEditingField] = useState(null)
   const [editValues, setEditValues] = useState({
@@ -47,6 +50,22 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
     }
     loadDomains()
   }, [])
+
+  // Load domain codes count
+  useEffect(() => {
+    const loadCodesCount = async () => {
+      if (!domain?.id) return
+      try {
+        const { data: codes, error } = await supabaseService.fetchDomainCodes(domain.id)
+        if (!error && codes) {
+          setDomainCodesCount(codes.length)
+        }
+      } catch (error) {
+        console.error('Failed to load domain codes count:', error)
+      }
+    }
+    loadCodesCount()
+  }, [domain?.id])
 
   const handleDomainUpdate = useCallback((updatedDomain) => {
     setLocalDomain(updatedDomain)
@@ -226,6 +245,7 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
         onTabChange={setActiveTab}
         questionsCount={localDomain.questions?.length || 0}
         resourcesCount={localDomain.resources?.length || 0}
+        codesCount={domainCodesCount}
       />
 
       {activeTab === 'questions' ? (
@@ -235,7 +255,7 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
             onDomainUpdate={handleDomainUpdate}
           />
         </div>
-      ) : (
+      ) : activeTab === 'resources' ? (
         <div className="px-6 py-6">
           <ResourcesSection
             domain={localDomain}
@@ -243,7 +263,11 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
             onDomainUpdate={handleDomainUpdate}
           />
         </div>
-      )}
+      ) : activeTab === 'codes' ? (
+        <div className="px-6 py-6">
+          <DomainCodesSection domain={localDomain} />
+        </div>
+      ) : null}
     </div>
   )
 }

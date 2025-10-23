@@ -306,40 +306,40 @@ export async function deleteQuiz(id, authorId) {
 }
 
 // ============================================================================
-// QUIZ CODE OPERATIONS
+// DOMAIN CODE OPERATIONS
 // ============================================================================
 
-export async function fetchQuizCodeByCode(code) {
+export async function fetchDomainCodeByCode(code) {
   const { data, error } = await supabase
-    .from('quiz_codes')
-    .select('id, quiz_id')
+    .from('domain_codes')
+    .select('id, domain_id')
     .eq('code', code.trim())
     .single()
 
   return { data, error }
 }
 
-export async function fetchQuizCodes(quizId) {
+export async function fetchDomainCodes(domainId) {
   const { data, error } = await supabase
-    .from('quiz_codes')
+    .from('domain_codes')
     .select(`
       id,
       code,
       created_at,
-      user_quiz_codes(id, user_id)
+      user_domain_codes(id, user_id)
     `)
-    .eq('quiz_id', quizId)
+    .eq('domain_id', domainId)
     .order('created_at', { ascending: false })
 
   return { data, error }
 }
 
-export async function createQuizCode(authorId, quizId, code) {
+export async function createDomainCode(authorId, domainId, code) {
   const { data, error } = await supabase
-    .from('quiz_codes')
+    .from('domain_codes')
     .insert({
       author_id: authorId,
-      quiz_id: quizId,
+      domain_id: domainId,
       code: code
     })
     .select()
@@ -349,40 +349,40 @@ export async function createQuizCode(authorId, quizId, code) {
 }
 
 // ============================================================================
-// USER QUIZ CODE OPERATIONS
+// USER DOMAIN CODE OPERATIONS
 // ============================================================================
 
-export async function checkUserQuizCodeClaim(userId, quizCodeId) {
+export async function checkUserDomainCodeClaim(userId, domainCodeId) {
   const { data, error } = await supabase
-    .from('user_quiz_codes')
+    .from('user_domain_codes')
     .select('id')
     .eq('user_id', userId)
-    .eq('quiz_code_id', quizCodeId)
+    .eq('domain_code_id', domainCodeId)
     .single()
 
   return { data, error }
 }
 
-export async function createUserQuizCode(userId, quizId, quizCodeId) {
+export async function createUserDomainCode(userId, domainId, domainCodeId) {
   const { data, error } = await supabase
-    .from('user_quiz_codes')
+    .from('user_domain_codes')
     .insert({
       user_id: userId,
-      quiz_id: quizId,
-      quiz_code_id: quizCodeId
+      domain_id: domainId,
+      domain_code_id: domainCodeId
     })
     .select()
 
   return { data, error }
 }
 
-export async function fetchUserQuizCodes(userId) {
+export async function fetchUserDomainCodes(userId) {
   const { data, error } = await supabase
-    .from('user_quiz_codes')
+    .from('user_domain_codes')
     .select(`
-      quiz_id,
-      quiz_code_id,
-      quiz_codes!inner(id, code)
+      domain_id,
+      domain_code_id,
+      domain_codes!inner(id, code)
     `)
     .eq('user_id', userId)
 

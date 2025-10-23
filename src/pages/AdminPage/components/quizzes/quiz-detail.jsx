@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, ChevronDown, FolderOpen, Folder, Settings, Plus, CheckCircle, XCircle, Copy, TicketSlash, Trash2, AlertTriangle, BarChart3 } from 'lucide-react'
+import { ChevronRight, ChevronDown, FolderOpen, Folder, Settings, Trash2, AlertTriangle, BarChart3 } from 'lucide-react'
 import * as supabaseService from '@/services/supabaseService'
 import { useTranslation } from 'react-i18next'
 import { QuizInsights } from './quiz-insights'
@@ -14,15 +14,6 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [collapsedDomains, setCollapsedDomains] = useState(new Set())
   const [activeTab, setActiveTab] = useState('insights')
-  const [quizCodes, setQuizCodes] = useState([])
-  const [userCredits, setUserCredits] = useState(0)
-  const [isLoadingCodes, setIsLoadingCodes] = useState(false)
-  const [isLoadingCredits, setIsLoadingCredits] = useState(false)
-  const [showCreditDialog, setShowCreditDialog] = useState(false)
-  const [showCodeDialog, setShowCodeDialog] = useState(false)
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
-  const [generatedCode, setGeneratedCode] = useState('')
-  const [isCreatingCode, setIsCreatingCode] = useState(false)
   const [toast, setToast] = useState(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -212,103 +203,10 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
     }
   }
 
-  // Load quiz codes and their claim status
-  const loadQuizCodes = async () => {
-    if (!quiz?.id) return
-
-    setIsLoadingCodes(true)
-    try {
-      const { data: codes, error: codesError } = await supabaseService.fetchQuizCodes(quiz.id)
-
-      if (codesError) throw codesError
-
-      setQuizCodes(codes || [])
-    } catch (error) {
-      console.error('Failed to load quiz codes:', error)
-    } finally {
-      setIsLoadingCodes(false)
-    }
-  }
-
-  // Load user credits
-  const loadUserCredits = async () => {
-    setIsLoadingCredits(true)
-    try {
-      const { user } = await supabaseService.getCurrentUser()
-      if (!user) return
-
-      const { data: credits, error } = await supabaseService.getUserCredits(user.id)
-
-      if (error) {
-        throw error
-      }
-
-      setUserCredits(credits?.credits || 0)
-    } catch (error) {
-      console.error('Failed to load user credits:', error)
-      setUserCredits(0)
-    } finally {
-      setIsLoadingCredits(false)
-    }
-  }
-
   // Show toast notification
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 4000)
-  }
-
-  // Generate random code
-  const generateCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let result = ''
-    for (let i = 0; i < 8; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    return result
-  }
-
-  // Create new quiz code
-  const createQuizCode = async () => {
-    // Load user credits before checking
-    await loadUserCredits()
-
-    if (userCredits < 1) {
-      setShowCreditDialog(true)
-      return
-    }
-
-    setIsCreatingCode(true)
-    try {
-      const { user } = await supabaseService.getCurrentUser()
-      if (!user) throw new Error('User not authenticated')
-
-      const code = generateCode()
-
-      // Create the quiz code
-      const { data: newCode, error: codeError } = await supabaseService.createQuizCode(user.id, quiz.id, code)
-
-      if (codeError) throw codeError
-
-      // Deduct credit
-      const { error: creditError } = await supabaseService.deductUserCredit(user.id, 1)
-
-      if (creditError) throw creditError
-
-      // Update local state
-      setUserCredits(prev => prev - 1)
-      await loadQuizCodes()
-      setShowCodeDialog(false)
-
-      // Show success dialog with generated code
-      setGeneratedCode(code)
-      setShowSuccessDialog(true)
-    } catch (error) {
-      console.error('Failed to create quiz code:', error)
-      showToast('Failed to create quiz code. Please try again.', 'error')
-    } finally {
-      setIsCreatingCode(false)
-    }
   }
 
   // Handle quiz publish
@@ -337,13 +235,6 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
       setIsDeleting(false)
     }
   }
-
-  // Load data when quiz changes
-  useEffect(() => {
-    if (quiz?.id) {
-      loadQuizCodes()
-    }
-  }, [quiz?.id])
 
   const renderTree = (nodes, level = 0) => (
     <div className="space-y-1">
@@ -492,24 +383,6 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
             </span>
           )}
         </button>
-        <button
-          className={`
-            flex items-center gap-2 px-6 py-3 font-medium transition-colors
-            -mb-[2px] rounded-t-md cursor-pointer
-            ${activeTab === 'codes'
-              ? 'text-primary bg-primary/10'
-              : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
-            }
-          `}
-          style={{ fontSize: '12.25px' }}
-          onClick={() => setActiveTab('codes')}
-        >
-          <TicketSlash className="h-4 w-4" />
-          <span>{t('Codes')}</span>
-          <span className="px-2 py-0.5 text-xs rounded-full font-medium bg-base-200 text-base-content">
-            {quizCodes.length}
-          </span>
-        </button>
       </div>
     </div>
   )
@@ -636,17 +509,6 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
             <div className="flex gap-2">
               <button className="btn btn-outline btn-sm" onClick={selectAll}>{t('Select All')}</button>
               <button className="btn btn-outline btn-sm" onClick={deselectAll}>{t('Deselect All')}</button>
-              <button 
-                className="btn btn-primary btn-sm"
-                onClick={async () => {
-                  await loadUserCredits()
-                  setShowCodeDialog(true)
-                }}
-                disabled={!quiz?.id}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                {t('Generate Code')}
-              </button>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -711,209 +573,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="space-y-3 px-6 py-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-medium flex items-center gap-2">
-              {t("Quiz Codes")}
-              {isLoadingCodes && (<span className="w-2 h-2 bg-primary rounded-full animate-pulse" />)}
-            </h2>
-          </div>
-          
-          {isLoadingCodes ? (
-            <div className="border rounded-md p-8 text-center">
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm text-muted-foreground">{t("Loading codes...")}</span>
-              </div>
-            </div>
-          ) : quizCodes.length > 0 ? (
-            <div className="border rounded-md">
-              <div className="overflow-x-auto">
-                <table className="table table-zebra w-full">
-                  <thead>
-                    <tr>
-                      <th>{t('Code')}</th>
-                      <th>{t('Status')}</th>
-                      <th>{t('Created')}</th>
-                      <th>{t('Claimed By')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {quizCodes.map((code) => {
-                      const isClaimed = code.user_quiz_codes && code.user_quiz_codes.length > 0
-                      return (
-                        <tr key={code.id}>
-                          <td>
-                            <code className="bg-base-200 px-2 py-1 rounded text-sm font-mono">
-                              {code.code}
-                            </code>
-                          </td>
-                          <td>
-                            {isClaimed ? (
-                              <span className="badge badge-success px-2">{t("Claimed")}</span>
-                            ) : (
-                              <span className="badge badge-outline px-2">{t("Available")}</span>
-                            )}
-                          </td>
-                          <td className="text-sm text-muted-foreground">
-                            {new Date(code.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="text-sm text-muted-foreground">
-                            {isClaimed ? 
-                              `User ${code.user_quiz_codes[0].user_id.slice(-8)}` : 
-                              '-'
-                            }
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground border rounded-md">
-              <TicketSlash className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">{t("No codes created yet.")}</p>
-              <button 
-                className="btn btn-primary btn-sm mt-3"
-                onClick={async () => {
-                  await loadUserCredits()
-                  setShowCodeDialog(true)
-                }}
-                disabled={!quiz?.id}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                {t('Create First Code')}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Credit Dialog */}
-      {showCreditDialog && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">{t("Insufficient Credits")}</h3>
-            <p className="text-muted-foreground mb-6">
-              {t("You need credits to create quiz codes. You currently have")} {userCredits} {t("credit(s). Please purchase more credits to continue.")}
-            </p>
-            <div className="modal-action">
-              <button 
-                className="btn btn-outline"
-                onClick={() => setShowCreditDialog(false)}
-              >
-                Cancel
-              </button>
-              <button className="btn btn-primary">
-                {t("Buy Credits")}
-              </button>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => setShowCreditDialog(false)} />
-        </div>
-      )}
-
-      {/* Code Creation Dialog */}
-      {showCodeDialog && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">{t("Create Quiz Code")}</h3>
-            <div className="space-y-4 mb-6">
-              <div className="alert alert-info">
-                <div>
-                  <p className="text-sm">
-                    Creating a quiz code will use 1 credit. You currently have {userCredits} credit(s) available.
-                  </p>
-                </div>
-              </div>
-              <p className="text-muted-foreground">
-                A unique code will be generated that users can redeem to access this quiz.
-              </p>
-            </div>
-            <div className="modal-action">
-              <button 
-                className="btn btn-outline"
-                onClick={() => setShowCodeDialog(false)}
-                disabled={isCreatingCode}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-primary"
-                onClick={createQuizCode}
-                disabled={isCreatingCode || userCredits < 1}
-              >
-                {isCreatingCode ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm"></span>
-                    Creating...
-                  </>
-                ) : (
-                  t('Generate Code')
-                )}
-              </button>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => setShowCodeDialog(false)} />
-        </div>
-      )}
-
-      {/* Success Dialog with Generated Code */}
-      {showSuccessDialog && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-success" />
-              {t('Code Generated Successfully!')}
-            </h3>
-            <div className="space-y-4 mb-6">
-              <div className="alert alert-success">
-                <div>
-                  <p className="font-medium">{t("Your quiz code has been generated successfully:")}</p>
-                </div>
-              </div>
-              <div className="bg-base-200 rounded-lg p-4 border-2 border-dashed border-base-300">
-                <div className="flex items-center justify-between">
-                  <code className="text-lg font-mono font-bold tracking-wider">
-                    {generatedCode}
-                  </code>
-                  <button 
-                    className="btn btn-sm btn-outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(generatedCode)
-                      showToast(t('Code copied to clipboard!'), 'success')
-                    }}
-                  >
-                    <Copy className="h-4 w-4 mr-1" />
-                    Copy
-                  </button>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Share this code with users so they can redeem access to your quiz.
-              </p>
-            </div>
-            <div className="modal-action">
-              <button 
-                className="btn btn-primary"
-                onClick={() => {
-                  setShowSuccessDialog(false)
-                  setGeneratedCode('')
-                }}
-              >
-                Done
-              </button>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => {
-            setShowSuccessDialog(false)
-            setGeneratedCode('')
-          }} />
-        </div>
-      )}
+      ) : null}
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (

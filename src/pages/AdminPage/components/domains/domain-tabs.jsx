@@ -1,9 +1,9 @@
 'use client'
 
-import { HelpCircle, FileText } from 'lucide-react'
+import { HelpCircle, FileText, Ticket } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCount }) {
+export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCount, codesCount }) {
   const { t } = useTranslation()
   return (
     <div className="mb-0 bg-[#f6f8fc]"
@@ -47,6 +47,26 @@ export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCo
           {resourcesCount > 0 && (
             <span className="px-2 py-0.5 text-xs rounded-full font-medium bg-base-200 text-base-content">
               {resourcesCount}
+            </span>
+          )}
+        </button>
+        <button
+          className={`
+            flex items-center gap-2 px-6 py-3 font-medium transition-colors
+            -mb-[2px] rounded-t-md cursor-pointer
+            ${activeTab === 'codes'
+              ? 'text-primary border-primary bg-primary/10'
+              : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
+            }
+          `}
+          style={{ fontSize: '12.25px' }}
+          onClick={() => onTabChange('codes')}
+        >
+          <Ticket className="h-4 w-4" />
+          <span>{t('Codes')}</span>
+          {codesCount > 0 && (
+            <span className="px-2 py-0.5 text-xs rounded-full font-medium bg-base-200 text-base-content">
+              {codesCount}
             </span>
           )}
         </button>
