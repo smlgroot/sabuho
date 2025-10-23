@@ -491,29 +491,33 @@ function OnlineQuizScreen() {
     <>
     <div className="fixed inset-0 bg-base-100 z-50 flex flex-col">
       {/* Header */}
-      <div className="navbar bg-base-100 border-b border-base-300 px-4">
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">
-            {quiz?.name || t('Quiz Challenge')}
-          </h1>
+      <div className="bg-base-100 border-b border-base-300">
+        <div className="navbar px-4">
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold">
+              {quiz?.name || t('Quiz Challenge')}
+            </h1>
+          </div>
+          <div className="flex-none">
+            {closeButton}
+          </div>
         </div>
-        <div className="flex-none">
-          {closeButton}
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          {/* Trophy Dashboard */}
-          {quizStats && (
+        {/* Trophy Dashboard */}
+        {quizStats && (
+          <div className="px-4 pb-4">
             <TrophyDashboard
               stats={quizStats}
               unlockedTrophies={unlockedTrophies}
               nextTrophyProgress={nextTrophyProgress}
             />
-          )}
+          </div>
+        )}
+      </div>
 
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 py-6">
           {/* Question Card */}
           <div className="bg-base-200/30 border border-base-300 rounded-lg p-8 mb-6">
               <h2 className="text-2xl font-semibold mb-6 text-base-content">
