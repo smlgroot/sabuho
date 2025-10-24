@@ -33,7 +33,7 @@ export function DomainTabs({ activeTab, onTabChange, questionsCount, resourcesCo
         <button
           className={`
             flex items-center gap-2 px-6 py-3 font-medium transition-colors
-            -mb-[2px] rounded-t-md cursor-pointer
+            -mb-[2px] mr-2 rounded-t-md cursor-pointer
             ${activeTab === 'resources'
               ? 'text-primary border-primary bg-primary/10'
               : 'text-base-content border-transparent hover:bg-primary/10 hover:text-primary'
