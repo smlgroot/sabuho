@@ -301,11 +301,9 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
                   {domain.name}
                 </span>
               )}
-              {domain.questions && domain.questions.length > 0 && (
-                <div className="badge badge-neutral badge-sm ml-2">
-                  {domain.questions.length}
-                </div>
-              )}
+              <div className="badge badge-neutral badge-sm ml-2">
+                {domain.questions?.length || 0}
+              </div>
             </button>
           </div>
         </div>
