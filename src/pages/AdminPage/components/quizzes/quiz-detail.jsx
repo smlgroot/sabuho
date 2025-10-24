@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, ChevronDown, FolderOpen, Folder, Settings, Trash2, AlertTriangle, BarChart3 } from 'lucide-react'
+import { ChevronRight, ChevronDown, FolderOpen, Folder, Settings, Trash2, AlertTriangle, BarChart3, Circle } from 'lucide-react'
 import * as supabaseService from '@/services/supabaseService'
 import { useTranslation } from 'react-i18next'
 import { QuizInsights } from './quiz-insights'
@@ -241,69 +241,58 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
       {nodes.map(node => {
         const hasChildren = node.children && node.children.length > 0
         const isCollapsed = isDomainCollapsed(node.id)
-        const indentationLeft = level * 20
+        const indentationLeft = level * 8
         const isSelected = selected.includes(node.id)
         const questionCount = node.questions?.length || 0
 
         return (
-          <div key={node.id}>
+          <div key={node.id} className="w-full">
             <div
-              className="flex items-center group relative hover:bg-muted rounded p-1"
-              style={{ paddingLeft: `${indentationLeft}px` }}
+              className="flex items-center group relative min-w-0 transition-all select-none"
             >
-              {hasChildren ? (
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    toggleDomainCollapsed(node.id)
-                  }}
-                  className="hover:bg-muted rounded p-0.5 mr-1 cursor-pointer flex-shrink-0"
-                >
-                  {isCollapsed ? (
-                    <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                  )}
-                </div>
-              ) : (
-                <div className="w-4 h-4 mr-1 flex-shrink-0" />
-              )}
-              <div className="flex items-center mr-2">
-                {level === 0 ? (
-                  // Root level domains - always show folder icons
-                  hasChildren ? (
-                    <FolderOpen className="h-4 w-4 text-blue-600 mr-2" />
-                  ) : (
-                    <Folder className="h-4 w-4 text-blue-600 mr-2" />
-                  )
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary checkbox-sm mr-2 flex-shrink-0"
+                checked={isSelected}
+                onChange={(e) => {
+                  e.stopPropagation()
+                  toggleDomain(node.id)
+                }}
+                disabled={isDomainListSaving}
+              />
+              <div
+                className="flex items-center flex-1 min-w-0"
+                style={{ paddingLeft: `${indentationLeft}px` }}
+              >
+                {hasChildren ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleDomainCollapsed(node.id)
+                    }}
+                    className="btn btn-ghost btn-xs p-0.5 mr-1 flex-shrink-0"
+                  >
+                    {isCollapsed ? (
+                      <Folder className="h-4 w-4" />
+                    ) : (
+                      <FolderOpen className="h-4 w-4" />
+                    )}
+                  </button>
                 ) : (
-                  // Child domains - show smaller, muted folder icons
-                  hasChildren ? (
-                    <FolderOpen className="h-3.5 w-3.5 text-muted-foreground mr-2" />
-                  ) : (
-                    <Folder className="h-3.5 w-3.5 text-muted-foreground mr-2" />
-                  )
+                  <div className="flex items-center justify-center w-4 h-4 mr-1 flex-shrink-0">
+                    <Circle className="h-2 w-2 opacity-40" />
+                  </div>
                 )}
-              </div>
-              <div className="flex items-center flex-1">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 mr-2"
-                  checked={isSelected}
-                  onChange={(e) => {
-                    e.stopPropagation()
-                    toggleDomain(node.id)
-                  }}
-                  disabled={isDomainListSaving}
-                />
-                <span
-                  className={`flex-1 truncate ${level === 0 ? 'font-medium' : ''}`}
-                >
-                  {node.name}
-                </span>
-                <span className="ml-2 px-1.5 py-0.5 text-xs bg-muted text-muted-foreground rounded">
-                  {questionCount}
-                </span>
+                <div className="flex items-center flex-1 min-w-0">
+                  <span
+                    className={`flex-1 truncate min-w-0 ${level === 0 ? 'font-medium' : ''}`}
+                  >
+                    {node.name}
+                  </span>
+                  <div className="badge badge-neutral badge-sm ml-2">
+                    {questionCount}
+                  </div>
+                </div>
               </div>
             </div>
             {!isCollapsed && hasChildren && renderTree(node.children || [], level + 1)}
@@ -507,34 +496,34 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
               {isDomainListSaving && (<span className="w-2 h-2 bg-primary rounded-full animate-pulse" />)}
             </h2>
             <div className="flex gap-2">
-              <button className="btn btn-outline btn-sm" onClick={selectAll}>{t('Select All')}</button>
-              <button className="btn btn-outline btn-sm" onClick={deselectAll}>{t('Deselect All')}</button>
+              <button className="btn btn-ghost btn-sm" onClick={selectAll}>{t('Select All')}</button>
+              <button className="btn btn-ghost btn-sm" onClick={deselectAll}>{t('Deselect All')}</button>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <input
               type="text"
-              className="input input-bordered flex-1"
+              className="input input-bordered input-sm flex-1"
               placeholder={t('Search domains...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className={`border rounded-md p-3 max-h-[50vh] overflow-auto relative ${isDomainListSaving ? 'opacity-50' : ''}`}>
+          <div className={`border border-base-300 rounded-lg p-3 max-h-[50vh] overflow-auto relative bg-base-100 ${isDomainListSaving ? 'opacity-50' : ''}`}>
             {isDomainListSaving && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-md z-10">
+              <div className="absolute inset-0 flex items-center justify-center bg-base-100/80 rounded-lg z-10">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm text-muted-foreground">{t("Saving...")}</span>
+                  <span className="loading loading-spinner loading-sm text-primary"></span>
+                  <span className="text-sm">{t("Saving...")}</span>
                 </div>
               </div>
             )}
             {domains.length ? (
               renderTree(filterTree(domains, searchQuery))
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">{t("No domains available. Create a domain first.")}</p>
+              <div className="text-center py-8">
+                <Folder className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm opacity-70">{t("No domains available. Create a domain first.")}</p>
               </div>
             )}
           </div>
