@@ -20,6 +20,13 @@ export default function HomePage() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
+  // 3-step process state
+  const [currentStep, setCurrentStep] = useState(1);
+  const [currentProcessingState, setCurrentProcessingState] = useState("");
+  const [resultExpanded, setResultExpanded] = useState(false);
+  const [mockTopics, setMockTopics] = useState([]);
+  const [questionsCount, setQuestionsCount] = useState(0);
+
   const handleMainButton = () => {
     if (user) {
       trackEvent('admin_access_clicked', { props: { source: 'homepage' } });
@@ -112,8 +119,54 @@ export default function HomePage() {
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleFileUpload(file);
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        alert(validation.error);
+        return;
+      }
+
+      trackEvent('file_uploaded', { props: { fileType: file.type, fileName: file.name } });
+
+      // Reset all state when changing file
+      setUploadedFile(file);
+      setCurrentStep(2);
+      setIsProcessing(false);
+      setCurrentProcessingState("");
+      setResultExpanded(false);
+      setQuizGenerated(false);
+      setMockTopics([]);
+      setQuestionsCount(0);
     }
+  };
+
+  const handleProcessClick = async () => {
+    if (!uploadedFile || currentStep < 2) return;
+
+    setIsProcessing(true);
+    setQuizGenerated(false);
+
+    // Cycle through processing states: uploading, decoding, ai_processing
+    const states = [
+      { name: "uploading", duration: 2000 },
+      { name: "decoding", duration: 2000 },
+      { name: "ai_processing", duration: 2000 }
+    ];
+
+    for (const state of states) {
+      setCurrentProcessingState(state.name);
+      await new Promise(resolve => setTimeout(resolve, state.duration));
+    }
+
+    // Mock results
+    const mockTopicsData = ["Biology", "Cell Structure", "Genetics", "Human Anatomy"];
+    setMockTopics(mockTopicsData);
+    setQuestionsCount(sampleQuestions.length);
+
+    setIsProcessing(false);
+    setCurrentProcessingState("");
+    setQuizGenerated(true);
+    setCurrentStep(3);
+    trackEvent('quiz_generated', { props: { fileType: uploadedFile?.type } });
   };
 
   const handleDragOver = (e) => {
@@ -150,6 +203,11 @@ export default function HomePage() {
     setIsProcessing(false);
     setProcessingStep("");
     setQuizGenerated(false);
+    setCurrentStep(1);
+    setCurrentProcessingState("");
+    setResultExpanded(false);
+    setMockTopics([]);
+    setQuestionsCount(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -301,174 +359,203 @@ export default function HomePage() {
               Upload your content and watch AI instantly create personalized, interactive quizzes tailored to what you need to learn
             </p>
 
-            {!quizGenerated && !isProcessing && (
-              <>
-                {/* Upload Section */}
-                <div className="max-w-4xl mx-auto mb-8">
-                  <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
-                    <div className="grid md:grid-cols-2 gap-8">
-                      {/* Left: Sample Documents */}
-                      <div>
-                        <p className="text-sm font-semibold text-gray-700 mb-4">Try a sample:</p>
-                        <div className="space-y-3">
-                          {sampleDocuments.map((doc, index) => (
-                            <button
-                              key={index}
-                              onClick={() => {
-                                const mockFile = new File([""], doc.title, { type: "application/pdf" });
-                                Object.defineProperty(mockFile, 'size', { value: 50000 });
-                                setUploadedFile(mockFile);
-                                handleFileUpload(mockFile);
-                              }}
-                              className="w-full bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-500 rounded-lg p-4 transition-all text-left group flex items-center gap-3"
-                            >
-                              <div className="text-3xl">{doc.icon}</div>
-                              <div className="flex-1">
-                                <div className="font-bold text-gray-900 text-sm">{doc.title}</div>
-                                <div className="text-xs text-gray-500">{doc.description}</div>
-                              </div>
-                              <div className="text-blue-600 group-hover:translate-x-1 transition-transform">→</div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+            {/* 3-Step Process Section */}
+            <div className="max-w-4xl mx-auto mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Step 1: Choose a file */}
+                <div className={`bg-white rounded-lg shadow-lg border-2 p-8 transition-all ${
+                  currentStep === 1 ? 'border-blue-500' : 'border-gray-200'
+                }`}>
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <div className={`rounded-full p-4 mb-4 ${
+                      uploadedFile ? 'bg-green-100' : 'bg-blue-100'
+                    }`}>
+                      {uploadedFile ? (
+                        <CheckCircle className="w-12 h-12 text-green-600" />
+                      ) : (
+                        <Upload className="w-12 h-12 text-blue-600" />
+                      )}
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-2 text-lg">Step 1</h3>
+                    <p className="text-sm text-gray-600 mb-4 text-center">
+                      {uploadedFile ? 'File selected' : 'Choose a file'}
+                    </p>
 
-                      {/* Right: Upload Your Own */}
-                      <div className="flex flex-col">
-                        <p className="text-sm font-semibold text-gray-700 mb-4">Or upload your own:</p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.docx,.txt,.md"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      id="file-upload-step"
+                    />
 
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept=".pdf,.docx,.txt,.md"
-                          onChange={handleFileSelect}
-                          className="hidden"
-                          id="file-upload"
-                        />
-
+                    {!uploadedFile ? (
+                      <label
+                        htmlFor="file-upload-step"
+                        className="btn btn-primary btn-sm cursor-pointer"
+                      >
+                        Select File
+                      </label>
+                    ) : (
+                      <div className="text-center">
+                        <p className="text-xs text-gray-700 font-medium mb-2">{uploadedFile.name}</p>
                         <label
-                          htmlFor="file-upload"
-                          className="flex-1 border-2 border-blue-200 bg-blue-50/30 hover:bg-blue-50 hover:border-blue-400 rounded-lg p-6 cursor-pointer transition-all group"
+                          htmlFor="file-upload-step"
+                          className="btn btn-ghost btn-xs cursor-pointer"
                         >
-                          <div className="flex flex-col items-center justify-center h-full text-center">
-                            <div className="bg-blue-600 rounded-full p-4 mb-4 group-hover:scale-110 transition-transform">
-                              <Upload className="w-8 h-8 text-white" />
-                            </div>
-                            <p className="font-bold text-gray-900 mb-2">Choose a file</p>
-                            <p className="text-xs text-gray-600 mb-4">PDF, DOCX, TXT, MD up to 10MB</p>
-
-                            {/* Privacy Badge */}
-                            <div className="flex items-center gap-2 text-xs text-gray-600 bg-white px-3 py-2 rounded-full border border-gray-200">
-                              <Shield className="w-4 h-4 text-green-600" />
-                              <span>Your file stays private</span>
-                            </div>
-                          </div>
+                          Change
                         </label>
-
-                        {/* Trust indicators */}
-                        <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
-                          <div className="flex items-center gap-1">
-                            <Lock className="w-3 h-3" />
-                            <span>Secure</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            <span>No storage</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Zap className="w-3 h-3" />
-                            <span>Instant processing</span>
-                          </div>
-                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
-              </>
-            )}
 
-            {/* Processing State */}
-            {isProcessing && (
-              <div className="max-w-2xl mx-auto">
-                <div className="card bg-white rounded-lg shadow-xl p-8 border border-gray-100">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="bg-blue-100 p-3 rounded-lg">
-                      <FileText className="w-8 h-8 text-blue-600" />
+                {/* Step 2: Process */}
+                <div className={`bg-white rounded-lg shadow-lg border-2 p-8 transition-all duration-300 ${
+                  currentStep === 2 && !isProcessing ? 'border-blue-500 cursor-pointer hover:shadow-xl hover:scale-105' :
+                  isProcessing ? 'border-blue-500 animate-pulse' :
+                  'border-gray-200 opacity-50 cursor-not-allowed'
+                }`}
+                onClick={() => {
+                  if (currentStep === 2 && !isProcessing) {
+                    handleProcessClick();
+                  }
+                }}>
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <div className={`rounded-full p-4 mb-4 transition-all duration-500 ${
+                      isProcessing ? 'bg-purple-200 scale-110' : 'bg-purple-100'
+                    }`}>
+                      {isProcessing ? (
+                        <>
+                          {currentProcessingState === "uploading" && (
+                            <Upload className="w-12 h-12 text-purple-600 animate-bounce" />
+                          )}
+                          {currentProcessingState === "decoding" && (
+                            <FileText className="w-12 h-12 text-purple-600 animate-spin" style={{ animationDuration: '2s' }} />
+                          )}
+                          {currentProcessingState === "ai_processing" && (
+                            <Sparkles className="w-12 h-12 text-purple-600 animate-pulse" />
+                          )}
+                        </>
+                      ) : (
+                        <Brain className={`w-12 h-12 text-purple-600 transition-transform duration-300 ${
+                          currentStep === 2 ? 'hover:scale-125' : ''
+                        }`} />
+                      )}
                     </div>
-                    <div className="text-left flex-1">
-                      <h3 className="font-bold text-lg text-gray-900">{uploadedFile?.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        {(uploadedFile?.size / 1024).toFixed(1)} KB
-                      </p>
-                    </div>
+                    <h3 className="font-bold text-gray-900 mb-2 text-lg">Step 2</h3>
+                    <p className={`text-sm text-gray-600 mb-4 text-center transition-all duration-300 ${
+                      isProcessing ? 'font-semibold text-purple-700 animate-pulse' : ''
+                    }`}>
+                      {isProcessing ? (
+                        <>
+                          {currentProcessingState === "uploading" && "Uploading..."}
+                          {currentProcessingState === "decoding" && "Decoding..."}
+                          {currentProcessingState === "ai_processing" && "AI Processing..."}
+                        </>
+                      ) : (
+                        currentStep >= 2 ? 'Click to process' : 'Process'
+                      )}
+                    </p>
+                    {currentStep === 2 && !isProcessing && (
+                      <button className="btn btn-primary btn-sm hover:scale-110 transition-transform">
+                        Start
+                      </button>
+                    )}
                   </div>
+                </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Clock className="w-5 h-5 text-blue-600 animate-spin" />
-                      <span className="text-gray-700 font-medium">{processingStep}</span>
+                {/* Step 3: Result */}
+                <div className={`bg-white rounded-lg shadow-lg border-2 p-8 transition-all ${
+                  currentStep === 3 ? 'border-blue-500 cursor-pointer hover:shadow-xl' :
+                  'border-gray-200 opacity-50 cursor-not-allowed'
+                }`}
+                onClick={() => {
+                  if (currentStep === 3) {
+                    setResultExpanded(!resultExpanded);
+                  }
+                }}>
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <div className="bg-green-100 rounded-full p-4 mb-4">
+                      <Trophy className="w-12 h-12 text-green-600" />
                     </div>
-                    <progress className="progress progress-primary w-full h-2 bg-blue-100"></progress>
+                    <h3 className="font-bold text-gray-900 mb-2 text-lg">Step 3</h3>
+                    <p className="text-sm text-gray-600 mb-4 text-center">
+                      {currentStep === 3 ? (
+                        <>
+                          {questionsCount} questions<br />
+                          {mockTopics.length} topics
+                        </>
+                      ) : (
+                        'Result'
+                      )}
+                    </p>
+                    {currentStep === 3 && (
+                      <button className="btn btn-primary btn-sm">
+                        {resultExpanded ? 'Hide' : 'View'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
-            )}
 
-            {/* Quiz Generated State */}
-            {quizGenerated && (
-              <div className="max-w-3xl mx-auto">
-                <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 mb-6 flex items-center gap-3">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                  <span className="font-semibold">Quiz generated successfully! {sampleQuestions.length} questions created.</span>
-                </div>
-
-                <div className="card bg-white rounded-lg shadow-xl border border-gray-100">
-                  <div className="card-body p-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="bg-blue-100 p-2 rounded-lg">
-                        <FileText className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-gray-900">
-                        {uploadedFile?.name} - Preview
-                      </h3>
-                    </div>
-
-                    <div className="space-y-4 text-left">
-                      {sampleQuestions.map((q, index) => (
-                        <div key={index} className="p-5 bg-gray-50 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
-                          <p className="font-semibold text-gray-900 mb-4 text-base">
-                            {index + 1}. {q.question}
-                          </p>
-                          <div className="space-y-3 ml-4">
-                            {q.options.map((option, optIndex) => (
-                              <div key={optIndex} className="flex items-center gap-3">
-                                <input
-                                  type="radio"
-                                  name={`question-${index}`}
-                                  className="radio radio-sm radio-primary"
-                                  disabled
-                                />
-                                <span className="text-sm text-gray-700">{option}</span>
-                              </div>
-                            ))}
+              {/* Expanded Result Section */}
+              {resultExpanded && currentStep === 3 && (
+                <div className="mt-6 bg-white rounded-lg shadow-lg border border-gray-200 p-8 animate-fadeIn">
+                  <div className="grid md:grid-cols-2 gap-8">
+                    {/* Topics */}
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <BookOpen className="w-5 h-5 text-blue-600" />
+                        Topics Discovered
+                      </h4>
+                      <div className="space-y-2">
+                        {mockTopics.map((topic, index) => (
+                          <div key={index} className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <Target className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <span className="text-sm text-gray-900 font-medium">{topic}</span>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="flex justify-end mt-8 gap-3">
-                      <button onClick={handleReset} className="btn bg-gray-100 hover:bg-gray-200 text-gray-700 border-0 rounded-lg font-semibold px-6">
-                        Upload Another
-                      </button>
-                      <button onClick={handleSaveQuiz} className="btn bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-lg font-semibold px-6 shadow-md hover:shadow-lg transition-all">
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        {user ? "Save Quiz" : "Sign Up to Save"}
-                      </button>
+                    {/* Questions Preview */}
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-purple-600" />
+                        Questions Generated
+                      </h4>
+                      <div className="space-y-3">
+                        {sampleQuestions.map((q, index) => (
+                          <div key={index} className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                            <p className="text-sm font-semibold text-gray-900 mb-2">
+                              {index + 1}. {q.question}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-gray-600">
+                              <CheckCircle className="w-3 h-3" />
+                              <span>{q.type}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-end mt-6 gap-3">
+                    <button onClick={handleReset} className="btn bg-gray-100 hover:bg-gray-200 text-gray-700 border-0 rounded-lg font-semibold px-6">
+                      Start Over
+                    </button>
+                    <button onClick={handleSaveQuiz} className="btn bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-lg font-semibold px-6 shadow-md hover:shadow-lg transition-all">
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      {user ? "Save Quiz" : "Sign Up to Save"}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
           </div>
         </div>
       </section>
