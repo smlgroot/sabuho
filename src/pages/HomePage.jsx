@@ -2,7 +2,6 @@ import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from "react-router-dom";
 import { Globe } from "lucide-react";
 import { useState } from "react";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTranslation } from "react-i18next";
 import { usePostHog } from "@/components/PostHogProvider";
 
@@ -60,19 +59,25 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      <header className="navbar bg-base-100 shadow-sm">
+      <header className="navbar bg-base-100 shadow-sm px-4">
         <div className="flex-1">
-          <h1 className="btn btn-ghost normal-case text-xl font-black">
-            Sabuho<span className="text-primary">.</span>
-          </h1>
+          <a href="/" className="flex items-center gap-3 group cursor-pointer">
+            <img
+              src="/sabuho_logo_3.png"
+              alt="Sabuho Logo"
+              className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
+            />
+            <span className="text-2xl font-black tracking-tight">
+              Sabuho<span className="text-primary">.</span>
+            </span>
+          </a>
         </div>
         <div className="flex-none">
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             {/* Language Selector */}
             <div className="dropdown dropdown-end">
-              <div tabIndex={0} role="button" className="btn btn-sm btn-ghost">
-                <Globe className="w-4 h-4" />
-                {language === "es" ? "ES" : "EN"}
+              <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
+                <Globe className="w-5 h-5" />
               </div>
               <ul
                 tabIndex={0}
@@ -97,8 +102,14 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Theme Switch */}
-            <ThemeToggle />
+            {user && (
+              <button
+                onClick={() => navigate("/admin")}
+                className="btn btn-ghost"
+              >
+                {t("Admin")}
+              </button>
+            )}
 
             <button onClick={handleHeaderButton} className="btn btn-primary">
               {user ? t("Logout") : t("Sign In")}
@@ -111,11 +122,6 @@ export default function HomePage() {
         <div className="text-center max-w-4xl w-full">
           <div className="hero-content text-center">
             <div className="max-w-3xl">
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black mb-6 text-base-content leading-tight">
-                Welcome{user ? `, ${user.email}` : ""}
-                <span className="text-primary">.</span>
-              </h1>
-
               <p className="text-lg sm:text-xl lg:text-2xl text-base-content/70 mb-12 font-light max-w-2xl mx-auto">
                 {t(
                   "Manage your learning domains, quizzes, and educational content all in one place."
