@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Trophy, Target, Zap, Flame, Star, Crosshair, Gauge, Bolt, Undo2, Award, X } from 'lucide-react'
+import { Trophy, Target, Zap, Flame, Star, Crosshair, Gauge, Bolt, Undo2, Award, X, Lock } from 'lucide-react'
 import { TROPHY_TYPES } from '@/services/trophyService'
 
 // Icon mapping for trophy types
@@ -31,8 +31,8 @@ const TROPHY_COLORS = {
 }
 
 function TrophyDashboard({ stats, unlockedTrophies, nextTrophyProgress }) {
-  const [showCompleted, setShowCompleted] = useState(false)
   const [selectedTrophy, setSelectedTrophy] = useState(null)
+  const [showCompletedModal, setShowCompletedModal] = useState(false)
 
   // Calculate progress for each trophy
   const getTrophyProgress = (trophyType) => {
@@ -164,8 +164,18 @@ function TrophyDashboard({ stats, unlockedTrophies, nextTrophyProgress }) {
     }
   }
 
-  // Get uncompleted trophies
-  const getUncompletedTrophies = () => {
+  // Get completed trophies
+  const getCompletedTrophies = () => {
+    return Object.values(TROPHY_TYPES)
+      .filter(trophy => unlockedTrophies.includes(trophy.type))
+      .map(trophy => ({
+        ...trophy,
+        label: 'Unlocked!'
+      }))
+  }
+
+  // Get the closest trophy to completion
+  const getClosestTrophy = () => {
     const allTrophies = Object.values(TROPHY_TYPES)
       .filter(trophy => !unlockedTrophies.includes(trophy.type))
       .map(trophy => {
@@ -177,135 +187,72 @@ function TrophyDashboard({ stats, unlockedTrophies, nextTrophyProgress }) {
           progress
         }
       })
+      .filter(trophy => trophy.canBeAchieved)
+      .sort((a, b) => b.progress - a.progress)
 
-    return allTrophies.filter(trophy => trophy.canBeAchieved)
+    return allTrophies[0] || null
   }
 
-  // Get completed trophies
-  const getCompletedTrophies = () => {
-    return Object.values(TROPHY_TYPES)
-      .filter(trophy => unlockedTrophies.includes(trophy.type))
-      .map(trophy => ({
-        ...trophy,
-        label: 'Unlocked!'
-      }))
-  }
-
-  const uncompletedTrophies = getUncompletedTrophies()
   const completedTrophies = getCompletedTrophies()
+  const closestTrophy = getClosestTrophy()
 
   return (
     <>
-      <div className="bg-base-200/30 rounded-lg p-3 mb-4">
-        {/* Header with Tab Toggle */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+      {/* Slim Trophy Ribbon */}
+      <div className="relative bg-gradient-to-r from-base-200/40 via-base-200/20 to-base-200/40 border-y border-base-300/30 backdrop-blur-sm">
+        <div className="flex items-center justify-between gap-3 px-4 py-2 min-h-[52px]">
+          {/* Left: Completed Trophies Count Card */}
+          {completedTrophies.length > 0 ? (
             <button
-              onClick={() => setShowCompleted(false)}
-              className={`text-sm font-medium transition-colors flex items-center gap-1 ${
-                !showCompleted
-                  ? 'text-base-content'
-                  : 'text-base-content/50 hover:text-base-content/70'
-              }`}
+              onClick={() => setShowCompletedModal(true)}
+              className="group flex items-center gap-3 bg-success/10 hover:bg-success/20 rounded-lg px-4 py-2 transition-all duration-200 border border-success/20 hover:border-success/40 flex-1"
             >
-              Active
-              <span className={`badge badge-xs ${
-                uncompletedTrophies.length > 0 ? 'badge-primary' : 'badge-ghost'
-              }`}>
-                {uncompletedTrophies.length}
-              </span>
-            </button>
-            <span className="text-base-content/30">|</span>
-            <button
-              onClick={() => setShowCompleted(true)}
-              className={`text-sm font-medium transition-colors flex items-center gap-1 ${
-                showCompleted
-                  ? 'text-base-content'
-                  : 'text-base-content/50 hover:text-base-content/70'
-              }`}
-            >
-              Completed
-              <span className={`badge badge-xs ${
-                completedTrophies.length > 0 ? 'badge-success' : 'badge-ghost'
-              }`}>
-                {completedTrophies.length}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Trophy Row */}
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-          {!showCompleted ? (
-            // Uncompleted Trophies
-            uncompletedTrophies.length > 0 ? (
-              uncompletedTrophies.map((trophy) => {
-                const IconComponent = TROPHY_ICONS[trophy.icon] || Trophy
-                const colors = TROPHY_COLORS[trophy.type] || { bg: 'bg-base-300/50', text: 'text-base-content/60', border: 'border-base-300' }
-
-                return (
-                  <button
-                    key={trophy.type}
-                    onClick={() => setSelectedTrophy(trophy)}
-                    className="flex flex-col items-center min-w-[80px] flex-shrink-0 hover:opacity-80 transition-opacity"
-                  >
-                    {/* Trophy Icon */}
-                    <div className={`w-10 h-10 rounded-full ${colors.bg} flex items-center justify-center mb-1`}>
-                      <IconComponent className={`w-5 h-5 ${colors.text}`} />
-                    </div>
-
-                    {/* Trophy Name */}
-                    <h4 className={`text-xs font-medium text-center mb-1 line-clamp-1 max-w-[80px] ${colors.text}`}>
-                      {trophy.name}
-                    </h4>
-
-                    {/* Label */}
-                    <p className="text-[10px] text-center text-base-content/60 line-clamp-1 max-w-[80px]">
-                      {trophy.label}
-                    </p>
-                  </button>
-                )
-              })
-            ) : (
-              <div className="w-full text-center py-2">
-                <p className="text-xs text-base-content/60">All challenges completed!</p>
+              <div className="relative w-8 h-8 rounded-full bg-success/20 flex items-center justify-center flex-shrink-0">
+                <Trophy className="w-4 h-4 text-success" />
               </div>
-            )
+              <div className="flex flex-col items-start min-w-0 flex-1">
+                <span className="text-xs font-bold text-success">
+                  {completedTrophies.length} {completedTrophies.length === 1 ? 'Trophy' : 'Trophies'}
+                </span>
+                <span className="text-[10px] text-success/70">Click to view</span>
+              </div>
+            </button>
           ) : (
-            // Completed Trophies
-            completedTrophies.length > 0 ? (
-              completedTrophies.map((trophy) => {
-                const IconComponent = TROPHY_ICONS[trophy.icon] || Trophy
-                const colors = TROPHY_COLORS[trophy.type] || { bg: 'bg-success/20', text: 'text-success', border: 'border-success/30' }
-
-                return (
-                  <button
-                    key={trophy.type}
-                    onClick={() => setSelectedTrophy(trophy)}
-                    className="flex flex-col items-center min-w-[80px] flex-shrink-0 hover:opacity-80 transition-opacity"
-                  >
-                    {/* Trophy Icon */}
-                    <div className={`w-10 h-10 rounded-full ${colors.bg} flex items-center justify-center mb-1`}>
-                      <IconComponent className={`w-5 h-5 ${colors.text}`} />
-                    </div>
-
-                    {/* Trophy Name */}
-                    <h4 className={`text-xs font-medium text-center mb-1 line-clamp-1 max-w-[80px] ${colors.text}`}>
-                      {trophy.name}
-                    </h4>
-
-                    {/* Unlocked Label */}
-                    <p className="text-[10px] text-center text-base-content/60 line-clamp-1 max-w-[80px]">
-                      Unlocked
-                    </p>
-                  </button>
-                )
-              })
-            ) : (
-              <div className="w-full text-center py-2">
-                <p className="text-xs text-base-content/60">No completed challenges yet</p>
+            <div className="flex items-center gap-2 bg-base-300/10 rounded-lg px-4 py-2 border border-base-300/20 flex-1">
+              <div className="w-8 h-8 rounded-full bg-base-300/20 flex items-center justify-center flex-shrink-0">
+                <Trophy className="w-4 h-4 text-base-content/30" />
               </div>
-            )
+              <span className="text-xs text-base-content/40 italic">No trophies yet</span>
+            </div>
+          )}
+
+          {/* Right: Mystery Next Challenge Card */}
+          {closestTrophy && (
+            <div className="group flex items-center gap-3 bg-warning/10 rounded-lg px-4 py-2 border border-warning/20 flex-1">
+              {/* Mystery Locked Icon */}
+              <div className="relative w-8 h-8 rounded-full bg-warning/20 flex items-center justify-center flex-shrink-0">
+                <Lock className="w-4 h-4 text-warning" />
+              </div>
+
+              {/* Mystery Challenge Info */}
+              <div className="flex flex-col items-start min-w-0 flex-1">
+                <div className="flex items-center gap-2 w-full">
+                  <span className="text-xs font-medium text-warning">
+                    Secret Trophy
+                  </span>
+                  <span className="text-xs font-bold text-warning ml-auto">
+                    {closestTrophy.progress}%
+                  </span>
+                </div>
+                {/* Mini progress bar */}
+                <div className="w-full bg-warning/20 rounded-full h-1.5 mt-1 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-warning to-warning/80 h-full transition-all duration-300 rounded-full"
+                    style={{ width: `${closestTrophy.progress}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -399,6 +346,78 @@ function TrophyDashboard({ stats, unlockedTrophies, nextTrophyProgress }) {
             <label
               className="modal-backdrop"
               onClick={() => setSelectedTrophy(null)}
+            >
+            </label>
+          </div>
+        </>
+      )}
+
+      {/* Completed Trophies Modal */}
+      {showCompletedModal && (
+        <>
+          <input
+            type="checkbox"
+            id="completed-trophies-modal"
+            className="modal-toggle"
+            checked={showCompletedModal}
+            onChange={() => setShowCompletedModal(false)}
+          />
+          <div className="modal modal-bottom sm:modal-middle">
+            <div className="modal-box">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-base-content">Your Trophies</h3>
+                <button
+                  className="btn btn-sm btn-circle btn-ghost"
+                  onClick={() => setShowCompletedModal(false)}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Completed Trophies Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {completedTrophies.map((trophy) => {
+                  const IconComponent = TROPHY_ICONS[trophy.icon] || Trophy
+                  const colors = TROPHY_COLORS[trophy.type] || { bg: 'bg-success/20', text: 'text-success', border: 'border-success/30' }
+
+                  return (
+                    <button
+                      key={trophy.type}
+                      onClick={() => {
+                        setShowCompletedModal(false)
+                        setSelectedTrophy(trophy)
+                      }}
+                      className={`flex flex-col items-center p-4 rounded-lg border ${colors.border} ${colors.bg} hover:scale-105 transition-transform duration-200`}
+                    >
+                      {/* Trophy Icon */}
+                      <div className={`w-16 h-16 rounded-full ${colors.bg} flex items-center justify-center mb-2 border-2 ${colors.border}`}>
+                        <IconComponent className={`w-8 h-8 ${colors.text}`} />
+                      </div>
+
+                      {/* Trophy Name */}
+                      <h4 className={`text-sm font-medium text-center ${colors.text} mb-1`}>
+                        {trophy.name}
+                      </h4>
+
+                      {/* Unlocked Badge */}
+                      <span className="badge badge-success badge-xs">Unlocked</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="modal-action">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setShowCompletedModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <label
+              className="modal-backdrop"
+              onClick={() => setShowCompletedModal(false)}
             >
             </label>
           </div>

@@ -505,13 +505,11 @@ function OnlineQuizScreen() {
 
         {/* Trophy Dashboard */}
         {quizStats && (
-          <div className="px-4 pb-4">
-            <TrophyDashboard
-              stats={quizStats}
-              unlockedTrophies={unlockedTrophies}
-              nextTrophyProgress={nextTrophyProgress}
-            />
-          </div>
+          <TrophyDashboard
+            stats={quizStats}
+            unlockedTrophies={unlockedTrophies}
+            nextTrophyProgress={nextTrophyProgress}
+          />
         )}
       </div>
 
