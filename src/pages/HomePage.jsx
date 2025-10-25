@@ -280,13 +280,21 @@ export default function HomePage() {
       <section className="hero min-h-[85vh] bg-gradient-to-b from-blue-50 to-white">
         <div className="hero-content text-center px-6 w-full py-16">
           <div className="max-w-5xl w-full">
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <Sparkles className="w-6 h-6 text-blue-600" />
-              <span className="text-sm font-bold text-blue-600 tracking-wide uppercase">Intelligent Quiz Generation</span>
-            </div>
-
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 text-gray-900 leading-tight tracking-tight">
-              Any Document → Perfect Quiz
+              <div className="flex items-center justify-center gap-6 flex-wrap">
+                <span className="bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">Any Document</span>
+
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 rounded-full blur-xl opacity-75 group-hover:opacity-100 animate-pulse"></div>
+                  <div className="relative bg-white rounded-full p-4 shadow-2xl">
+                    <Brain className="w-10 h-10 sm:w-14 sm:h-14 text-blue-600" />
+                  </div>
+                  <Sparkles className="w-5 h-5 text-yellow-400 absolute -top-1 -right-1 animate-bounce" />
+                  <Sparkles className="w-4 h-4 text-blue-400 absolute -bottom-1 -left-1 animate-ping" />
+                </div>
+
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Interactive Quiz</span>
+              </div>
             </h1>
 
             <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
