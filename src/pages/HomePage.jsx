@@ -282,15 +282,15 @@ export default function HomePage() {
           <div className="max-w-5xl w-full">
             <div className="flex items-center justify-center gap-2 mb-6">
               <Sparkles className="w-6 h-6 text-blue-600" />
-              <span className="text-sm font-bold text-blue-600 tracking-wide uppercase">AI-Powered</span>
+              <span className="text-sm font-bold text-blue-600 tracking-wide uppercase">Intelligent Quiz Generation</span>
             </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 text-gray-900 leading-tight tracking-tight">
-              Documents → Quizzes
+              Any Document → Perfect Quiz
             </h1>
 
             <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
-              Transform any document into interactive quizzes instantly
+              Upload your content and watch AI instantly create personalized, interactive quizzes tailored to what you need to learn
             </p>
 
             {!quizGenerated && !isProcessing && (
