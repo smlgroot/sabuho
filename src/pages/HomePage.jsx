@@ -4,6 +4,14 @@ import { Globe, Brain, Target, Trophy, BookOpen, BarChart3, Sparkles, Upload, Fi
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { usePostHog } from "@/components/PostHogProvider";
+import {
+  createResourceSession,
+  uploadResourceSessionFile,
+  uploadFileToS3,
+  startResourceSessionProcessing,
+  pollResourceSessionStatus,
+  fetchResourceSessionDomains
+} from "@/services/resourceSessionService";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
@@ -24,8 +32,10 @@ export default function HomePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [currentProcessingState, setCurrentProcessingState] = useState("");
   const [resultExpanded, setResultExpanded] = useState(false);
-  const [mockTopics, setMockTopics] = useState([]);
+  const [topics, setTopics] = useState([]);
   const [questionsCount, setQuestionsCount] = useState(0);
+  const [resourceSessionId, setResourceSessionId] = useState(null);
+  const [processingError, setProcessingError] = useState(null);
 
   const handleMainButton = () => {
     if (user) {
@@ -86,7 +96,19 @@ export default function HomePage() {
   };
 
   const handleFileUpload = async (file) => {
-    trackEvent('file_uploaded', { props: { fileType: file.type, fileName: file.name } });
+    // This function is no longer used since we moved to explicit process button
+    // Keeping it for compatibility but it just does validation now
+    const validation = validateFile(file);
+    if (!validation.valid) {
+      alert(validation.error);
+      return;
+    }
+    setUploadedFile(file);
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     const validation = validateFile(file);
     if (!validation.valid) {
@@ -94,49 +116,19 @@ export default function HomePage() {
       return;
     }
 
+    // Reset all state when changing file
     setUploadedFile(file);
-    setIsProcessing(true);
-    setQuizGenerated(false);
-
-    // Mock AI processing with steps
-    const steps = [
-      { message: "Reading document...", duration: 1000 },
-      { message: "Analyzing content...", duration: 1500 },
-      { message: "Generating questions...", duration: 2000 },
-      { message: "Finalizing quiz...", duration: 1000 }
-    ];
-
-    for (const step of steps) {
-      setProcessingStep(step.message);
-      await new Promise(resolve => setTimeout(resolve, step.duration));
-    }
-
+    setCurrentStep(2);
     setIsProcessing(false);
-    setQuizGenerated(true);
-    trackEvent('quiz_generated', { props: { fileType: file.type } });
-  };
+    setCurrentProcessingState("");
+    setResultExpanded(false);
+    setQuizGenerated(false);
+    setTopics([]);
+    setQuestionsCount(0);
+    setResourceSessionId(null);
+    setProcessingError(null);
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const validation = validateFile(file);
-      if (!validation.valid) {
-        alert(validation.error);
-        return;
-      }
-
-      trackEvent('file_uploaded', { props: { fileType: file.type, fileName: file.name } });
-
-      // Reset all state when changing file
-      setUploadedFile(file);
-      setCurrentStep(2);
-      setIsProcessing(false);
-      setCurrentProcessingState("");
-      setResultExpanded(false);
-      setQuizGenerated(false);
-      setMockTopics([]);
-      setQuestionsCount(0);
-    }
+    trackEvent('file_selected', { props: { fileType: file.type, fileName: file.name } });
   };
 
   const handleProcessClick = async () => {
@@ -144,29 +136,94 @@ export default function HomePage() {
 
     setIsProcessing(true);
     setQuizGenerated(false);
+    setProcessingError(null);
+    setCurrentProcessingState("uploading");
 
-    // Cycle through processing states: uploading, decoding, ai_processing
-    const states = [
-      { name: "uploading", duration: 2000 },
-      { name: "decoding", duration: 2000 },
-      { name: "ai_processing", duration: 2000 }
-    ];
+    try {
+      trackEvent('processing_started', {
+        props: {
+          fileType: uploadedFile.type,
+          fileName: uploadedFile.name
+        }
+      });
 
-    for (const state of states) {
-      setCurrentProcessingState(state.name);
-      await new Promise(resolve => setTimeout(resolve, state.duration));
+      // Upload file to S3 using presigned URL
+      const { key, jobId, error: uploadError } = await uploadFileToS3(uploadedFile);
+
+      if (uploadError) {
+        throw new Error(`File upload failed: ${uploadError.message}`);
+      }
+
+      console.log('File uploaded to S3:', { key, jobId });
+
+      // Create resource_session record with S3 key
+      const { data: session, error: sessionError } = await createResourceSession({
+        name: uploadedFile.name,
+        file_path: key, // S3 key instead of Supabase Storage path
+        mime_type: uploadedFile.type,
+        status: 'pending'
+      });
+
+      if (sessionError) {
+        throw new Error(`Failed to create resource session: ${sessionError.message}`);
+      }
+
+      const sessionId = session.id;
+      setResourceSessionId(sessionId);
+
+      console.log('Resource session created:', sessionId);
+      trackEvent('file_uploaded', {
+        props: {
+          fileType: uploadedFile.type,
+          fileName: uploadedFile.name,
+          sessionId: sessionId,
+          s3Key: key,
+          jobId: jobId
+        }
+      });
+
+      // Start processing via Heroku service
+      await startResourceSessionProcessing(sessionId);
+      console.log('Processing started for session:', sessionId);
+
+      // Poll for completion
+      const completedSession = await pollResourceSessionStatus(sessionId, {
+        intervalMs: 2000,
+        timeoutMs: 300000, // 5 minutes
+        onStatusChange: (status, sessionData) => {
+          console.log('Status changed to:', status);
+          setCurrentProcessingState(status);
+        }
+      });
+
+      console.log('Processing completed:', completedSession);
+
+      // Extract results
+      const topicsData = completedSession.topic_page_range?.topics || [];
+      setTopics(topicsData);
+
+      // Estimate question count based on topics
+      setQuestionsCount(topicsData.length * 3); // Rough estimate
+
+      setIsProcessing(false);
+      setCurrentProcessingState("");
+      setQuizGenerated(true);
+      setCurrentStep(3);
+      trackEvent('quiz_generated', {
+        props: {
+          fileType: uploadedFile.type,
+          topicsCount: topicsData.length,
+          sessionId: sessionId
+        }
+      });
+
+    } catch (error) {
+      console.error('Processing error:', error);
+      setProcessingError(error.message);
+      setIsProcessing(false);
+      setCurrentProcessingState("");
+      alert(`Processing failed: ${error.message}`);
     }
-
-    // Mock results
-    const mockTopicsData = ["Biology", "Cell Structure", "Genetics", "Human Anatomy"];
-    setMockTopics(mockTopicsData);
-    setQuestionsCount(sampleQuestions.length);
-
-    setIsProcessing(false);
-    setCurrentProcessingState("");
-    setQuizGenerated(true);
-    setCurrentStep(3);
-    trackEvent('quiz_generated', { props: { fileType: uploadedFile?.type } });
   };
 
   const handleDragOver = (e) => {
@@ -179,13 +236,19 @@ export default function HomePage() {
     setIsDragging(false);
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragging(false);
 
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      handleFileUpload(file);
+      // Simulate file input change event for consistency
+      const fakeEvent = {
+        target: {
+          files: [file]
+        }
+      };
+      await handleFileSelect(fakeEvent);
     }
   };
 
@@ -206,8 +269,10 @@ export default function HomePage() {
     setCurrentStep(1);
     setCurrentProcessingState("");
     setResultExpanded(false);
-    setMockTopics([]);
+    setTopics([]);
     setQuestionsCount(0);
+    setResourceSessionId(null);
+    setProcessingError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -485,7 +550,7 @@ export default function HomePage() {
                       {currentStep === 3 ? (
                         <>
                           {questionsCount} questions<br />
-                          {mockTopics.length} topics
+                          {topics.length} topics
                         </>
                       ) : (
                         'Result'
@@ -511,10 +576,15 @@ export default function HomePage() {
                         Topics Discovered
                       </h4>
                       <div className="space-y-2">
-                        {mockTopics.map((topic, index) => (
+                        {topics.map((topic, index) => (
                           <div key={index} className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                             <Target className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                            <span className="text-sm text-gray-900 font-medium">{topic}</span>
+                            <div className="flex-1">
+                              <span className="text-sm text-gray-900 font-medium">{topic.name}</span>
+                              <span className="text-xs text-gray-500 ml-2">
+                                (Pages {topic.start}-{topic.end})
+                              </span>
+                            </div>
                           </div>
                         ))}
                       </div>

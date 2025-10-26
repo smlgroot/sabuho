@@ -18,33 +18,36 @@ import pytesseract
 from PIL import Image
 import re
 from openai_topic_range_id import identify_document_topics
+import boto3
 # pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 
-async def process_pdf_document(supabase_client: Client, resource_id: str):
+async def process_pdf_document(supabase_client: Client, resource_session_id: str):
     """
     Main function to process a PDF document through the complete pipeline
     """
-    print(f"[process_pdf_document] Starting processing for: {resource_id}")
-    
+    print(f"[process_pdf_document] Starting processing for: {resource_session_id}")
+
     try:
-        resource = supabase_client.table("resources").select("*").eq("id", resource_id).execute()
-        if not resource.data:
-            raise Exception(f"No resource found with id: {resource_id}")
-        
-        resource = resource.data[0]
+        resource_session = supabase_client.table("resource_sessions").select("*").eq("id", resource_session_id).execute()
+        if not resource_session.data:
+            raise Exception(f"No resource_session found with id: {resource_session_id}")
 
-        print(f"[process_pdf_document] [Resource] [id: {resource['id']}]")
-        print(f"[process_pdf_document] [Resource] [file_path: {resource['file_path']}]")
-        print(f"[process_pdf_document] [Resource] [domain_id: {resource['domain_id']}]")
-        print(f"[process_pdf_document] [Resource] [author_id: {resource['author_id']}]")
+        resource_session = resource_session.data[0]
 
-        pdf_file_path = resource['file_path']
+        print(f"[process_pdf_document] [ResourceSession] [id: {resource_session['id']}]")
+        print(f"[process_pdf_document] [ResourceSession] [file_path: {resource_session['file_path']}]")
+        print(f"[process_pdf_document] [ResourceSession] [name: {resource_session['name']}]")
 
-        await update_resource_status(supabase_client, resource_id, "processing")
-        
-        # Download PDF from Supabase Storage
-        pdf_buffer = await download_file_from_supabase(supabase_client, pdf_file_path)
-        print(f"[process_pdf_document] Downloaded PDF: {len(pdf_buffer)} bytes")
+        pdf_file_path = resource_session['file_path']
+
+        await update_resource_session_status(supabase_client, resource_session_id, "uploading")
+
+        # Download PDF from S3 (file_path now contains S3 key)
+        pdf_buffer = await download_file_from_s3(pdf_file_path)
+        print(f"[process_pdf_document] Downloaded PDF from S3: {len(pdf_buffer)} bytes")
+
+        # Update status to decoding
+        await update_resource_session_status(supabase_client, resource_session_id, "decoding")
 
         # Extract text with PyMuPDF and OCR for images
         extracted_text, extracted_text_from_images, ocr_pages = await extract_text_with_pymupdf_and_ocr(pdf_buffer)
@@ -60,16 +63,23 @@ async def process_pdf_document(supabase_client: Client, resource_id: str):
         )
         print(f"[process_pdf_document] Extraction result saved: {extraction_output_path}")
 
-        # Save extracted_text_from_images in resrouces.unparsable coulmn
-        await save_unparsable_text_to_supabase(supabase_client, resource_id, extracted_text_from_images)
+        # Save extracted_text_from_images in resource_sessions.unparsable column
+        await save_unparsable_text_to_supabase(supabase_client, resource_session_id, extracted_text_from_images)
+
+        # Update status to ai_processing
+        await update_resource_session_status(supabase_client, resource_session_id, "ai_processing")
 
         # Identify document topics {"topics": [{"name": "Name of the topic/section", "start": number, "end": number, } ] }
         topics_map = await identify_document_topics(extracted_text)
         print(f"[process_pdf_document] Topics result: {topics_map}")
 
-        # Save topics map to Supabase Storage
-        await save_topics_map_to_supabase(supabase_client, resource, topics_map)
-        print(f"[process_pdf_document] [Topics map] [saved]")
+        # Save topics map to resource_sessions table
+        await save_topics_map_to_resource_session(supabase_client, resource_session_id, topics_map)
+        print(f"[process_pdf_document] [Topics map] [saved to resource_session]")
+
+        # Create resource_session_domains records (one per topic)
+        await create_resource_session_domains(supabase_client, resource_session_id, topics_map)
+        print(f"[process_pdf_document] [resource_session_domains] [created]")
 
         # Extract topic texts
         topic_to_text = extract_topic_texts(extracted_text, topics_map)
@@ -79,18 +89,47 @@ async def process_pdf_document(supabase_client: Client, resource_id: str):
         analysis_result = await process_text_document_with_openai(supabase_client, topic_to_text)
         print(f"[process_pdf_document] OpenAI analysis completed")
 
-        # Save analysis result, create questions.
-        created_questions_count = await save_analysis_result_to_supabase_create_questions(supabase_client, resource, analysis_result['quiz_questions'])
-        print(f"[process_pdf_document] Created {created_questions_count} questions")
+        # Note: Questions are not created here in the new flow
+        # They will be created when user saves the quiz in the admin panel
+        print(f"[process_pdf_document] Generated {len(analysis_result['quiz_questions'])} questions")
 
-        # Update resource status to completed
-        await update_resource_status(supabase_client, resource_id, "completed")
-        print(f"[process_pdf_document] [Resource] [status: completed]")
-        
+        # Update resource_session status to completed
+        await update_resource_session_status(supabase_client, resource_session_id, "completed")
+        print(f"[process_pdf_document] [ResourceSession] [status: completed]")
+
         print(f"[process_pdf_document] Processing completed successfully")
-        
+
     except Exception as error:
         print(f"[process_pdf_document] Error: {str(error)}")
+        # Update status to failed on error
+        try:
+            await update_resource_session_status(supabase_client, resource_session_id, "failed")
+        except:
+            pass
+        raise error
+
+async def download_file_from_s3(s3_key: str) -> bytes:
+    """Download file from S3 using boto3"""
+    print(f"[download_file_from_s3] [s3_key: {s3_key}]")
+
+    try:
+        # Get S3 bucket name from environment
+        bucket_name = os.getenv('AWS_S3_BUCKET')
+        if not bucket_name:
+            raise Exception("AWS_S3_BUCKET environment variable is not set")
+
+        # Create S3 client
+        s3_client = boto3.client('s3')
+
+        # Download file from S3
+        response = s3_client.get_object(Bucket=bucket_name, Key=s3_key)
+        file_content = response['Body'].read()
+
+        print(f"[download_file_from_s3] Downloaded {len(file_content)} bytes from S3")
+        return file_content
+
+    except Exception as error:
+        print(f"[download_file_from_s3] [error: {str(error)}]")
         raise error
 
 async def download_file_from_supabase(supabase_client: Client, file_path: str) -> bytes:
@@ -98,7 +137,7 @@ async def download_file_from_supabase(supabase_client: Client, file_path: str) -
     print(f"[download_file_from_supabase] [file_path: {file_path}]")
 
     try:
-        response = supabase_client.storage.from_("resources").download(file_path)
+        response = supabase_client.storage.from_("resources-files").download(file_path)
         if not response:
             raise Exception("Failed to download file from Supabase")
         return response
@@ -209,12 +248,12 @@ async def save_extraction_result_to_supabase(
     timestamp = int(datetime.now().timestamp() * 1000)
     base_name = original_path.replace('.pdf', '')
     output_path = f"{base_name}-extracted.txt"
-    
+
     content = f"PDF TEXT EXTRACTION RESULT:\n{extracted_text}"
     content_bytes = content.encode('utf-8')
-    
+
     try:
-        supabase_client.storage.from_("resources").upload(
+        supabase_client.storage.from_("resources-files").upload(
             path=output_path,
             file=content_bytes,
             file_options={"cache-control": "3600", "upsert": "true"}
@@ -223,20 +262,20 @@ async def save_extraction_result_to_supabase(
     except Exception as error:
         raise Exception(f"Failed to save extraction result to Supabase: {str(error)}")
 
-async def save_unparsable_text_to_supabase(supabase_client: Client, resource_id: str, unparsable_text: str) -> str:
-    """Update resource table with unparsable text"""
+async def save_unparsable_text_to_supabase(supabase_client: Client, resource_session_id: str, unparsable_text: str) -> str:
+    """Update resource_sessions table with unparsable text"""
     try:
-        # Update the resource table with the unparsable text
-        result = supabase_client.table("resources").update({
+        # Update the resource_sessions table with the unparsable text
+        result = supabase_client.table("resource_sessions").update({
             "unparsable": unparsable_text
-        }).eq("id", resource_id).execute()
-        
+        }).eq("id", resource_session_id).execute()
+
         if not result.data:
-            raise Exception(f"No resource found with id: {resource_id}")
-        
-        return f"Updated resource {resource_id} with unparsable text"
+            raise Exception(f"No resource_session found with id: {resource_session_id}")
+
+        return f"Updated resource_session {resource_session_id} with unparsable text"
     except Exception as error:
-        raise Exception(f"Failed to update resource unparsable column: {str(error)}")
+        raise Exception(f"Failed to update resource_session unparsable column: {str(error)}")
 
 def extract_topic_texts(raw_text, topics_json: dict[str, Any]) -> list[dict[str, str]]:
     # 1. Split text into pages: returns [(page_num, text), ...]
@@ -309,32 +348,73 @@ async def save_analysis_result_to_supabase_create_questions(supabase_client: Cli
     except Exception as error:
         raise Exception(f"Failed to update resource analysis result: {str(error)}")
 
-async def save_topics_map_to_supabase(supabase_client: Client, resource: dict[str, Any], topics_map: dict[str, Any]) -> str:
-    """Save topics map to Supabase Storage"""
+async def save_topics_map_to_resource_session(supabase_client: Client, resource_session_id: str, topics_map: dict[str, Any]) -> str:
+    """Save topics map to resource_sessions table"""
     try:
-        # Save the topics map to the resource table
-        result = supabase_client.table("resources").update({
+        # Save the topics map to the resource_sessions table
+        result = supabase_client.table("resource_sessions").update({
             "topic_page_range": topics_map
-        }).eq("id", resource['id']).execute()
-        
-        if not result.data:
-            raise Exception(f"No resource found with id: {resource['id']}")
-        
-        return f"Updated resource {resource['id']} with topics map"
-    except Exception as error:
-        raise Exception(f"Failed to update resource topics map: {str(error)}")
+        }).eq("id", resource_session_id).execute()
 
-async def update_resource_status(supabase_client: Client, resource_id: str, status: str) -> str:
-    """Update resource status to completed"""
+        if not result.data:
+            raise Exception(f"No resource_session found with id: {resource_session_id}")
+
+        return f"Updated resource_session {resource_session_id} with topics map"
+    except Exception as error:
+        raise Exception(f"Failed to update resource_session topics map: {str(error)}")
+
+async def create_resource_session_domains(supabase_client: Client, resource_session_id: str, topics_map: dict[str, Any]) -> int:
+    """Create resource_session_domains records from topics map
+
+    Args:
+        supabase_client: Supabase client instance
+        resource_session_id: ID of the resource session
+        topics_map: Dictionary with structure {"topics": [{"name": "...", "start": 4, "end": 5}, ...]}
+
+    Returns:
+        Number of domains created
+    """
     try:
-        result = supabase_client.table("resources").update({
-            "status": status
-        }).eq("id", resource_id).execute()
-        
+        topics = topics_map.get('topics', [])
+        if not topics:
+            print(f"[create_resource_session_domains] No topics found in topics_map")
+            return 0
+
+        # Prepare domain records to insert
+        domain_records = []
+        for topic in topics:
+            domain_record = {
+                "resource_session_id": resource_session_id,
+                "name": topic.get('name', 'Unnamed Topic'),
+                "page_range_start": topic.get('start', 0),
+                "page_range_end": topic.get('end', 0)
+            }
+            domain_records.append(domain_record)
+
+        # Insert all domain records at once
+        result = supabase_client.table("resource_session_domains").insert(domain_records).execute()
+
         if not result.data:
-            raise Exception(f"No resource found with id: {resource_id}")
-        
-        return f"Updated resource {resource_id} with status {status}"
+            raise Exception(f"Failed to create resource_session_domains")
+
+        created_count = len(result.data)
+        print(f"[create_resource_session_domains] Created {created_count} resource_session_domains")
+
+        return created_count
+    except Exception as error:
+        raise Exception(f"Failed to create resource_session_domains: {str(error)}")
+
+async def update_resource_session_status(supabase_client: Client, resource_session_id: str, status: str) -> str:
+    """Update resource_session status"""
+    try:
+        result = supabase_client.table("resource_sessions").update({
+            "status": status
+        }).eq("id", resource_session_id).execute()
+
+        if not result.data:
+            raise Exception(f"No resource_session found with id: {resource_session_id}")
+
+        return f"Updated resource_session {resource_session_id} with status {status}"
 
     except Exception as error:
-        raise Exception(f"Failed to update resource status: {str(error)}")
+        raise Exception(f"Failed to update resource_session status: {str(error)}")

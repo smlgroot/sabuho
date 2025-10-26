@@ -468,7 +468,7 @@ export async function uploadResourceFile(file, userId, domainId) {
   const filePath = `${userId}/${domainId}_${fileName}`
 
   const { error: uploadError } = await supabase.storage
-    .from('resources')
+    .from('resources-files')
     .upload(filePath, file)
 
   if (uploadError) {
@@ -476,7 +476,7 @@ export async function uploadResourceFile(file, userId, domainId) {
   }
 
   const { data: { publicUrl } } = supabase.storage
-    .from('resources')
+    .from('resources-files')
     .getPublicUrl(filePath)
 
   return { filePath, publicUrl, error: null }
@@ -518,7 +518,7 @@ export async function updateResource(resourceId, updates) {
 
 export async function deleteResourceFile(filePath) {
   const { error } = await supabase.storage
-    .from('resources')
+    .from('resources-files')
     .remove([filePath])
 
   return { error }

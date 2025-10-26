@@ -26,32 +26,32 @@ app.add_middleware(
 )
 
 class ProcessPDFRequest(BaseModel):
-    resource_id: str
+    resource_session_id: str
 
 def get_supabase_client(request: Request) -> Client:
     """Get authenticated Supabase client using service role key"""
     supabase_url = os.getenv("SUPABASE_URL")
     supabase_service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-    
+
     if not supabase_url or not supabase_service_key:
         raise HTTPException(status_code=500, detail="Missing Supabase configuration")
-    
+
     # Create client with service role key for full access
     supabase = create_client(supabase_url, supabase_service_key)
-    
+
     return supabase
 
-def run_pdf_processing_in_thread(supabase: Client, resource_id: str):
+def run_pdf_processing_in_thread(supabase: Client, resource_session_id: str):
     """Run PDF processing in a separate thread"""
     def thread_worker():
         try:
-            print(f"Starting background PDF processing for resource_id: {resource_id}")
+            print(f"Starting background PDF processing for resource_session_id: {resource_session_id}")
             # Run the async function in a new event loop
-            asyncio.run(process_pdf_document(supabase, resource_id))
-            print(f"Background PDF processing completed for resource_id: {resource_id}")
+            asyncio.run(process_pdf_document(supabase, resource_session_id))
+            print(f"Background PDF processing completed for resource_session_id: {resource_session_id}")
         except Exception as error:
-            print(f"Error in background PDF processing for resource_id {resource_id}: {error}")
-    
+            print(f"Error in background PDF processing for resource_session_id {resource_session_id}: {error}")
+
     # Start the processing in a daemon thread so it doesn't block the main process
     thread = threading.Thread(target=thread_worker, daemon=True)
     thread.start()
@@ -70,21 +70,21 @@ async def process_pdf(
     """Process PDF document endpoint"""
     try:
         # Start PDF processing in a separate thread immediately
-        run_pdf_processing_in_thread(supabase, request_data.resource_id)
-        
+        run_pdf_processing_in_thread(supabase, request_data.resource_session_id)
+
         # Return immediate success response
         return JSONResponse(
             content={
                 "data": {
                     "message": "PDF processing started",
-                    "resource_id": request_data.resource_id,
+                    "resource_session_id": request_data.resource_session_id,
                     "status": "processing"
-                }, 
+                },
                 "error": None
             },
             status_code=200
         )
-        
+
     except Exception as error:
         print(f"Error starting PDF processing: {error}")
         return JSONResponse(

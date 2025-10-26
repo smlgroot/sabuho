@@ -1,0 +1,21 @@
+# AWS SAM build artifacts
+.aws-sam/
+
+# Test files
+src/test.pdf
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
