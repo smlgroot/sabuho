@@ -20,20 +20,34 @@ def _save_resource_session(supabase: Client, file_path: str, name: str,
     Base method to save a resource session record to Supabase
     Handles error handling internally
     Returns the created/updated record or None on error
+
+    Note: Updates existing record if file_path exists, otherwise inserts new record
     """
     try:
+        # First, check if a record with this file_path already exists
+        existing = supabase.table('resource_sessions').select('id').eq('file_path', file_path).execute()
+
         data = {
             'file_path': file_path,
             'name': name,
             'mime_type': 'application/pdf',
-            'status': status
+            'status': status,
+            'updated_at': 'now()'  # Update timestamp
         }
 
         if unparsable:
             data['unparsable'] = unparsable
 
-        result = supabase.table('resource_sessions').upsert(data, on_conflict='file_path').execute()
-        print(f"[_save_resource_session] Successfully saved record for: {file_path} with status: {status}")
+        if existing.data and len(existing.data) > 0:
+            # Update existing record
+            record_id = existing.data[0]['id']
+            result = supabase.table('resource_sessions').update(data).eq('id', record_id).execute()
+            print(f"[_save_resource_session] Successfully updated record for: {file_path} with status: {status}")
+        else:
+            # Insert new record
+            result = supabase.table('resource_sessions').insert(data).execute()
+            print(f"[_save_resource_session] Successfully created record for: {file_path} with status: {status}")
+
         return result.data[0] if result.data else None
     except Exception as e:
         print(f"[_save_resource_session] Error saving to Supabase: {e}")

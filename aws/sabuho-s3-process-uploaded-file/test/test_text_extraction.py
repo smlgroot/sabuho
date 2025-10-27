@@ -58,12 +58,15 @@ def test_text_extraction():
 
         # Save initial record to Supabase with 'processing' status
         if supabase:
-            save_resource_session_processing(
+            result = save_resource_session_processing(
                 supabase=supabase,
                 file_path=PDF_FILE_PATH,
                 name=filename
             )
-            print(f"✓ Saved 'processing' status to Supabase for: {filename}")
+            if result:
+                print(f"✓ Saved 'processing' status to Supabase for: {filename}")
+            else:
+                print(f"✗ Failed to save 'processing' status to Supabase for: {filename}")
             print()
 
         # Extract text using the extraction module
@@ -110,12 +113,15 @@ def test_text_extraction():
 
         # Update Supabase record with 'completed' status
         if supabase:
-            save_resource_session_completed(
+            result = save_resource_session_completed(
                 supabase=supabase,
                 file_path=PDF_FILE_PATH,
                 name=filename
             )
-            print(f"✓ Updated to 'completed' status in Supabase for: {filename}")
+            if result:
+                print(f"✓ Updated to 'completed' status in Supabase for: {filename}")
+            else:
+                print(f"✗ Failed to update to 'completed' status in Supabase for: {filename}")
             print()
 
         # Display extracted text preview
@@ -146,14 +152,17 @@ def test_text_extraction():
         if supabase:
             try:
                 filename = os.path.basename(PDF_FILE_PATH)
-                save_resource_session_error(
+                result = save_resource_session_error(
                     supabase=supabase,
                     file_path=PDF_FILE_PATH,
                     name=filename,
                     error_message=f"{str(error)}\n\n{error_trace}"
                 )
                 print()
-                print(f"✓ Updated to 'error' status in Supabase for: {filename}")
+                if result:
+                    print(f"✓ Updated to 'error' status in Supabase for: {filename}")
+                else:
+                    print(f"✗ Failed to update to 'error' status in Supabase for: {filename}")
             except Exception as supabase_error:
                 print(f"⚠ Could not update Supabase error status: {supabase_error}")
 
