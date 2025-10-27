@@ -8,6 +8,12 @@ import tracemalloc
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from pdf_text_extraction import extract_text_with_pymupdf_and_ocr
+from supabase_client import (
+    get_supabase_client,
+    save_resource_session_processing,
+    save_resource_session_completed,
+    save_resource_session_error
+)
 
 
 def test_text_extraction():
@@ -22,6 +28,17 @@ def test_text_extraction():
     print(f"PDF File: {PDF_FILE_PATH}")
     print()
 
+    # Initialize Supabase client (optional - will warn if not configured)
+    supabase = None
+    try:
+        supabase = get_supabase_client()
+        print("✓ Supabase client initialized")
+        print()
+    except ValueError as e:
+        print(f"⚠ Supabase not configured: {e}")
+        print("⚠ Test will NOT continue: Supabase is required for this test.")
+        return
+
     # Check if file exists
     if not os.path.exists(PDF_FILE_PATH):
         print(f"ERROR: PDF file not found at: {PDF_FILE_PATH}")
@@ -35,6 +52,19 @@ def test_text_extraction():
 
         print(f"✓ Loaded PDF: {len(pdf_buffer)} bytes ({len(pdf_buffer)/1024:.2f} KB)")
         print()
+
+        # Extract filename for resource_sessions
+        filename = os.path.basename(PDF_FILE_PATH)
+
+        # Save initial record to Supabase with 'processing' status
+        if supabase:
+            save_resource_session_processing(
+                supabase=supabase,
+                file_path=PDF_FILE_PATH,
+                name=filename
+            )
+            print(f"✓ Saved 'processing' status to Supabase for: {filename}")
+            print()
 
         # Extract text using the extraction module
         print("Starting text extraction...")
@@ -78,6 +108,16 @@ def test_text_extraction():
         print(f"✓ Saved extracted text to: {output_file_path}")
         print()
 
+        # Update Supabase record with 'completed' status
+        if supabase:
+            save_resource_session_completed(
+                supabase=supabase,
+                file_path=PDF_FILE_PATH,
+                name=filename
+            )
+            print(f"✓ Updated to 'completed' status in Supabase for: {filename}")
+            print()
+
         # Display extracted text preview
         if extracted_text:
             print("EXTRACTED TEXT PREVIEW (first 500 chars):")
@@ -99,7 +139,23 @@ def test_text_extraction():
         print(f"✗ ERROR: {str(error)}")
         print("="*80)
         import traceback
+        error_trace = traceback.format_exc()
         traceback.print_exc()
+
+        # Update Supabase record with error status
+        if supabase:
+            try:
+                filename = os.path.basename(PDF_FILE_PATH)
+                save_resource_session_error(
+                    supabase=supabase,
+                    file_path=PDF_FILE_PATH,
+                    name=filename,
+                    error_message=f"{str(error)}\n\n{error_trace}"
+                )
+                print()
+                print(f"✓ Updated to 'error' status in Supabase for: {filename}")
+            except Exception as supabase_error:
+                print(f"⚠ Could not update Supabase error status: {supabase_error}")
 
 
 if __name__ == "__main__":
