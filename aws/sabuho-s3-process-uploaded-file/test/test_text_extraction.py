@@ -28,16 +28,10 @@ def test_text_extraction():
     print(f"PDF File: {PDF_FILE_PATH}")
     print()
 
-    # Initialize Supabase client (optional - will warn if not configured)
-    supabase = None
-    try:
-        supabase = get_supabase_client()
-        print("✓ Supabase client initialized")
-        print()
-    except ValueError as e:
-        print(f"⚠ Supabase not configured: {e}")
-        print("⚠ Test will NOT continue: Supabase is required for this test.")
-        return
+    # Initialize Supabase client - fail fast if not configured
+    supabase = get_supabase_client()
+    print("✓ Supabase client initialized")
+    print()
 
     # Check if file exists
     if not os.path.exists(PDF_FILE_PATH):
@@ -59,19 +53,14 @@ def test_text_extraction():
         filename = os.path.basename(PDF_FILE_PATH)
 
         # Create new session in Supabase with 'processing' status
-        if supabase:
-            session = save_resource_session_processing_ocr(
-                supabase=supabase,
-                file_path=PDF_FILE_PATH,
-                name=filename
-            )
-            if session:
-                session_id = session.get('id')
-                print(f"✓ Created new session in Supabase: {session_id}")
-            else:
-                print(f"✗ Failed to create session in Supabase for: {filename}")
-                return
-            print()
+        session = save_resource_session_processing_ocr(
+            supabase=supabase,
+            file_path=PDF_FILE_PATH,
+            name=filename
+        )
+        session_id = session.get('id')
+        print(f"✓ Created new session in Supabase: {session_id}")
+        print()
 
         # Extract text using the extraction module
         print("Starting text extraction...")
@@ -116,16 +105,15 @@ def test_text_extraction():
         print()
 
         # Update Supabase record with 'ocr_completed' status
-        if supabase and session_id:
-            result = save_resource_session_ocr_completed(
-                supabase=supabase,
-                session_id=session_id
-            )
-            if result:
-                print(f"✓ Updated session {session_id} to 'ocr_completed' status in Supabase")
-            else:
-                print(f"✗ Failed to update session {session_id} to 'ocr_completed' status")
-            print()
+        result = save_resource_session_ocr_completed(
+            supabase=supabase,
+            session_id=session_id
+        )
+        if result:
+            print(f"✓ Updated session {session_id} to 'ocr_completed' status in Supabase")
+        else:
+            print(f"✗ Failed to update session {session_id} to 'ocr_completed' status")
+        print()
 
         # Display extracted text preview
         if extracted_text:
@@ -152,7 +140,7 @@ def test_text_extraction():
         traceback.print_exc()
 
         # Update Supabase record with error status
-        if supabase and session_id:
+        if session_id:
             try:
                 result = save_resource_session_error(
                     supabase=supabase,
@@ -166,7 +154,7 @@ def test_text_extraction():
                     print(f"✗ Failed to update session {session_id} to 'error' status")
             except Exception as supabase_error:
                 print(f"⚠ Could not update Supabase error status: {supabase_error}")
-        elif supabase:
+        else:
             print(f"⚠ No session ID available to update with error")
 
 

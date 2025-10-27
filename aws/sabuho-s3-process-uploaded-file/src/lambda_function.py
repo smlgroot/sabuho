@@ -58,11 +58,6 @@ def lambda_handler(event, context):
                     file_path=key,
                     name=filename
                 )
-
-                if not session:
-                    print(f"[lambda_handler] ERROR: Failed to create session in Supabase")
-                    continue
-
                 session_id = session.get('id')
                 print(f"[lambda_handler] Created session: {session_id}")
 
