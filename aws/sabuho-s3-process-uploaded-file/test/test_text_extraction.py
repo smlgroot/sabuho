@@ -44,7 +44,7 @@ def test_text_extraction():
         tracemalloc.start()
         start_time = time.perf_counter()
 
-        extracted_text, extracted_text_from_images, ocr_pages = extract_text_with_pymupdf_and_ocr(pdf_buffer)
+        extracted_text = extract_text_with_pymupdf_and_ocr(pdf_buffer)
 
         # Calculate elapsed time
         end_time = time.perf_counter()
@@ -68,9 +68,14 @@ def test_text_extraction():
         # Display results
         print("RESULTS:")
         print("="*80)
-        print(f"✓ Text extracted: {len(extracted_text)} characters")
-        print(f"✓ Image text extracted: {len(extracted_text_from_images)} characters")
-        print(f"✓ OCR processed pages: {ocr_pages}")
+        print(f"✓ Total extracted text: {len(extracted_text)} characters")
+        print()
+
+        # Save extracted text to file with .ocr.txt extension (similar to Lambda)
+        output_file_path = f"{PDF_FILE_PATH}.ocr.txt"
+        with open(output_file_path, 'w', encoding='utf-8') as f:
+            f.write(extracted_text)
+        print(f"✓ Saved extracted text to: {output_file_path}")
         print()
 
         # Display extracted text preview
@@ -83,18 +88,6 @@ def test_text_extraction():
             print()
         else:
             print("⚠ No text extracted from PDF")
-            print()
-
-        # Display image text preview
-        if extracted_text_from_images:
-            print("IMAGE TEXT PREVIEW (first 500 chars):")
-            print("-"*80)
-            print(extracted_text_from_images[:500])
-            if len(extracted_text_from_images) > 500:
-                print("...")
-            print()
-        else:
-            print("⚠ No text extracted from images")
             print()
 
         print("="*80)

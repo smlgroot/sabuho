@@ -45,14 +45,11 @@ def process_single_page(doc, page_num: int, total_pages: int) -> tuple:
     return page_num, text_content, image_text_content, has_images
 
 
-def extract_text_with_pymupdf_and_ocr(pdf_buffer: bytes) -> tuple:
+def extract_text_with_pymupdf_and_ocr(pdf_buffer: bytes) -> str:
     """Extract text from PDF using PyMuPDF and OCR for images with pytesseract
 
     Returns:
-        tuple: (extracted_text, extracted_text_from_images, ocr_pages) where:
-        - extracted_text: text extracted directly from PDF using PyMuPDF
-        - extracted_text_from_images: text extracted from images using OCR
-        - ocr_pages: list of page numbers that had images processed with OCR
+        str: Combined text extracted from PDF (both direct text and OCR from images)
     """
     print(f"[START][extract_text_with_pymupdf_and_ocr] [buffer_size: {len(pdf_buffer)} bytes]")
     if not OCR_AVAILABLE:
@@ -105,11 +102,21 @@ def extract_text_with_pymupdf_and_ocr(pdf_buffer: bytes) -> tuple:
         extracted_text = "\n\n".join(text_content)
         extracted_text_from_images = "\n\n".join(image_text_content)
 
+        # Combine both text sources
+        combined_text_parts = []
+        if extracted_text:
+            combined_text_parts.append(extracted_text)
+        if extracted_text_from_images:
+            combined_text_parts.append(extracted_text_from_images)
+
+        combined_text = "\n\n".join(combined_text_parts)
+
         print(f"[END][extract_text_with_pymupdf_and_ocr] Extracted {len(extracted_text)} characters of text from {total_pages} pages")
         if extracted_text_from_images:
             print(f"[END][extract_text_with_pymupdf_and_ocr] Extracted {len(extracted_text_from_images)} characters from images on {len(ocr_pages)} pages")
+        print(f"[END][extract_text_with_pymupdf_and_ocr] Total combined text: {len(combined_text)} characters")
 
-        return extracted_text, extracted_text_from_images, ocr_pages
+        return combined_text
 
     except Exception as error:
         raise Exception(f"[extract_text_with_pymupdf_and_ocr] [error: {str(error)}]")
