@@ -45,6 +45,8 @@ def test_text_extraction():
         print("Please update PDF_FILE_PATH in this test file to point to a valid PDF")
         return
 
+    session_id = None  # Track session ID for error handling
+
     try:
         # Read PDF file into memory buffer
         with open(PDF_FILE_PATH, 'rb') as f:
@@ -56,17 +58,19 @@ def test_text_extraction():
         # Extract filename for resource_sessions
         filename = os.path.basename(PDF_FILE_PATH)
 
-        # Save initial record to Supabase with 'processing' status
+        # Create new session in Supabase with 'processing' status
         if supabase:
-            result = save_resource_session_processing_ocr(
+            session = save_resource_session_processing_ocr(
                 supabase=supabase,
                 file_path=PDF_FILE_PATH,
                 name=filename
             )
-            if result:
-                print(f"✓ Saved 'processing' status to Supabase for: {filename}")
+            if session:
+                session_id = session.get('id')
+                print(f"✓ Created new session in Supabase: {session_id}")
             else:
-                print(f"✗ Failed to save 'processing' status to Supabase for: {filename}")
+                print(f"✗ Failed to create session in Supabase for: {filename}")
+                return
             print()
 
         # Extract text using the extraction module
@@ -112,16 +116,15 @@ def test_text_extraction():
         print()
 
         # Update Supabase record with 'ocr_completed' status
-        if supabase:
+        if supabase and session_id:
             result = save_resource_session_ocr_completed(
                 supabase=supabase,
-                file_path=PDF_FILE_PATH,
-                name=filename
+                session_id=session_id
             )
             if result:
-                print(f"✓ Updated to 'ocr_completed' status in Supabase for: {filename}")
+                print(f"✓ Updated session {session_id} to 'ocr_completed' status in Supabase")
             else:
-                print(f"✗ Failed to update to 'ocr_completed' status in Supabase for: {filename}")
+                print(f"✗ Failed to update session {session_id} to 'ocr_completed' status")
             print()
 
         # Display extracted text preview
@@ -149,22 +152,22 @@ def test_text_extraction():
         traceback.print_exc()
 
         # Update Supabase record with error status
-        if supabase:
+        if supabase and session_id:
             try:
-                filename = os.path.basename(PDF_FILE_PATH)
                 result = save_resource_session_error(
                     supabase=supabase,
-                    file_path=PDF_FILE_PATH,
-                    name=filename,
+                    session_id=session_id,
                     error_message=f"{str(error)}\n\n{error_trace}"
                 )
                 print()
                 if result:
-                    print(f"✓ Updated to 'error' status in Supabase for: {filename}")
+                    print(f"✓ Updated session {session_id} to 'error' status in Supabase")
                 else:
-                    print(f"✗ Failed to update to 'error' status in Supabase for: {filename}")
+                    print(f"✗ Failed to update session {session_id} to 'error' status")
             except Exception as supabase_error:
                 print(f"⚠ Could not update Supabase error status: {supabase_error}")
+        elif supabase:
+            print(f"⚠ No session ID available to update with error")
 
 
 if __name__ == "__main__":
