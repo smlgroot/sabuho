@@ -5,8 +5,8 @@ import boto3
 from pdf_text_extraction import extract_text_with_pymupdf_and_ocr
 from supabase_client import (
     get_supabase_client,
-    save_resource_session_processing,
-    save_resource_session_completed,
+    save_resource_session_processing_ocr,
+    save_resource_session_ocr_completed,
     save_resource_session_error
 )
 
@@ -51,7 +51,7 @@ def lambda_handler(event, context):
                 filename = key.split('/')[-1]
 
                 # Save initial record to Supabase with 'processing' status
-                save_resource_session_processing(
+                save_resource_session_processing_ocr(
                     supabase=supabase,
                     file_path=key,
                     name=filename
@@ -82,8 +82,8 @@ def lambda_handler(event, context):
                 )
                 print(f"[lambda_handler] Saved extracted text to: {output_key}")
 
-                # Update Supabase record with 'completed' status
-                save_resource_session_completed(
+                # Update Supabase record with 'ocr_completed' status
+                save_resource_session_ocr_completed(
                     supabase=supabase,
                     file_path=key,
                     name=filename

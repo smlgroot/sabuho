@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from pdf_text_extraction import extract_text_with_pymupdf_and_ocr
 from supabase_client import (
     get_supabase_client,
-    save_resource_session_processing,
-    save_resource_session_completed,
+    save_resource_session_processing_ocr,
+    save_resource_session_ocr_completed,
     save_resource_session_error
 )
 
@@ -58,7 +58,7 @@ def test_text_extraction():
 
         # Save initial record to Supabase with 'processing' status
         if supabase:
-            result = save_resource_session_processing(
+            result = save_resource_session_processing_ocr(
                 supabase=supabase,
                 file_path=PDF_FILE_PATH,
                 name=filename
@@ -111,17 +111,17 @@ def test_text_extraction():
         print(f"✓ Saved extracted text to: {output_file_path}")
         print()
 
-        # Update Supabase record with 'completed' status
+        # Update Supabase record with 'ocr_completed' status
         if supabase:
-            result = save_resource_session_completed(
+            result = save_resource_session_ocr_completed(
                 supabase=supabase,
                 file_path=PDF_FILE_PATH,
                 name=filename
             )
             if result:
-                print(f"✓ Updated to 'completed' status in Supabase for: {filename}")
+                print(f"✓ Updated to 'ocr_completed' status in Supabase for: {filename}")
             else:
-                print(f"✗ Failed to update to 'completed' status in Supabase for: {filename}")
+                print(f"✗ Failed to update to 'ocr_completed' status in Supabase for: {filename}")
             print()
 
         # Display extracted text preview

@@ -56,14 +56,14 @@ def _save_resource_session(supabase: Client, file_path: str, name: str,
         return None
 
 
-def save_resource_session_processing(supabase: Client, file_path: str, name: str) -> dict:
-    """Save a resource session record with 'processing' status"""
+def save_resource_session_processing_ocr(supabase: Client, file_path: str, name: str) -> dict:
+    """Save a resource session record with 'processing' status for OCR"""
     return _save_resource_session(supabase, file_path, name, 'processing')
 
 
-def save_resource_session_completed(supabase: Client, file_path: str, name: str) -> dict:
-    """Save a resource session record with 'completed' status"""
-    return _save_resource_session(supabase, file_path, name, 'completed')
+def save_resource_session_ocr_completed(supabase: Client, file_path: str, name: str) -> dict:
+    """Save a resource session record with 'ocr_completed' status"""
+    return _save_resource_session(supabase, file_path, name, 'ocr_completed')
 
 
 def save_resource_session_error(supabase: Client, file_path: str, name: str, error_message: str) -> dict:
