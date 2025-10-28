@@ -1,5 +1,0 @@
-boto3==1.35.80
-openai==1.101.0
-supabase==2.10.0
-tiktoken==0.5.2
-awslambdaric==2.0.4
