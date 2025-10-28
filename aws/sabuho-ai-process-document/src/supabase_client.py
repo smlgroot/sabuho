@@ -153,20 +153,20 @@ def save_questions_to_db(supabase: Client, questions: list, session_id: str):
 
     for q in questions:
         # Transform options array into the format expected by DB
-        # Mark the correct answer in the options structure
+        # Mark the correct answer with [correct] suffix
         options_with_correct = []
         for i, option in enumerate(q['options']):
-            options_with_correct.append({
-                'text': option,
-                'is_correct': i == q['correct_answer_index']
-            })
+            if i == q['correct_answer_index']:
+                options_with_correct.append(f"{option} [correct]")
+            else:
+                options_with_correct.append(option)
 
         question_data = {
             'resource_session_id': session_id,
             'resource_session_domain_id': q['domain_id'],
             'type': 'multiple_options',
             'body': q['question'],
-            'options': options_with_correct,  # JSONB array
+            'options': options_with_correct,  # JSONB array of strings
             'explanation': q.get('source_text', '')
         }
 
