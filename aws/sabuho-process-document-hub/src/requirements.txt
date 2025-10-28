@@ -1,0 +1,17 @@
+# AWS SDK
+boto3==1.35.80
+
+# OCR Processing
+PyMuPDF==1.24.14
+Pillow==11.0.0
+pytesseract==0.3.13
+
+# AI Processing
+openai==1.101.0
+tiktoken==0.5.2
+
+# Database
+supabase==2.10.0
+
+# Lambda Runtime
+awslambdaric==2.0.4

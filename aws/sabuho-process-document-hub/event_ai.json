@@ -1,0 +1,20 @@
+{
+  "Records": [
+    {
+      "messageId": "22d7ff62-5dd8-5413-af33-8de9bfebbbf6",
+      "receiptHandle": "AQEBBX8nesZEXmkhsmZeyIE8iQAMig==",
+      "body": "{\"message_type\": \"ai_process\", \"resource_session_id\": \"550e8400-e29b-41d4-a716-446655440000\"}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1735000000000",
+        "SenderId": "AIDAIENQZJOLO23YVJ4VO",
+        "ApproximateFirstReceiveTimestamp": "1735000000000"
+      },
+      "messageAttributes": {},
+      "md5OfBody": "f5f79fc8ce247c0ae9f2cf342957b4e4",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-1:123456789012:sabuho-ai-processing-queue",
+      "awsRegion": "us-east-1"
+    }
+  ]
+}

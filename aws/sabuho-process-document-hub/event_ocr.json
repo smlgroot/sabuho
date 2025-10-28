@@ -1,0 +1,20 @@
+{
+  "Records": [
+    {
+      "messageId": "11d6ee51-4cc7-4302-9e22-7cd8afdaadf5",
+      "receiptHandle": "AQEBBX8nesZEXmkhsmZeyIE8iQAMig==",
+      "body": "{\"message_type\": \"ocr_process\", \"Records\": [{\"eventVersion\": \"2.1\", \"eventSource\": \"aws:s3\", \"awsRegion\": \"us-east-1\", \"eventTime\": \"2024-06-22T12:34:56.789Z\", \"eventName\": \"ObjectCreated:Put\", \"s3\": {\"s3SchemaVersion\": \"1.0\", \"bucket\": {\"name\": \"sabuho-files\"}, \"object\": {\"key\": \"uploads/test-document.pdf\", \"size\": 1024}}}]}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1735000000000",
+        "SenderId": "AIDAIENQZJOLO23YVJ4VO",
+        "ApproximateFirstReceiveTimestamp": "1735000000000"
+      },
+      "messageAttributes": {},
+      "md5OfBody": "e4e68fb7bd0e697a0ae8f1bb342846b3",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-1:123456789012:sabuho-s3-upload-queue",
+      "awsRegion": "us-east-1"
+    }
+  ]
+}
