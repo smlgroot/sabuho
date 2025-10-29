@@ -4,13 +4,15 @@ Supabase client and database operations for document processing.
 Includes operations for both OCR and AI processing stages.
 """
 import os
+import httpx
 from supabase import create_client, Client
+from supabase.lib.client_options import ClientOptions
 from datetime import datetime
 
 
 def get_supabase_client() -> Client:
     """
-    Initialize and return a Supabase client.
+    Initialize and return a Supabase client with extended timeout settings.
 
     Returns:
         Supabase client instance
@@ -26,7 +28,24 @@ def get_supabase_client() -> Client:
     if not supabase_key:
         raise ValueError("SUPABASE_SERVICE_ROLE_KEY environment variable is not set")
 
-    return create_client(supabase_url, supabase_key)
+    # Create custom httpx client with extended timeouts
+    # Using httpx.Timeout for fine-grained control: (connect, read, write, pool)
+    timeout = httpx.Timeout(
+        connect=10.0,  # Time to establish connection
+        read=60.0,     # Time to read response
+        write=60.0,    # Time to send request
+        pool=5.0       # Time to acquire connection from pool
+    )
+
+    http_client = httpx.Client(timeout=timeout)
+
+    # Configure client options with custom httpx client
+    # This is the new recommended way to set timeouts (postgrest_client_timeout is deprecated)
+    options = ClientOptions(
+        httpx_client=http_client
+    )
+
+    return create_client(supabase_url, supabase_key, options=options)
 
 
 # ============================================================================

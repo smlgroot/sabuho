@@ -1,70 +1,71 @@
-"""Simple test for PDF text extraction with static variables"""
-import sys
+"""Test for PDF text extraction with OCR."""
 import os
 import time
 import tracemalloc
+import pytest
 
-# Add the src directory to the path to import the extraction module
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-
-from pdf_text_extraction import extract_text_with_pymupdf_and_ocr
+from ocr.pdf_text_extraction import extract_text_with_pymupdf_and_ocr
 from supabase_client import (
-    get_supabase_client,
     save_resource_session_processing_ocr,
     save_resource_session_ocr_completed,
     save_resource_session_error
 )
 
 
-def test_text_extraction():
-    """Test text extraction with a static PDF file path"""
+@pytest.mark.ocr
+@pytest.mark.integration
+@pytest.mark.slow
+def test_text_extraction(supabase_client, test_pdf_path, capsys):
+    """
+    Test text extraction from a PDF file.
 
-    # Static variables - CONFIGURE THESE
-    PDF_FILE_PATH = "/Users/smlg/Downloads/compendio-familia-umf-25-tuxtla-gutierrez-chiapas-1.pdf"  # Replace with actual PDF path
+    Args:
+        supabase_client: Supabase client fixture
+        test_pdf_path: Path to test PDF file fixture
+        capsys: Pytest fixture to capture stdout/stderr
+    """
+    print("=" * 80, flush=True)
+    print("PDF Text Extraction Test", flush=True)
+    print("=" * 80, flush=True)
+    print(f"PDF File: {test_pdf_path}", flush=True)
+    print(flush=True)
 
-    print("="*80)
-    print("PDF Text Extraction Test")
-    print("="*80)
-    print(f"PDF File: {PDF_FILE_PATH}")
-    print()
-
-    # Initialize Supabase client - fail fast if not configured
-    supabase = get_supabase_client()
-    print("✓ Supabase client initialized")
-    print()
-
-    # Check if file exists
-    if not os.path.exists(PDF_FILE_PATH):
-        print(f"ERROR: PDF file not found at: {PDF_FILE_PATH}")
-        print("Please update PDF_FILE_PATH in this test file to point to a valid PDF")
-        return
-
-    session_id = None  # Track session ID for error handling
+    session_id = None
 
     try:
         # Read PDF file into memory buffer
-        with open(PDF_FILE_PATH, 'rb') as f:
+        with open(test_pdf_path, 'rb') as f:
             pdf_buffer = f.read()
 
-        print(f"✓ Loaded PDF: {len(pdf_buffer)} bytes ({len(pdf_buffer)/1024:.2f} KB)")
-        print()
+        print(f"Loaded PDF: {len(pdf_buffer)} bytes ({len(pdf_buffer)/1024:.2f} KB)", flush=True)
+        print(flush=True)
+
+        # Verify buffer is not empty
+        assert len(pdf_buffer) > 0, "PDF buffer is empty"
 
         # Extract filename for resource_sessions
-        filename = os.path.basename(PDF_FILE_PATH)
+        filename = os.path.basename(test_pdf_path)
 
         # Create new session in Supabase with 'processing' status
         session = save_resource_session_processing_ocr(
-            supabase=supabase,
-            file_path=PDF_FILE_PATH,
+            supabase=supabase_client,
+            file_path=test_pdf_path,
             name=filename
         )
+
+        # Check if session creation succeeded
+        if session is None:
+            pytest.fail("Failed to create Supabase session - connection may have timed out. Check SUPABASE_URL and network connectivity.")
+
         session_id = session.get('id')
-        print(f"✓ Created new session in Supabase: {session_id}")
-        print()
+        assert session_id is not None, "Session created but missing 'id' field"
+        print(f"Created new session in Supabase: {session_id}", flush=True)
+        print(flush=True)
 
         # Extract text using the extraction module
-        print("Starting text extraction...")
-        print("-"*80)
+        print("Starting text extraction...", flush=True)
+        print("(This may take several minutes for large PDFs with OCR)", flush=True)
+        print("-" * 80, flush=True)
 
         # Start memory tracking
         tracemalloc.start()
@@ -80,61 +81,62 @@ def test_text_extraction():
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
 
-        print("-"*80)
+        print("-" * 80)
         print()
 
         # Display performance metrics
         print("PERFORMANCE METRICS:")
-        print("="*80)
-        print(f"⏱  Execution time: {elapsed_time:.2f} seconds")
-        print(f"💾 Current memory: {current / 1024 / 1024:.2f} MB")
-        print(f"💾 Peak memory: {peak / 1024 / 1024:.2f} MB")
+        print("=" * 80)
+        print(f"Execution time: {elapsed_time:.2f} seconds")
+        print(f"Current memory: {current / 1024 / 1024:.2f} MB")
+        print(f"Peak memory: {peak / 1024 / 1024:.2f} MB")
         print()
+
+        # Verify extracted text
+        assert extracted_text is not None, "No text extracted"
+        assert len(extracted_text) > 0, "Extracted text is empty"
 
         # Display results
         print("RESULTS:")
-        print("="*80)
-        print(f"✓ Total extracted text: {len(extracted_text)} characters")
+        print("=" * 80)
+        print(f"Total extracted text: {len(extracted_text)} characters")
         print()
 
-        # Save extracted text to file with .ocr.txt extension (similar to Lambda)
-        output_file_path = f"{PDF_FILE_PATH}.ocr.txt"
+        # Save extracted text to file with .ocr.txt extension
+        output_file_path = f"{test_pdf_path}.ocr.txt"
         with open(output_file_path, 'w', encoding='utf-8') as f:
             f.write(extracted_text)
-        print(f"✓ Saved extracted text to: {output_file_path}")
+        print(f"Saved extracted text to: {output_file_path}")
         print()
+
+        # Verify file was written
+        assert os.path.exists(output_file_path), "Output file was not created"
 
         # Update Supabase record with 'ocr_completed' status
         result = save_resource_session_ocr_completed(
-            supabase=supabase,
+            supabase=supabase_client,
             session_id=session_id
         )
-        if result:
-            print(f"✓ Updated session {session_id} to 'ocr_completed' status in Supabase")
-        else:
-            print(f"✗ Failed to update session {session_id} to 'ocr_completed' status")
+        assert result is not None, "Failed to update session status"
+        print(f"Updated session {session_id} to 'ocr_completed' status in Supabase")
         print()
 
         # Display extracted text preview
-        if extracted_text:
-            print("EXTRACTED TEXT PREVIEW (first 500 chars):")
-            print("-"*80)
-            print(extracted_text[:500])
-            if len(extracted_text) > 500:
-                print("...")
-            print()
-        else:
-            print("⚠ No text extracted from PDF")
-            print()
+        print("EXTRACTED TEXT PREVIEW (first 500 chars):")
+        print("-" * 80)
+        print(extracted_text[:500])
+        if len(extracted_text) > 500:
+            print("...")
+        print()
 
-        print("="*80)
-        print("✓ Test completed successfully!")
-        print("="*80)
+        print("=" * 80)
+        print("Test completed successfully!")
+        print("=" * 80)
 
     except Exception as error:
-        print("="*80)
-        print(f"✗ ERROR: {str(error)}")
-        print("="*80)
+        print("=" * 80)
+        print(f"ERROR: {str(error)}")
+        print("=" * 80)
         import traceback
         error_trace = traceback.format_exc()
         traceback.print_exc()
@@ -143,20 +145,19 @@ def test_text_extraction():
         if session_id:
             try:
                 result = save_resource_session_error(
-                    supabase=supabase,
+                    supabase=supabase_client,
                     session_id=session_id,
                     error_message=f"{str(error)}\n\n{error_trace}"
                 )
                 print()
                 if result:
-                    print(f"✓ Updated session {session_id} to 'error' status in Supabase")
+                    print(f"Updated session {session_id} to 'error' status in Supabase")
                 else:
-                    print(f"✗ Failed to update session {session_id} to 'error' status")
+                    print(f"Failed to update session {session_id} to 'error' status")
             except Exception as supabase_error:
-                print(f"⚠ Could not update Supabase error status: {supabase_error}")
+                print(f"Could not update Supabase error status: {supabase_error}")
         else:
-            print(f"⚠ No session ID available to update with error")
+            print("No session ID available to update with error")
 
-
-if __name__ == "__main__":
-    test_text_extraction()
+        # Re-raise the exception so pytest marks the test as failed
+        pytest.fail(f"Test failed: {str(error)}")

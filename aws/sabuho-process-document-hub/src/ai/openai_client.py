@@ -68,7 +68,7 @@ Return the result as JSON."""
 
     try:
         response = client.chat.completions.create(
-            model='gpt-4o-mini',
+            model='gpt-3.5-turbo',  # Faster/cheaper for topic identification
             messages=[
                 {'role': 'system', 'content': system_prompt},
                 {'role': 'user', 'content': user_prompt}
@@ -162,7 +162,7 @@ Return the result as JSON."""
 
     try:
         response = client.chat.completions.create(
-            model='gpt-4o-mini',
+            model='gpt-4o-mini',  # Better quality for question generation
             messages=[
                 {'role': 'system', 'content': system_prompt},
                 {'role': 'user', 'content': user_prompt}

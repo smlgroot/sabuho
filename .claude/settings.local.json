@@ -28,7 +28,9 @@
       "Bash(xargs cat:*)",
       "Bash(yarn remove:*)",
       "WebFetch(domain:www.gmail.com)",
-      "WebFetch(domain:developers.meta.com)"
+      "WebFetch(domain:developers.meta.com)",
+      "Bash(pytest:*)",
+      "Bash(pip index:*)"
     ],
     "deny": [],
     "ask": []
