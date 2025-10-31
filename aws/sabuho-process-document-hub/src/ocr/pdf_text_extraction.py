@@ -1,7 +1,7 @@
 """PDF text extraction module using PyMuPDF with parallel processing"""
 import fitz  # PyMuPDF
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from ocr_processing import extract_text_from_image_with_ocr, OCR_AVAILABLE
+from ocr.ocr_processing import extract_text_from_image_with_ocr, OCR_AVAILABLE
 
 
 def process_single_page(doc, page_num: int, total_pages: int) -> tuple:

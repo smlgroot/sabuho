@@ -12,10 +12,7 @@ tiktoken==0.8.0
 
 # Database
 supabase==2.22.2
-postgrest==2.22.2  # Must match supabase version
-
-# Lambda Runtime
-awslambdaric==2.0.4
+postgrest==2.22.2
 
 # Testing
 pytest==8.3.4

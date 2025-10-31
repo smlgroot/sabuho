@@ -50,6 +50,11 @@ def lambda_handler(event, context):
 
     print(f"[lambda_handler] Processing {len(event.get('Records', []))} SQS records")
 
+    # Track processing results
+    processed_count = 0
+    failed_count = 0
+    errors = []
+
     # Process each SQS record
     for record in event.get('Records', []):
         try:
@@ -58,7 +63,10 @@ def lambda_handler(event, context):
             message_type = message.get('message_type')
 
             if not message_type:
-                print("Error: No message_type in SQS message")
+                error_msg = "No message_type in SQS message"
+                print(f"Error: {error_msg}")
+                errors.append(error_msg)
+                failed_count += 1
                 continue
 
             print(f"\n{'='*60}")
@@ -68,20 +76,47 @@ def lambda_handler(event, context):
             # Route to appropriate handler based on message_type
             if message_type == 'ocr_process':
                 process_ocr(supabase, message)
+                processed_count += 1
             elif message_type == 'ai_process':
                 process_ai(supabase, message)
+                processed_count += 1
             else:
-                print(f"Error: Unknown message_type: {message_type}")
+                error_msg = f"Unknown message_type: {message_type}"
+                print(f"Error: {error_msg}")
+                errors.append(error_msg)
+                failed_count += 1
                 continue
 
         except Exception as error:
             error_trace = traceback.format_exc()
             print(f"Error processing record: {error}")
             print(error_trace)
+            errors.append(str(error))
+            failed_count += 1
 
+    # Always return 200 to consume messages (no retries)
+    # But include processing statistics and errors for monitoring
+    total_records = len(event.get('Records', []))
+
+    response_body = {
+        'total': total_records,
+        'processed': processed_count,
+        'failed': failed_count
+    }
+
+    if failed_count > 0:
+        response_body['errors'] = errors
+        if processed_count == 0:
+            response_body['message'] = 'All records failed to process'
+        else:
+            response_body['message'] = 'Partial processing completed'
+    else:
+        response_body['message'] = 'Processing completed successfully'
+
+    # Always return 200 so SQS/Lambda deletes the message
     return {
         'statusCode': 200,
-        'body': json.dumps({'message': 'Processing completed'})
+        'body': json.dumps(response_body)
     }
 
 
@@ -94,8 +129,12 @@ def process_ocr(supabase, message: dict):
         message: SQS message containing S3 event
     """
     session_id = None  # Track session ID for error handling
-    s3_client = boto3.client('s3')
-    sqs_client = boto3.client('sqs')
+
+    # Get AWS configuration from environment
+    aws_region = os.getenv('AWS_REGION', 'us-east-1')
+
+    s3_client = boto3.client('s3', region_name=aws_region)
+    sqs_client = boto3.client('sqs', region_name=aws_region)
 
     # Get output queue URL from environment
     output_queue_url = os.getenv('OUTPUT_QUEUE_URL')
@@ -284,15 +323,17 @@ def download_ocr_text_from_s3(resource_session: dict) -> str:
 
     # OCR text is stored with .ocr.txt extension
     if not file_path.endswith('.ocr.txt'):
-        ocr_file_path = file_path.replace('.pdf', '.ocr.txt')
+        # OCR process appends .ocr.txt to the original filename
+        ocr_file_path = f"{file_path}.ocr.txt"
     else:
         ocr_file_path = file_path
 
     # Download from S3
     s3_bucket = os.getenv('AWS_S3_BUCKET', 'sabuho-files')
+    aws_region = os.getenv('AWS_REGION', 'us-east-1')
     print(f"Downloading from S3: bucket={s3_bucket}, key={ocr_file_path}")
 
-    s3_client = boto3.client('s3')
+    s3_client = boto3.client('s3', region_name=aws_region)
 
     try:
         response = s3_client.get_object(Bucket=s3_bucket, Key=ocr_file_path)

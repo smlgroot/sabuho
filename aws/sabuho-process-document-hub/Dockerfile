@@ -1,25 +1,31 @@
-# Dockerfile
 FROM ubuntu:22.04
 
-# System deps
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      python3 python3-pip tesseract-ocr \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
 
-# Install Lambda Runtime Interface Client (required for Lambda execution)
-RUN pip3 install awslambdaric
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /var/task
+WORKDIR /app
 
-# Copy application code
-COPY src/ /var/task/
+# Copy and install Python dependencies
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies
-RUN pip3 install -r requirements.txt
+# Copy source code
+COPY src/ .
 
-# ENTRYPOINT runs the Lambda Runtime Interface Client
-# CMD points to the unified Lambda handler
-ENTRYPOINT ["python3", "-m", "awslambdaric"]
-CMD ["lambda_function.lambda_handler"]
+# Set Python path so imports work correctly
+ENV PYTHONPATH=/app
+
+# Default command
+CMD ["python3", "main.py"]

@@ -3,8 +3,8 @@ Question generation module - generates quiz questions from topics.
 This module is designed to be testable independently.
 """
 import time
-from openai_client import create_openai_client, call_openai_for_questions
-from text_processor import create_batches, format_batch_content
+from ai.openai_client import create_openai_client, call_openai_for_questions
+from ai.text_processor import create_batches, format_batch_content
 
 
 # Rate limiting configuration (OpenAI gpt-4o-mini limits)
