@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
 Main entry point for Sabuho Document Processing Hub.
+
 Supports two execution modes:
-1. Production SQS Mode - Long-running SQS processor for ECS deployment
-2. Development Local Mode - Single test execution for local development
+1. Production Mode - Long-running SQS processor for ECS deployment
+2. Local Mode - Single test execution for local development
+
+Processes document messages for OCR and AI analysis without Lambda dependencies.
 """
 
 import os
@@ -20,8 +23,8 @@ from concurrent.futures import ThreadPoolExecutor
 import boto3
 from botocore.config import Config
 
-# Import the existing lambda_function for backward compatibility
-from lambda_function import lambda_handler
+# Import the document message processor
+from message_processor import DocumentMessageProcessor
 
 # Configure logging
 logging.basicConfig(
@@ -66,7 +69,12 @@ class SQSProcessor:
             retries={'max_attempts': 3, 'mode': 'adaptive'}
         )
 
-        self.sqs = boto3.client('sqs', config=config)
+        # Support LocalStack endpoint (optional)
+        endpoint_url = os.environ.get('AWS_ENDPOINT_URL')
+        self.sqs = boto3.client('sqs', config=config, endpoint_url=endpoint_url)
+
+        # Initialize the document message processor
+        self.message_processor = DocumentMessageProcessor()
 
         logger.info(f"SQS Processor initialized for queue: {queue_url}")
 
@@ -75,40 +83,22 @@ class SQSProcessor:
         message_id = message.get('MessageId', 'unknown')
 
         try:
-            # Convert SQS message to Lambda event format
-            event = {
-                'Records': [{
-                    'body': message['Body'],
-                    'receiptHandle': message['ReceiptHandle'],
-                    'messageId': message_id,
-                    'attributes': message.get('Attributes', {}),
-                    'messageAttributes': message.get('MessageAttributes', {})
-                }]
-            }
-
-            # Use the existing lambda handler
-            context = type('Context', (), {
-                'aws_request_id': message_id,
-                'invoked_function_arn': 'arn:aws:lambda:local:000000000000:function:sabuho-processor',
-                'get_remaining_time_in_millis': lambda: 300000  # 5 minutes
-            })()
+            # Parse the message body
+            message_body = json.loads(message['Body'])
 
             logger.info(f"Processing message: {message_id}")
-            result = lambda_handler(event, context)
+
+            # Process the message using the document processor
+            result = self.message_processor.process_message(message_body)
 
             # Log the result
-            result_body = json.loads(result.get('body', '{}'))
-            if result_body.get('failed', 0) > 0:
-                logger.warning(
-                    f"Message processed with errors: {message_id} - "
-                    f"Processed: {result_body.get('processed', 0)}, "
-                    f"Failed: {result_body.get('failed', 0)}"
-                )
-                if result_body.get('errors'):
-                    logger.error(f"Errors: {result_body['errors']}")
-            else:
+            if result.success:
                 logger.info(f"Successfully processed message: {message_id}")
+            else:
+                logger.error(f"Message processing failed: {message_id} - Error: {result.error}")
 
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse message body for {message_id}: {e}", exc_info=True)
         except Exception as e:
             logger.error(f"Error processing message {message_id}: {e}", exc_info=True)
 
@@ -206,13 +196,6 @@ def run_local_test():
     logger.info("LOCAL TEST MODE - Testing document processor")
     logger.info("=" * 80)
 
-    # Create mock context
-    context = type('Context', (), {
-        'aws_request_id': 'local-test-request',
-        'invoked_function_arn': 'arn:aws:lambda:local:000000000000:function:sabuho-processor',
-        'get_remaining_time_in_millis': lambda: 300000
-    })()
-
     # Get test parameters from environment - all required, will raise KeyError if not set
     try:
         bucket = os.environ['AWS_S3_BUCKET']
@@ -222,16 +205,14 @@ def run_local_test():
         logger.error(f"Required environment variable not set: {e}")
         raise
 
-    
-
     logger.info(f"Test S3 Bucket: {bucket}")
     logger.info(f"Test File Path: {file_path}")
     logger.info(f"Test Message Type: {message_type}")
     logger.info("-" * 80)
 
-    # Create test event in the format expected by lambda_handler
-    # For ocr_process: needs S3 event structure
+    # Create test message body
     if message_type == 'ocr_process':
+        # For ocr_process: needs S3 event structure
         message_body = {
             'message_type': 'ocr_process',
             'Records': [{
@@ -257,26 +238,22 @@ def run_local_test():
         logger.error(f"Unknown message_type: {message_type}")
         return
 
-    event = {
-        'Records': [{
-            'body': json.dumps(message_body),
-            'receiptHandle': 'local-test-receipt',
-            'messageId': 'local-test-msg-001'
-        }]
-    }
-
-    # Run the lambda handler
+    # Initialize the message processor and run the test
     try:
-        result = lambda_handler(event, context)
+        processor = DocumentMessageProcessor()
+        logger.info("Document processor initialized successfully")
+
+        result = processor.process_message(message_body)
+
         logger.info("=" * 80)
         logger.info("TEST RESULT:")
-        logger.info(json.dumps(result, indent=2))
+        logger.info(json.dumps(result.to_dict(), indent=2))
         logger.info("=" * 80)
 
-        if result.get('statusCode') == 200:
+        if result.success:
             logger.info("✓ Test PASSED")
         else:
-            logger.error("✗ Test FAILED")
+            logger.error(f"✗ Test FAILED: {result.error}")
     except Exception as e:
         logger.error(f"✗ Test FAILED with exception: {e}", exc_info=True)
 
