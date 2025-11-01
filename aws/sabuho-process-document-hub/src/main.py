@@ -56,8 +56,9 @@ class GracefulShutdown:
 class SQSProcessor:
     """Process messages from SQS queue for Production mode."""
 
-    def __init__(self, queue_url: str, max_workers: int = 4):
-        self.queue_url = queue_url
+    def __init__(self, s3_events_queue_url: str, processing_queue_url: str, max_workers: int = 4):
+        self.s3_events_queue_url = s3_events_queue_url
+        self.processing_queue_url = processing_queue_url
         self.max_workers = max_workers
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
         self.shutdown_handler = GracefulShutdown()
@@ -69,23 +70,73 @@ class SQSProcessor:
             retries={'max_attempts': 3, 'mode': 'adaptive'}
         )
 
-        # Support LocalStack endpoint (optional)
-        endpoint_url = os.environ.get('AWS_ENDPOINT_URL')
-        self.sqs = boto3.client('sqs', config=config, endpoint_url=endpoint_url)
-
-        # Get output queue URL for routing messages between OCR and AI
-        self.output_queue_url = os.environ['OUTPUT_QUEUE_URL']  # Required - will raise KeyError if not set
+        self.sqs = boto3.client('sqs', config=config)
 
         # Initialize the document processors
         self.ocr_processor = OCRProcessor()
         self.ai_processor = AIProcessor()
 
-        logger.info(f"SQS Processor initialized for queue: {queue_url}")
-        logger.info(f"Output queue URL: {self.output_queue_url}")
+        logger.info(f"SQS Processor initialized")
+        logger.info(f"S3 Events Queue: {s3_events_queue_url}")
+        logger.info(f"Processing Queue (FIFO): {processing_queue_url}")
+
+    def _transform_and_enqueue_s3_events(self, s3_event_message: Dict[str, Any]):
+        """
+        Transform S3 event records into simplified messages and send to processing queue.
+
+        Args:
+            s3_event_message: Raw S3 event message containing multiple Records
+        """
+        try:
+            records = s3_event_message.get('Records', [])
+
+            if not records:
+                logger.warning("No Records found in S3 event message")
+                return
+
+            logger.info(f"Processing {len(records)} S3 event records")
+
+            # Transform each S3 event record into simplified message
+            for record in records:
+                try:
+                    s3_info = record.get('s3', {})
+                    bucket = s3_info.get('bucket', {}).get('name')
+                    key = s3_info.get('object', {}).get('key')
+
+                    if not key:
+                        logger.error(f"Missing key in S3 record: {record}")
+                        continue
+
+                    # Create simplified message for OCR processing
+                    simplified_message = {
+                        'message_type': 'ocr_process',
+                        'key': key
+                    }
+
+                    # Send to FIFO processing queue
+                    # Use the S3 key as MessageGroupId to ensure ordering per file
+                    message_group_id = key.replace('/', '_')  # FIFO requires valid MessageGroupId
+
+                    logger.info(f"Enqueueing OCR message for key: {key}")
+                    self.sqs.send_message(
+                        QueueUrl=self.processing_queue_url,
+                        MessageBody=json.dumps(simplified_message),
+                        MessageGroupId=message_group_id,
+                        MessageDeduplicationId=f"{key}_{int(time.time() * 1000)}"  # Unique dedup ID
+                    )
+                    logger.debug(f"Enqueued message to processing queue for key: {key}")
+
+                except Exception as e:
+                    logger.error(f"Failed to transform/enqueue S3 record: {e}", exc_info=True)
+                    # Continue processing other records
+
+        except Exception as e:
+            logger.error(f"Failed to process S3 event records: {e}", exc_info=True)
+            raise
 
     def _send_ai_message(self, session_id: str):
         """
-        Send AI processing message to output queue.
+        Send AI processing message to processing queue.
 
         Args:
             session_id: Resource session ID to process
@@ -96,18 +147,61 @@ class SQSProcessor:
                 'resource_session_id': session_id
             }
 
-            logger.info(f"Sending AI processing message for session {session_id} to queue: {self.output_queue_url}")
+            # Use session_id as MessageGroupId for FIFO ordering
+            logger.info(f"Sending AI processing message for session {session_id} to processing queue")
             self.sqs.send_message(
-                QueueUrl=self.output_queue_url,
-                MessageBody=json.dumps(ai_message)
+                QueueUrl=self.processing_queue_url,
+                MessageBody=json.dumps(ai_message),
+                MessageGroupId=session_id,
+                MessageDeduplicationId=f"{session_id}_ai_{int(time.time() * 1000)}"
             )
             logger.debug(f"AI message sent successfully for session {session_id}")
         except Exception as e:
             logger.error(f"Failed to send AI message for session {session_id}: {e}", exc_info=True)
             raise
 
-    def process_message(self, message: Dict[str, Any]) -> bool:
-        """Process a single SQS message. Always consumes the message (no retries)."""
+    def process_s3_event_message(self, message: Dict[str, Any], queue_url: str) -> bool:
+        """
+        Process a single S3 event message from the S3 events queue.
+        Transforms S3 events and enqueues simplified messages to processing queue.
+        """
+        message_id = message.get('MessageId', 'unknown')
+
+        try:
+            # Parse the message body (S3 event format)
+            message_body = json.loads(message['Body'])
+
+            logger.info(f"Processing S3 event message: {message_id}")
+
+            # Transform and enqueue to processing queue
+            self._transform_and_enqueue_s3_events(message_body)
+
+            logger.info(f"Successfully transformed and enqueued S3 events from message: {message_id}")
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse S3 event message body for {message_id}: {e}", exc_info=True)
+        except Exception as e:
+            logger.error(f"Error processing S3 event message {message_id}: {e}", exc_info=True)
+
+        finally:
+            # Always delete message immediately after transformation to avoid reprocessing
+            try:
+                self.sqs.delete_message(
+                    QueueUrl=queue_url,
+                    ReceiptHandle=message['ReceiptHandle']
+                )
+                logger.debug(f"Deleted S3 event message from queue: {message_id}")
+            except Exception as delete_error:
+                logger.error(f"Failed to delete S3 event message {message_id}: {delete_error}")
+                return False
+
+        return True
+
+    def process_processing_message(self, message: Dict[str, Any], queue_url: str) -> bool:
+        """
+        Process a single message from the processing queue (OCR/AI messages).
+        Always consumes the message (no retries).
+        """
         message_id = message.get('MessageId', 'unknown')
 
         try:
@@ -116,7 +210,7 @@ class SQSProcessor:
             message_type = message_body.get('message_type')
 
             if not message_type:
-                logger.error(f"No message_type in message: {message_id}")
+                logger.error(f"No message_type in processing message: {message_id}")
                 return True
 
             logger.info(f"Processing message: {message_id} - Type: {message_type}")
@@ -125,7 +219,7 @@ class SQSProcessor:
             if message_type == 'ocr_process':
                 result = self.ocr_processor.process(message_body)
 
-                # If OCR succeeded, send AI processing message to output queue
+                # If OCR succeeded, send AI processing message to processing queue
                 if result.success:
                     session_id = result.data.get('session_id')
                     self._send_ai_message(session_id)
@@ -147,7 +241,7 @@ class SQSProcessor:
                 logger.error(f"Unknown message_type: {message_type} in message: {message_id}")
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse message body for {message_id}: {e}", exc_info=True)
+            logger.error(f"Failed to parse processing message body for {message_id}: {e}", exc_info=True)
         except Exception as e:
             logger.error(f"Error processing message {message_id}: {e}", exc_info=True)
 
@@ -155,51 +249,79 @@ class SQSProcessor:
             # Always delete message (no retries) regardless of processing result
             try:
                 self.sqs.delete_message(
-                    QueueUrl=self.queue_url,
+                    QueueUrl=queue_url,
                     ReceiptHandle=message['ReceiptHandle']
                 )
-                logger.debug(f"Deleted message from queue: {message_id}")
+                logger.debug(f"Deleted processing message from queue: {message_id}")
             except Exception as delete_error:
-                logger.error(f"Failed to delete message {message_id}: {delete_error}")
+                logger.error(f"Failed to delete processing message {message_id}: {delete_error}")
                 return False
 
         return True
 
     def poll_messages(self):
-        """Poll SQS queue for messages."""
-        logger.info("Starting SQS polling...")
+        """Poll both SQS queues for messages."""
+        logger.info("Starting SQS polling for both queues...")
 
         while not self.shutdown_handler.is_shutdown_requested():
             try:
-                # Long polling for messages
-                response = self.sqs.receive_message(
-                    QueueUrl=self.queue_url,
+                # Poll S3 events queue
+                s3_response = self.sqs.receive_message(
+                    QueueUrl=self.s3_events_queue_url,
                     MaxNumberOfMessages=min(10, self.max_workers),
-                    WaitTimeSeconds=20,  # Long polling
-                    VisibilityTimeout=300,  # 5 minutes
+                    WaitTimeSeconds=5,  # Shorter polling for S3 events
+                    VisibilityTimeout=60,  # 1 minute (transformation is quick)
                     AttributeNames=['All'],
                     MessageAttributeNames=['All']
                 )
 
-                messages = response.get('Messages', [])
+                s3_messages = s3_response.get('Messages', [])
 
-                if messages:
-                    logger.info(f"Received {len(messages)} messages from SQS")
+                if s3_messages:
+                    logger.info(f"Received {len(s3_messages)} S3 event messages")
 
-                    # Process messages in parallel
+                    # Process S3 event messages (transform and enqueue)
+                    for message in s3_messages:
+                        future = self.executor.submit(
+                            self.process_s3_event_message,
+                            message,
+                            self.s3_events_queue_url
+                        )
+
+                # Poll processing queue (FIFO)
+                processing_response = self.sqs.receive_message(
+                    QueueUrl=self.processing_queue_url,
+                    MaxNumberOfMessages=min(10, self.max_workers),
+                    WaitTimeSeconds=20,  # Long polling for processing queue
+                    VisibilityTimeout=300,  # 5 minutes (OCR/AI takes longer)
+                    AttributeNames=['All'],
+                    MessageAttributeNames=['All']
+                )
+
+                processing_messages = processing_response.get('Messages', [])
+
+                if processing_messages:
+                    logger.info(f"Received {len(processing_messages)} processing messages")
+
+                    # Process messages from processing queue in parallel
                     futures = []
-                    for message in messages:
-                        future = self.executor.submit(self.process_message, message)
+                    for message in processing_messages:
+                        future = self.executor.submit(
+                            self.process_processing_message,
+                            message,
+                            self.processing_queue_url
+                        )
                         futures.append(future)
 
-                    # Wait for all messages to be processed
+                    # Wait for all processing messages to complete
                     for future in futures:
                         try:
                             future.result(timeout=300)  # 5 minute timeout
                         except Exception as e:
-                            logger.error(f"Error in message processing: {e}")
-                else:
-                    logger.debug("No messages available, continuing to poll...")
+                            logger.error(f"Error in processing message: {e}")
+
+                if not s3_messages and not processing_messages:
+                    logger.debug("No messages available from either queue, continuing to poll...")
 
             except Exception as e:
                 logger.error(f"Error polling SQS: {e}", exc_info=True)
@@ -261,15 +383,10 @@ def run_local_test():
 
     # Create test message body
     if message_type == 'ocr_process':
-        # For ocr_process: needs S3 event structure
+        # For ocr_process: needs simplified message with key only
         message_body = {
             'message_type': 'ocr_process',
-            'Records': [{
-                's3': {
-                    'bucket': {'name': bucket},
-                    'object': {'key': file_path}
-                }
-            }]
+            'key': file_path
         }
     elif message_type == 'ai_process':
         # For ai_process: needs resource_session_id
@@ -331,13 +448,16 @@ def main():
     if mode == 'production':
         # SQS mode - long-running SQS processor for ECS deployment
         try:
-            queue_url = os.environ['SQS_QUEUE_URL']
+            s3_events_queue_url = os.environ['S3_EVENTS_QUEUE_URL']
+            processing_queue_url = os.environ['PROCESSING_QUEUE_URL']
             max_workers = int(os.environ['MAX_WORKERS'])
         except KeyError as e:
             logger.error(f"Required environment variable not set: {e}")
             sys.exit(1)
 
-        logger.info(f"Starting SQS processor for queue: {queue_url}")
+        logger.info(f"Starting SQS processor")
+        logger.info(f"S3 Events Queue: {s3_events_queue_url}")
+        logger.info(f"Processing Queue: {processing_queue_url}")
 
         # Start health check server in background for Production health checks
         import threading
@@ -346,7 +466,8 @@ def main():
 
         # Start SQS processor
         processor = SQSProcessor(
-            queue_url=queue_url,
+            s3_events_queue_url=s3_events_queue_url,
+            processing_queue_url=processing_queue_url,
             max_workers=max_workers
         )
         processor.poll_messages()

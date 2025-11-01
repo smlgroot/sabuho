@@ -67,7 +67,7 @@ class OCRProcessor:
         Process OCR for a PDF file from S3.
 
         Args:
-            message: Message containing S3 event structure with bucket and key
+            message: Simplified message containing only 'key' property
 
         Returns:
             ProcessingResult with session_id in data if successful
@@ -75,28 +75,28 @@ class OCRProcessor:
         session_id = None  # Track session ID for error handling
 
         try:
-            # Parse S3 event from message
-            s3_event = message
+            # Get key from simplified message format
+            key = message.get('key')
 
-            # Handle both direct S3 event format and wrapped format
-            if 'Records' in s3_event:
-                record = s3_event['Records'][0]
-                s3_info = record.get('s3', {})
-            else:
-                # Direct format without Records wrapper
-                s3_info = s3_event.get('s3', {})
+            if not key:
+                return ProcessingResult(False, f"No 'key' property in message: {message}")
 
-            bucket = s3_info.get('bucket', {}).get('name')
-            key = s3_info.get('object', {}).get('key')
-
-            if not bucket or not key:
-                return ProcessingResult(False, f"Invalid S3 event structure: bucket={bucket}, key={key}")
+            # Get bucket from environment variable
+            bucket = os.environ.get('AWS_S3_BUCKET')
+            if not bucket:
+                return ProcessingResult(False, "AWS_S3_BUCKET environment variable not set")
 
             print(f"[OCRProcessor] Processing OCR for: s3://{bucket}/{key}")
 
             # Create resource session with 'processing' status
             resource_name = os.path.basename(key)
+
+            print(f"[OCRProcessor] Creating resource session with name: {resource_name}")
             resource_session = save_resource_session_processing_ocr(self.supabase, key, resource_name)
+
+            if not resource_session:
+                return ProcessingResult(False, "Failed to create resource session in database")
+
             session_id = resource_session['id']
             print(f"[OCRProcessor] Created resource_session with id: {session_id}")
 
