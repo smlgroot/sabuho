@@ -23,12 +23,12 @@ from concurrent.futures import ThreadPoolExecutor
 import boto3
 from botocore.config import Config
 
-# Import the document message processor
-from message_processor import DocumentMessageProcessor
+# Import the document message processors
+from message_processor import OCRProcessor, AIProcessor, ProcessingResult
 
 # Configure logging
 logging.basicConfig(
-    level=os.environ.get('LOG_LEVEL') or 'INFO',  # Allow LOG_LEVEL to be optional for logging convenience
+    level=os.environ.get('LOG_LEVEL', 'INFO'),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -73,10 +73,38 @@ class SQSProcessor:
         endpoint_url = os.environ.get('AWS_ENDPOINT_URL')
         self.sqs = boto3.client('sqs', config=config, endpoint_url=endpoint_url)
 
-        # Initialize the document message processor
-        self.message_processor = DocumentMessageProcessor()
+        # Get output queue URL for routing messages between OCR and AI
+        self.output_queue_url = os.environ['OUTPUT_QUEUE_URL']  # Required - will raise KeyError if not set
+
+        # Initialize the document processors
+        self.ocr_processor = OCRProcessor()
+        self.ai_processor = AIProcessor()
 
         logger.info(f"SQS Processor initialized for queue: {queue_url}")
+        logger.info(f"Output queue URL: {self.output_queue_url}")
+
+    def _send_ai_message(self, session_id: str):
+        """
+        Send AI processing message to output queue.
+
+        Args:
+            session_id: Resource session ID to process
+        """
+        try:
+            ai_message = {
+                'message_type': 'ai_process',
+                'resource_session_id': session_id
+            }
+
+            logger.info(f"Sending AI processing message for session {session_id} to queue: {self.output_queue_url}")
+            self.sqs.send_message(
+                QueueUrl=self.output_queue_url,
+                MessageBody=json.dumps(ai_message)
+            )
+            logger.debug(f"AI message sent successfully for session {session_id}")
+        except Exception as e:
+            logger.error(f"Failed to send AI message for session {session_id}: {e}", exc_info=True)
+            raise
 
     def process_message(self, message: Dict[str, Any]) -> bool:
         """Process a single SQS message. Always consumes the message (no retries)."""
@@ -85,17 +113,38 @@ class SQSProcessor:
         try:
             # Parse the message body
             message_body = json.loads(message['Body'])
+            message_type = message_body.get('message_type')
 
-            logger.info(f"Processing message: {message_id}")
+            if not message_type:
+                logger.error(f"No message_type in message: {message_id}")
+                return True
 
-            # Process the message using the document processor
-            result = self.message_processor.process_message(message_body)
+            logger.info(f"Processing message: {message_id} - Type: {message_type}")
 
-            # Log the result
-            if result.success:
-                logger.info(f"Successfully processed message: {message_id}")
+            # Route to appropriate processor based on message_type
+            if message_type == 'ocr_process':
+                result = self.ocr_processor.process(message_body)
+
+                # If OCR succeeded, send AI processing message to output queue
+                if result.success:
+                    session_id = result.data.get('session_id')
+                    self._send_ai_message(session_id)
+                    logger.info(f"Successfully processed OCR and queued AI for session: {session_id}")
+                else:
+                    logger.error(f"OCR processing failed: {message_id} - Error: {result.error}")
+
+            elif message_type == 'ai_process':
+                result = self.ai_processor.process(message_body)
+
+                if result.success:
+                    session_id = result.data.get('session_id')
+                    questions_count = result.data.get('questions_count', 0)
+                    logger.info(f"Successfully processed AI for session {session_id} - Generated {questions_count} questions")
+                else:
+                    logger.error(f"AI processing failed: {message_id} - Error: {result.error}")
+
             else:
-                logger.error(f"Message processing failed: {message_id} - Error: {result.error}")
+                logger.error(f"Unknown message_type: {message_type} in message: {message_id}")
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse message body for {message_id}: {e}", exc_info=True)
@@ -238,12 +287,28 @@ def run_local_test():
         logger.error(f"Unknown message_type: {message_type}")
         return
 
-    # Initialize the message processor and run the test
+    # Initialize the appropriate processor and run the test
     try:
-        processor = DocumentMessageProcessor()
-        logger.info("Document processor initialized successfully")
+        if message_type == 'ocr_process':
+            processor = OCRProcessor()
+            logger.info("OCR processor initialized successfully")
+            result = processor.process(message_body)
 
-        result = processor.process_message(message_body)
+            # If OCR succeeded and we want to continue to AI, we could do it here
+            # For now, just report the OCR result
+            if result.success:
+                session_id = result.data.get('session_id')
+                logger.info(f"OCR completed successfully. Session ID: {session_id}")
+                logger.info("Note: In production, AI processing message would be sent to SQS")
+
+        elif message_type == 'ai_process':
+            processor = AIProcessor()
+            logger.info("AI processor initialized successfully")
+            result = processor.process(message_body)
+
+            if result.success:
+                questions_count = result.data.get('questions_count', 0)
+                logger.info(f"AI processing completed. Generated {questions_count} questions")
 
         logger.info("=" * 80)
         logger.info("TEST RESULT:")
