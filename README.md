@@ -22,14 +22,20 @@ supabase db push
 
 
 ---------------------------------------------------------------------
-# Heroku
-heroku status
-heroku ps
-heroku ps:scale web=1 --app orto-pdf-processor
-heroku ps
-heroku ps
-heroku logs --app orto-pdf-processor --tail
-heroku apps:info --app orto-pdf-processor
+# AWS ECS Document Processing
+
+# Check ECS service status
+aws ecs describe-services --cluster sabuho-cluster --services sabuho-processor --region us-east-1
+
+# View ECS task logs (CloudWatch)
+aws logs tail /ecs/sabuho-processor --follow --region us-east-1
+
+# Check SQS queue status
+aws sqs get-queue-attributes --queue-url <S3_EVENTS_QUEUE_URL> --attribute-names All --region us-east-1
+aws sqs get-queue-attributes --queue-url <PROCESSING_QUEUE_URL> --attribute-names All --region us-east-1
+
+# Deploy updated Lambda (presign-url)
+# See aws/sabuho-presign-url/README.md for deployment instructions
 
 ---------------------------------------------------------------------
 # Display dexie tables

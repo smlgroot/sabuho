@@ -5,10 +5,7 @@ import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { usePostHog } from "@/components/PostHogProvider";
 import {
-  createResourceSession,
-  uploadResourceSessionFile,
   uploadFileToS3,
-  startResourceSessionProcessing,
   pollResourceSessionStatus,
   fetchResourceSessionDomains
 } from "@/services/resourceSessionService";
@@ -34,7 +31,7 @@ export default function HomePage() {
   const [resultExpanded, setResultExpanded] = useState(false);
   const [topics, setTopics] = useState([]);
   const [questionsCount, setQuestionsCount] = useState(0);
-  const [resourceSessionId, setResourceSessionId] = useState(null);
+  const [s3Key, setS3Key] = useState(null);
   const [processingError, setProcessingError] = useState(null);
 
   const handleMainButton = () => {
@@ -125,7 +122,7 @@ export default function HomePage() {
     setQuizGenerated(false);
     setTopics([]);
     setQuestionsCount(0);
-    setResourceSessionId(null);
+    setS3Key(null);
     setProcessingError(null);
 
     trackEvent('file_selected', { props: { fileType: file.type, fileName: file.name } });
@@ -148,6 +145,7 @@ export default function HomePage() {
       });
 
       // Upload file to S3 using presigned URL
+      // S3 key is unique per upload (includes UUID)
       const { key, jobId, error: uploadError } = await uploadFileToS3(uploadedFile);
 
       if (uploadError) {
@@ -155,46 +153,35 @@ export default function HomePage() {
       }
 
       console.log('File uploaded to S3:', { key, jobId });
+      setS3Key(key);
 
-      // Create resource_session record with S3 key
-      const { data: session, error: sessionError } = await createResourceSession({
-        name: uploadedFile.name,
-        file_path: key, // S3 key instead of Supabase Storage path
-        mime_type: uploadedFile.type,
-        status: 'pending'
-      });
-
-      if (sessionError) {
-        throw new Error(`Failed to create resource session: ${sessionError.message}`);
-      }
-
-      const sessionId = session.id;
-      setResourceSessionId(sessionId);
-
-      console.log('Resource session created:', sessionId);
       trackEvent('file_uploaded', {
         props: {
           fileType: uploadedFile.type,
           fileName: uploadedFile.name,
-          sessionId: sessionId,
           s3Key: key,
           jobId: jobId
         }
       });
 
-      // Start processing via Heroku service
-      await startResourceSessionProcessing(sessionId);
-      console.log('Processing started for session:', sessionId);
+      // S3 upload triggers event -> SQS -> ECS backend processing
+      // Backend will create resource_session record automatically
+      // We poll by S3 key (which is unique per upload)
+      console.log('Polling for processing completion by S3 key:', key);
 
-      // Poll for completion
-      const completedSession = await pollResourceSessionStatus(sessionId, {
-        intervalMs: 2000,
-        timeoutMs: 300000, // 5 minutes
-        onStatusChange: (status, sessionData) => {
-          console.log('Status changed to:', status);
-          setCurrentProcessingState(status);
+      // Poll for completion using S3 key
+      const completedSession = await pollResourceSessionStatus(
+        { filePath: key },
+        {
+          intervalMs: 2000,
+          timeoutMs: 300000, // 5 minutes
+          maxWaitForRecord: 60000, // 1 minute to wait for backend to create record
+          onStatusChange: (status, sessionData) => {
+            console.log('Status changed to:', status);
+            setCurrentProcessingState(status);
+          }
         }
-      });
+      );
 
       console.log('Processing completed:', completedSession);
 
@@ -213,7 +200,7 @@ export default function HomePage() {
         props: {
           fileType: uploadedFile.type,
           topicsCount: topicsData.length,
-          sessionId: sessionId
+          sessionId: completedSession.id
         }
       });
 
@@ -271,7 +258,7 @@ export default function HomePage() {
     setResultExpanded(false);
     setTopics([]);
     setQuestionsCount(0);
-    setResourceSessionId(null);
+    setS3Key(null);
     setProcessingError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";

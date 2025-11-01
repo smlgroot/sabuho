@@ -35,6 +35,22 @@ export async function fetchResourceSession(sessionId) {
   return { data, error }
 }
 
+/**
+ * Fetch resource session by S3 file path (unique key)
+ * The S3 key includes a UUID, making it unique per upload
+ * @param {string} filePath - S3 key (e.g., "uploads/2024-01-15/uuid/document.pdf")
+ * @returns {Promise<object>} - { data, error }
+ */
+export async function fetchResourceSessionByFilePath(filePath) {
+  const { data, error } = await supabase
+    .from('resource_sessions')
+    .select('*')
+    .eq('file_path', filePath)
+    .maybeSingle()
+
+  return { data, error }
+}
+
 export async function updateResourceSession(sessionId, updates) {
   const { data, error } = await supabase
     .from('resource_sessions')
@@ -51,16 +67,26 @@ export async function updateResourceSession(sessionId, updates) {
 
 /**
  * Get presigned URL from AWS Lambda for S3 upload
+ * @param {string} filename - Original filename
+ * @param {string} contentType - MIME type (default: 'application/pdf')
  * @returns {Promise<object>} - { uploadUrl, key, jobId }
  */
-export async function getS3PresignedUrl() {
-  const lambdaUrl = 'https://nadlzhoqp0.execute-api.us-east-1.amazonaws.com/dev/presign-url'
+export async function getS3PresignedUrl(filename = 'document.pdf', contentType = 'application/pdf') {
+  const lambdaUrl = import.meta.env.VITE_PRESIGN_URL_API
+
+  if (!lambdaUrl) {
+    throw new Error('VITE_PRESIGN_URL_API environment variable is not set')
+  }
 
   const response = await fetch(lambdaUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-    }
+    },
+    body: JSON.stringify({
+      filename,
+      contentType
+    })
   })
 
   if (!response.ok) {
@@ -92,17 +118,17 @@ async function calculateSHA256(file) {
  */
 export async function uploadFileToS3(file) {
   try {
-    // Get presigned URL from Lambda
-    const { uploadUrl, key, jobId } = await getS3PresignedUrl()
+    // Get presigned URL from Lambda with filename and content type
+    const { uploadUrl, key, jobId } = await getS3PresignedUrl(file.name, file.type)
 
-    // Calculate SHA256 checksum
+    // Calculate SHA256 checksum (currently disabled)
     // const checksum = await calculateSHA256(file)
 
-    // Upload to S3 with checksum
+    // Upload to S3 using presigned URL
     const uploadResponse = await fetch(uploadUrl, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/pdf',
+        'Content-Type': file.type,
         // 'x-amz-checksum-sha256': checksum
       },
       body: file
@@ -169,22 +195,26 @@ export async function fetchResourceSessionDomains(sessionId) {
 
 /**
  * Poll resource session status until completion or timeout
- * @param {string} sessionId - Resource session ID to poll
+ * Can poll by either session ID or S3 file path
+ * @param {object} identifier - Either { sessionId: "uuid" } or { filePath: "uploads/..." }
  * @param {object} options - Polling options
  * @param {number} options.intervalMs - Polling interval in milliseconds (default: 2000)
  * @param {number} options.timeoutMs - Maximum polling duration in milliseconds (default: 300000 = 5 minutes)
+ * @param {number} options.maxWaitForRecord - Max wait time for record creation in ms (default: 60000 = 1 minute)
  * @param {function} options.onStatusChange - Callback fired when status changes
  * @returns {Promise<object>} - Final resource session data or error
  */
-export async function pollResourceSessionStatus(sessionId, options = {}) {
+export async function pollResourceSessionStatus(identifier, options = {}) {
   const {
     intervalMs = 2000,
     timeoutMs = 300000, // 5 minutes default timeout
+    maxWaitForRecord = 60000, // 1 minute to wait for backend to create record
     onStatusChange = null
   } = options
 
   const startTime = Date.now()
   let lastStatus = null
+  let recordFound = false
 
   return new Promise((resolve, reject) => {
     const pollInterval = setInterval(async () => {
@@ -196,8 +226,34 @@ export async function pollResourceSessionStatus(sessionId, options = {}) {
           return
         }
 
-        // Fetch current status
-        const { data: session, error } = await fetchResourceSession(sessionId)
+        // Fetch current status using appropriate method
+        let session, error
+        if (identifier.sessionId) {
+          const result = await fetchResourceSession(identifier.sessionId)
+          session = result.data
+          error = result.error
+        } else if (identifier.filePath) {
+          const result = await fetchResourceSessionByFilePath(identifier.filePath)
+          session = result.data
+          error = result.error
+        } else {
+          clearInterval(pollInterval)
+          reject(new Error('Invalid identifier: must provide sessionId or filePath'))
+          return
+        }
+
+        // If record doesn't exist yet, keep waiting (backend creates it asynchronously)
+        if (!session && !error) {
+          const elapsedTime = Date.now() - startTime
+          if (!recordFound && elapsedTime < maxWaitForRecord) {
+            console.log(`Waiting for backend to create resource_session record... (${Math.round(elapsedTime / 1000)}s)`)
+            return
+          } else if (!recordFound) {
+            clearInterval(pollInterval)
+            reject(new Error('Resource session not created by backend within timeout'))
+            return
+          }
+        }
 
         if (error) {
           clearInterval(pollInterval)
@@ -205,27 +261,31 @@ export async function pollResourceSessionStatus(sessionId, options = {}) {
           return
         }
 
+        if (session) {
+          recordFound = true
+        }
+
         // Call status change callback if status changed
-        if (session.status !== lastStatus && onStatusChange) {
+        if (session && session.status !== lastStatus && onStatusChange) {
           onStatusChange(session.status, session)
           lastStatus = session.status
         }
 
         // Check if processing is complete
-        if (session.status === 'completed') {
+        if (session && session.status === 'completed') {
           clearInterval(pollInterval)
           resolve(session)
           return
         }
 
         // Check if processing failed
-        if (session.status === 'failed') {
+        if (session && session.status === 'failed') {
           clearInterval(pollInterval)
           reject(new Error('Processing failed'))
           return
         }
 
-        // Continue polling for other statuses: pending, uploading, decoding, ai_processing
+        // Continue polling for other statuses: pending, processing, decoding, ai_processing
       } catch (err) {
         clearInterval(pollInterval)
         reject(err)
@@ -234,33 +294,3 @@ export async function pollResourceSessionStatus(sessionId, options = {}) {
   })
 }
 
-/**
- * Start processing a resource session via Heroku service
- * @param {string} sessionId - Resource session ID
- * @returns {Promise<object>} - Response from Heroku service
- */
-export async function startResourceSessionProcessing(sessionId) {
-  const herokuServiceUrl = import.meta.env.VITE_HEROKU_SERVICE_URL
-
-  if (!herokuServiceUrl) {
-    throw new Error('VITE_HEROKU_SERVICE_URL environment variable is not set')
-  }
-
-  const response = await fetch(herokuServiceUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      resource_session_id: sessionId
-    })
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`Heroku service error: ${response.status} - ${errorText}`)
-  }
-
-  const result = await response.json()
-  return result
-}

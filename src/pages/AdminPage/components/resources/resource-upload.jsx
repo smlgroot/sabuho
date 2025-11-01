@@ -65,34 +65,14 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
 
       // Upload file and get resource ID from the onUpload callback
       const resourceId = await onUpload(file, name, description)
-      
+
       clearInterval(progressInterval)
       setUploadProgress(80)
 
-      // Call Heroku REST service to process the PDF
-      if (resourceId) {
-        try {
-          const response = await fetch(import.meta.env.VITE_HEROKU_SERVICE_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              resource_id: resourceId
-            })
-          })
+      // S3 upload automatically triggers processing via S3 event -> SQS -> ECS backend
+      // No need to call external service - processing happens automatically
+      console.log('File uploaded, processing will start automatically via S3 events')
 
-          if (!response.ok) {
-            throw new Error(`Heroku service error: ${response.status}`)
-          }
-
-          const result = await response.json()
-        } catch (herokuError) {
-          console.error('Failed to start PDF processing:', herokuError)
-          // Don't fail the entire upload if processing fails
-        }
-      }
-      
       setUploadProgress(100)
       
       // Reset form
