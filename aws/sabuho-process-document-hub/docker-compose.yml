@@ -7,7 +7,7 @@ services:
     volumes:
       - ./src:/app:ro
     environment:
-      - ENV=local
+      - APP_ENV_TYPE=local
       - PYTHONUNBUFFERED=1
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}

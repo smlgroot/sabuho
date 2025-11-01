@@ -60,8 +60,8 @@ docker run sabuho-processor pytest -v
 
 ## Execution Modes
 
-- **Lambda Mode**: Runs in AWS Lambda (triggered by Lambda runtime)
-- **SQS Mode**: Long-running process that polls SQS queue (for ECS or local development with `SQS_QUEUE_URL` set)
+- **Production Mode**: Long-running process that polls SQS queue (for ECS deployment - requires `SQS_QUEUE_URL`)
+- **Development Local Mode**: Single test execution for local development (no `SQS_QUEUE_URL` set)
 
 ## Development
 
@@ -69,7 +69,7 @@ The `src/` directory is mounted as a volume for hot-reloading during development
 
 For local SQS testing, you can use LocalStack or point to an actual AWS SQS queue.
 
-## AWS Deployment
+## AWS ECS Deployment
 
 ### Deploy to ECR
 
@@ -79,7 +79,7 @@ AWS_ACCOUNT_ID="801935245468"
 AWS_REGION="us-east-1"
 ECR_REPO="ortosaurio/sabuho"
 
-# Build for AWS Lambda (linux/amd64)
+# Build for AWS ECS (linux/amd64)
 docker buildx build --platform linux/amd64 -t ${ECR_REPO}:latest .
 
 # Authenticate to ECR
@@ -91,13 +91,9 @@ docker tag ${ECR_REPO}:latest ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
 ```
 
-### Update Lambda Function
+### Update ECS Service
 
-```bash
-aws lambda update-function-code \
-  --function-name sabuho-process-document-hub \
-  --image-uri ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest
-```
+After pushing to ECR, update your ECS task definition to use the new image and deploy to your ECS service.
 
 ## License
 

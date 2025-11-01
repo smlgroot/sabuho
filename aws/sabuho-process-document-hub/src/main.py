@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 Main entry point for Sabuho Document Processing Hub.
-Supports multiple execution modes: Lambda, ECS, and Local development.
+Supports two execution modes:
+1. Production SQS Mode - Long-running SQS processor for ECS deployment
+2. Development Local Mode - Single test execution for local development
 """
 
 import os
@@ -49,7 +51,7 @@ class GracefulShutdown:
 
 
 class SQSProcessor:
-    """Process messages from SQS queue for ECS/Local mode."""
+    """Process messages from SQS queue for Production mode."""
 
     def __init__(self, queue_url: str, max_workers: int = 4):
         self.queue_url = queue_url
@@ -171,18 +173,11 @@ class SQSProcessor:
 
 def get_execution_mode() -> str:
     """Determine the execution mode based on environment."""
-    if os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
-        return 'lambda'
-    elif os.environ.get('SQS_QUEUE_URL'):
-        return 'sqs'
-    elif os.environ.get('ENV') == 'local':
-        return 'local'
-    else:
-        return 'lambda'
+    return os.environ.get('APP_ENV_TYPE', 'local')
 
 
 def run_health_check_server():
-    """Run a simple HTTP server for health checks (ECS)."""
+    """Run a simple HTTP server for health checks (Production mode)."""
     from http.server import HTTPServer, BaseHTTPRequestHandler
 
     class HealthHandler(BaseHTTPRequestHandler):
@@ -298,13 +293,8 @@ def main():
     mode = get_execution_mode()
     logger.info(f"Starting application in {mode.upper()} mode")
 
-    if mode == 'lambda':
-        # Lambda mode is handled by the Lambda runtime
-        logger.info("Running in Lambda mode - handler will be called by runtime")
-        # The lambda_handler will be called directly by AWS Lambda
-
-    elif mode == 'sqs':
-        # SQS mode - long-running SQS processor (for ECS or local development)
+    if mode == 'production':
+        # SQS mode - long-running SQS processor for ECS deployment
         queue_url = os.environ.get('SQS_QUEUE_URL')
         if not queue_url:
             logger.error("SQS_QUEUE_URL not set")
@@ -312,7 +302,7 @@ def main():
 
         logger.info(f"Starting SQS processor for queue: {queue_url}")
 
-        # Start health check server in background (useful for ECS)
+        # Start health check server in background for Production health checks
         import threading
         health_thread = threading.Thread(target=run_health_check_server, daemon=True)
         health_thread.start()
@@ -324,7 +314,7 @@ def main():
         )
         processor.poll_messages()
 
-    elif mode == 'local':
+    else:
         # Local test mode - run a single test and exit
         run_local_test()
 
