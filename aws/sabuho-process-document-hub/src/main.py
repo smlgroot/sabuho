@@ -25,7 +25,7 @@ from lambda_function import lambda_handler
 
 # Configure logging
 logging.basicConfig(
-    level=os.environ.get('LOG_LEVEL', 'INFO'),
+    level=os.environ.get('LOG_LEVEL') or 'INFO',  # Allow LOG_LEVEL to be optional for logging convenience
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -60,14 +60,13 @@ class SQSProcessor:
         self.shutdown_handler = GracefulShutdown()
 
         # Configure boto3 client
+        aws_region = os.environ['AWS_REGION']  # Required - will raise KeyError if not set
         config = Config(
-            region_name=os.environ.get('AWS_REGION', 'us-east-1'),
+            region_name=aws_region,
             retries={'max_attempts': 3, 'mode': 'adaptive'}
         )
 
-        # Support LocalStack endpoint
-        endpoint_url = os.environ.get('AWS_ENDPOINT_URL')
-        self.sqs = boto3.client('sqs', config=config, endpoint_url=endpoint_url)
+        self.sqs = boto3.client('sqs', config=config)
 
         logger.info(f"SQS Processor initialized for queue: {queue_url}")
 
@@ -173,7 +172,7 @@ class SQSProcessor:
 
 def get_execution_mode() -> str:
     """Determine the execution mode based on environment."""
-    return os.environ.get('APP_ENV_TYPE', 'local')
+    return os.environ['APP_ENV_TYPE']  # Required - will raise KeyError if not set
 
 
 def run_health_check_server():
@@ -214,21 +213,14 @@ def run_local_test():
         'get_remaining_time_in_millis': lambda: 300000
     })()
 
-    # Get test parameters from environment, no defaults; return if any are not set
-    bucket = os.environ.get('AWS_S3_BUCKET')
-    if not bucket:
-        logger.error("AWS_S3_BUCKET environment variable not set. Exiting test.")
-        return
-
-    file_path = os.environ.get('TEST_FILE_PATH')
-    if not file_path:
-        logger.error("TEST_FILE_PATH environment variable not set. Exiting test.")
-        return
-
-    message_type = os.environ.get('TEST_MESSAGE_TYPE')
-    if not message_type:
-        logger.error("TEST_MESSAGE_TYPE environment variable not set. Exiting test.")
-        return
+    # Get test parameters from environment - all required, will raise KeyError if not set
+    try:
+        bucket = os.environ['AWS_S3_BUCKET']
+        file_path = os.environ['TEST_FILE_PATH']
+        message_type = os.environ['TEST_MESSAGE_TYPE']
+    except KeyError as e:
+        logger.error(f"Required environment variable not set: {e}")
+        raise
 
     
 
@@ -251,10 +243,11 @@ def run_local_test():
         }
     elif message_type == 'ai_process':
         # For ai_process: needs resource_session_id
-        session_id = os.environ.get('TEST_SESSION_ID')
-        if not session_id:
-            logger.error("TEST_SESSION_ID environment variable not set. Exiting test.")
-            return
+        try:
+            session_id = os.environ['TEST_SESSION_ID']
+        except KeyError:
+            logger.error("TEST_SESSION_ID environment variable not set (required for ai_process message type)")
+            raise
         logger.info(f"Test Session ID: {session_id}")
         message_body = {
             'message_type': 'ai_process',
@@ -295,9 +288,11 @@ def main():
 
     if mode == 'production':
         # SQS mode - long-running SQS processor for ECS deployment
-        queue_url = os.environ.get('SQS_QUEUE_URL')
-        if not queue_url:
-            logger.error("SQS_QUEUE_URL not set")
+        try:
+            queue_url = os.environ['SQS_QUEUE_URL']
+            max_workers = int(os.environ['MAX_WORKERS'])
+        except KeyError as e:
+            logger.error(f"Required environment variable not set: {e}")
             sys.exit(1)
 
         logger.info(f"Starting SQS processor for queue: {queue_url}")
@@ -310,7 +305,7 @@ def main():
         # Start SQS processor
         processor = SQSProcessor(
             queue_url=queue_url,
-            max_workers=int(os.environ.get('MAX_WORKERS', '4'))
+            max_workers=max_workers
         )
         processor.poll_messages()
 

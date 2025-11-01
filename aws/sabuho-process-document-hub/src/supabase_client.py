@@ -18,15 +18,10 @@ def get_supabase_client() -> Client:
         Supabase client instance
 
     Raises:
-        ValueError: If required environment variables are not set
+        KeyError: If required environment variables are not set
     """
-    supabase_url = os.getenv('SUPABASE_URL')
-    supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
-
-    if not supabase_url:
-        raise ValueError("SUPABASE_URL environment variable is not set")
-    if not supabase_key:
-        raise ValueError("SUPABASE_SERVICE_ROLE_KEY environment variable is not set")
+    supabase_url = os.environ['SUPABASE_URL']  # Required - will raise KeyError if not set
+    supabase_key = os.environ['SUPABASE_SERVICE_ROLE_KEY']  # Required - will raise KeyError if not set
 
     # Create custom httpx client with extended timeouts
     # Using httpx.Timeout for fine-grained control: (connect, read, write, pool)

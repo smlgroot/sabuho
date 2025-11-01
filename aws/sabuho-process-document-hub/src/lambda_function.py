@@ -131,15 +131,17 @@ def process_ocr(supabase, message: dict):
     session_id = None  # Track session ID for error handling
 
     # Get AWS configuration from environment
-    aws_region = os.getenv('AWS_REGION', 'us-east-1')
+    aws_region = os.environ['AWS_REGION']  # Required - will raise KeyError if not set
 
     s3_client = boto3.client('s3', region_name=aws_region)
     sqs_client = boto3.client('sqs', region_name=aws_region)
 
     # Get output queue URL from environment
-    output_queue_url = os.getenv('OUTPUT_QUEUE_URL')
-    if not output_queue_url:
-        print("[process_ocr] WARNING: OUTPUT_QUEUE_URL not set")
+    try:
+        output_queue_url = os.environ['OUTPUT_QUEUE_URL']
+    except KeyError:
+        print("[process_ocr] ERROR: OUTPUT_QUEUE_URL environment variable not set")
+        raise
 
     try:
         # Parse S3 event from message (message contains S3 event structure)
@@ -329,8 +331,8 @@ def download_ocr_text_from_s3(resource_session: dict) -> str:
         ocr_file_path = file_path
 
     # Download from S3
-    s3_bucket = os.getenv('AWS_S3_BUCKET', 'sabuho-files')
-    aws_region = os.getenv('AWS_REGION', 'us-east-1')
+    s3_bucket = os.environ['AWS_S3_BUCKET']  # Required - will raise KeyError if not set
+    aws_region = os.environ['AWS_REGION']  # Required - will raise KeyError if not set
     print(f"Downloading from S3: bucket={s3_bucket}, key={ocr_file_path}")
 
     s3_client = boto3.client('s3', region_name=aws_region)

@@ -14,11 +14,9 @@ def create_openai_client() -> OpenAI:
         OpenAI client
 
     Raises:
-        ValueError: If OPENAI_API_KEY is not set
+        KeyError: If OPENAI_API_KEY is not set
     """
-    api_key = os.getenv('OPENAI_API_KEY')
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY environment variable is not set")
+    api_key = os.environ['OPENAI_API_KEY']  # Required - will raise KeyError if not set
 
     return OpenAI(api_key=api_key)
 

@@ -58,10 +58,12 @@ def test_resource_session_id():
 def test_pdf_path():
     """
     Fixture that provides a test PDF file path.
-    Can be overridden by TEST_PDF_PATH environment variable.
+    Requires TEST_PDF_PATH environment variable to be set.
     """
-    default_path = "/Users/smlg/Downloads/compendio-familia-umf-25-tuxtla-gutierrez-chiapas-1.pdf"
-    pdf_path = os.getenv('TEST_PDF_PATH', default_path)
+    pdf_path = os.getenv('TEST_PDF_PATH')
+
+    if not pdf_path:
+        pytest.skip("TEST_PDF_PATH environment variable not set")
 
     if not os.path.exists(pdf_path):
         pytest.skip(f"Test PDF not found at: {pdf_path}")
