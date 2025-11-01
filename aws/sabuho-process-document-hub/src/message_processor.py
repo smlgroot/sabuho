@@ -60,7 +60,12 @@ class OCRProcessor:
         self.aws_region = os.environ['AWS_REGION']  # Required - will raise KeyError if not set
         self.s3_client = boto3.client('s3', region_name=self.aws_region)
 
+        # Get bucket configuration
+        self.source_bucket = os.environ['AWS_S3_BUCKET']  # Source bucket for original files
+        self.ocr_bucket = os.environ.get('AWS_S3_OCR_BUCKET', 'sabuho-files-ocr')  # OCR output bucket
+
         print(f"[OCRProcessor] Initialized - AWS Region: {self.aws_region}")
+        print(f"[OCRProcessor] Source bucket: {self.source_bucket}, OCR bucket: {self.ocr_bucket}")
 
     def process(self, message: Dict[str, Any]) -> ProcessingResult:
         """
@@ -81,12 +86,7 @@ class OCRProcessor:
             if not key:
                 return ProcessingResult(False, f"No 'key' property in message: {message}")
 
-            # Get bucket from environment variable
-            bucket = os.environ.get('AWS_S3_BUCKET')
-            if not bucket:
-                return ProcessingResult(False, "AWS_S3_BUCKET environment variable not set")
-
-            print(f"[OCRProcessor] Processing OCR for: s3://{bucket}/{key}")
+            print(f"[OCRProcessor] Processing OCR for: s3://{self.source_bucket}/{key}")
 
             # Create resource session with 'processing' status
             resource_name = os.path.basename(key)
@@ -100,10 +100,10 @@ class OCRProcessor:
             session_id = resource_session['id']
             print(f"[OCRProcessor] Created resource_session with id: {session_id}")
 
-            # Download PDF from S3
-            print("[OCRProcessor] Downloading PDF from S3...")
+            # Download PDF from S3 source bucket
+            print(f"[OCRProcessor] Downloading PDF from S3 source bucket: {self.source_bucket}")
             local_pdf_path = f"/tmp/{os.path.basename(key)}"
-            self.s3_client.download_file(bucket, key, local_pdf_path)
+            self.s3_client.download_file(self.source_bucket, key, local_pdf_path)
             print(f"[OCRProcessor] Downloaded to: {local_pdf_path}")
 
             # Extract text using OCR
@@ -114,11 +114,12 @@ class OCRProcessor:
             extracted_text = extract_text_with_pymupdf_and_ocr(pdf_buffer)
             print(f"[OCRProcessor] Extracted {len(extracted_text)} characters of text")
 
-            # Upload OCR result to S3
+            # Upload OCR result to the OCR bucket (different from source bucket)
+            # Keep the same file structure in the OCR bucket
             ocr_key = f"{key}.ocr.txt"
-            print(f"[OCRProcessor] Uploading OCR result to: s3://{bucket}/{ocr_key}")
+            print(f"[OCRProcessor] Uploading OCR result to OCR bucket: s3://{self.ocr_bucket}/{ocr_key}")
             self.s3_client.put_object(
-                Bucket=bucket,
+                Bucket=self.ocr_bucket,
                 Key=ocr_key,
                 Body=extracted_text.encode('utf-8'),
                 ContentType='text/plain'
@@ -164,10 +165,11 @@ class AIProcessor:
 
         # Get AWS configuration from environment
         self.aws_region = os.environ['AWS_REGION']  # Required - will raise KeyError if not set
-        self.s3_bucket = os.environ['AWS_S3_BUCKET']  # Required - will raise KeyError if not set
+        # AI processor now reads OCR files from the OCR bucket
+        self.ocr_bucket = os.environ.get('AWS_S3_OCR_BUCKET', 'sabuho-files-ocr')  # OCR bucket
         self.s3_client = boto3.client('s3', region_name=self.aws_region)
 
-        print(f"[AIProcessor] Initialized - AWS Region: {self.aws_region}, Bucket: {self.s3_bucket}")
+        print(f"[AIProcessor] Initialized - AWS Region: {self.aws_region}, OCR Bucket: {self.ocr_bucket}")
 
     def process(self, message: Dict[str, Any]) -> ProcessingResult:
         """
@@ -201,15 +203,15 @@ class AIProcessor:
             else:
                 ocr_file_path = file_path
 
-            # Download OCR text from S3
-            print(f"[AIProcessor] Downloading OCR text from S3: bucket={self.s3_bucket}, key={ocr_file_path}")
+            # Download OCR text from the OCR bucket (not the source bucket)
+            print(f"[AIProcessor] Downloading OCR text from OCR bucket: bucket={self.ocr_bucket}, key={ocr_file_path}")
 
             try:
-                response = self.s3_client.get_object(Bucket=self.s3_bucket, Key=ocr_file_path)
+                response = self.s3_client.get_object(Bucket=self.ocr_bucket, Key=ocr_file_path)
                 full_text = response['Body'].read().decode('utf-8')
-                print(f"[AIProcessor] Downloaded {len(full_text)} characters")
+                print(f"[AIProcessor] Downloaded {len(full_text)} characters from OCR bucket")
             except Exception as s3_error:
-                raise Exception(f"Failed to download OCR text from S3: {s3_error}")
+                raise Exception(f"Failed to download OCR text from OCR bucket: {s3_error}")
 
             # Step 1: Identify topics
             print("[AIProcessor] Step 1: Identifying document topics...")
