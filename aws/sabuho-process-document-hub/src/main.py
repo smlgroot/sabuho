@@ -16,6 +16,7 @@ import signal
 import asyncio
 import logging
 import time
+from datetime import datetime
 from typing import Dict, Any, Optional
 from threading import Event
 from concurrent.futures import ThreadPoolExecutor
@@ -56,9 +57,10 @@ class GracefulShutdown:
 class SQSProcessor:
     """Process messages from SQS queue for Production mode."""
 
-    def __init__(self, s3_events_queue_url: str, processing_queue_url: str, max_workers: int = 4):
+    def __init__(self, s3_events_queue_url: str, processing_queue_url: str, processing_dlq_url: str, max_workers: int = 4):
         self.s3_events_queue_url = s3_events_queue_url
         self.processing_queue_url = processing_queue_url
+        self.processing_dlq_url = processing_dlq_url
         self.max_workers = max_workers
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
         self.shutdown_handler = GracefulShutdown()
@@ -79,6 +81,7 @@ class SQSProcessor:
         logger.info(f"SQS Processor initialized")
         logger.info(f"S3 Events Queue: {s3_events_queue_url}")
         logger.info(f"Processing Queue (FIFO): {processing_queue_url}")
+        logger.info(f"Processing DLQ (FIFO): {processing_dlq_url}")
 
     def _transform_and_enqueue_s3_events(self, s3_event_message: Dict[str, Any]):
         """
@@ -133,6 +136,46 @@ class SQSProcessor:
         except Exception as e:
             logger.error(f"Failed to process S3 event records: {e}", exc_info=True)
             raise
+
+    def _send_to_dlq(self, message_body: Dict[str, Any], error_reason: str, original_message_id: str):
+        """
+        Send failed message to Dead Letter Queue.
+
+        Args:
+            message_body: The original message body that failed
+            error_reason: Reason for failure
+            original_message_id: Original SQS message ID
+        """
+        try:
+            # Add error metadata to the message
+            dlq_message = {
+                'original_message': message_body,
+                'error_reason': error_reason,
+                'original_message_id': original_message_id,
+                'failed_at': datetime.utcnow().isoformat(),
+                'timestamp': int(time.time() * 1000)
+            }
+
+            # Determine MessageGroupId based on message type
+            message_type = message_body.get('message_type', 'unknown')
+            if message_type == 'ocr_process':
+                group_id = message_body.get('key', 'unknown').replace('/', '_')
+            elif message_type == 'ai_process':
+                group_id = message_body.get('resource_session_id', 'unknown')
+            else:
+                group_id = 'unknown'
+
+            logger.warning(f"Sending message to DLQ: {original_message_id} - Reason: {error_reason}")
+            self.sqs.send_message(
+                QueueUrl=self.processing_dlq_url,
+                MessageBody=json.dumps(dlq_message),
+                MessageGroupId=group_id,
+                MessageDeduplicationId=f"dlq_{original_message_id}_{int(time.time() * 1000)}"
+            )
+            logger.info(f"Message sent to DLQ successfully: {original_message_id}")
+        except Exception as e:
+            logger.error(f"Failed to send message to DLQ: {e}", exc_info=True)
+            # Don't raise - we don't want DLQ failures to prevent message deletion
 
     def _send_ai_message(self, session_id: str):
         """
@@ -200,9 +243,12 @@ class SQSProcessor:
     def process_processing_message(self, message: Dict[str, Any], queue_url: str) -> bool:
         """
         Process a single message from the processing queue (OCR/AI messages).
-        Always consumes the message (no retries).
+        Always consumes the message - sends failures to DLQ, no retries.
         """
         message_id = message.get('MessageId', 'unknown')
+        message_body = None
+        processing_failed = False
+        error_reason = None
 
         try:
             # Parse the message body
@@ -210,43 +256,58 @@ class SQSProcessor:
             message_type = message_body.get('message_type')
 
             if not message_type:
-                logger.error(f"No message_type in processing message: {message_id}")
-                return True
-
-            logger.info(f"Processing message: {message_id} - Type: {message_type}")
-
-            # Route to appropriate processor based on message_type
-            if message_type == 'ocr_process':
-                result = self.ocr_processor.process(message_body)
-
-                # If OCR succeeded, send AI processing message to processing queue
-                if result.success:
-                    session_id = result.data.get('session_id')
-                    self._send_ai_message(session_id)
-                    logger.info(f"Successfully processed OCR and queued AI for session: {session_id}")
-                else:
-                    logger.error(f"OCR processing failed: {message_id} - Error: {result.error}")
-
-            elif message_type == 'ai_process':
-                result = self.ai_processor.process(message_body)
-
-                if result.success:
-                    session_id = result.data.get('session_id')
-                    questions_count = result.data.get('questions_count', 0)
-                    logger.info(f"Successfully processed AI for session {session_id} - Generated {questions_count} questions")
-                else:
-                    logger.error(f"AI processing failed: {message_id} - Error: {result.error}")
-
+                error_reason = "No message_type in processing message"
+                logger.error(f"{error_reason}: {message_id}")
+                processing_failed = True
             else:
-                logger.error(f"Unknown message_type: {message_type} in message: {message_id}")
+                logger.info(f"Processing message: {message_id} - Type: {message_type}")
+
+                # Route to appropriate processor based on message_type
+                if message_type == 'ocr_process':
+                    result = self.ocr_processor.process(message_body)
+
+                    # If OCR succeeded, send AI processing message to processing queue
+                    if result.success:
+                        session_id = result.data.get('session_id')
+                        self._send_ai_message(session_id)
+                        logger.info(f"Successfully processed OCR and queued AI for session: {session_id}")
+                    else:
+                        error_reason = f"OCR processing failed: {result.error}"
+                        logger.error(f"{error_reason} - Message: {message_id}")
+                        processing_failed = True
+
+                elif message_type == 'ai_process':
+                    result = self.ai_processor.process(message_body)
+
+                    if result.success:
+                        session_id = result.data.get('session_id')
+                        questions_count = result.data.get('questions_count', 0)
+                        logger.info(f"Successfully processed AI for session {session_id} - Generated {questions_count} questions")
+                    else:
+                        error_reason = f"AI processing failed: {result.error}"
+                        logger.error(f"{error_reason} - Message: {message_id}")
+                        processing_failed = True
+
+                else:
+                    error_reason = f"Unknown message_type: {message_type}"
+                    logger.error(f"{error_reason} in message: {message_id}")
+                    processing_failed = True
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse processing message body for {message_id}: {e}", exc_info=True)
+            error_reason = f"Failed to parse message body: {str(e)}"
+            logger.error(f"{error_reason} for {message_id}", exc_info=True)
+            processing_failed = True
         except Exception as e:
-            logger.error(f"Error processing message {message_id}: {e}", exc_info=True)
+            error_reason = f"Error processing message: {str(e)}"
+            logger.error(f"{error_reason} {message_id}", exc_info=True)
+            processing_failed = True
 
         finally:
-            # Always delete message (no retries) regardless of processing result
+            # Send to DLQ if processing failed
+            if processing_failed and message_body and error_reason:
+                self._send_to_dlq(message_body, error_reason, message_id)
+
+            # ALWAYS delete message from processing queue (no retries, no reprocessing)
             try:
                 self.sqs.delete_message(
                     QueueUrl=queue_url,
@@ -450,6 +511,7 @@ def main():
         try:
             s3_events_queue_url = os.environ['S3_EVENTS_QUEUE_URL']
             processing_queue_url = os.environ['PROCESSING_QUEUE_URL']
+            processing_dlq_url = os.environ['PROCESSING_DLQ_URL']
             max_workers = int(os.environ['MAX_WORKERS'])
         except KeyError as e:
             logger.error(f"Required environment variable not set: {e}")
@@ -458,6 +520,7 @@ def main():
         logger.info(f"Starting SQS processor")
         logger.info(f"S3 Events Queue: {s3_events_queue_url}")
         logger.info(f"Processing Queue: {processing_queue_url}")
+        logger.info(f"Processing DLQ: {processing_dlq_url}")
 
         # Start health check server in background for Production health checks
         import threading
@@ -468,6 +531,7 @@ def main():
         processor = SQSProcessor(
             s3_events_queue_url=s3_events_queue_url,
             processing_queue_url=processing_queue_url,
+            processing_dlq_url=processing_dlq_url,
             max_workers=max_workers
         )
         processor.poll_messages()
