@@ -4,7 +4,9 @@ boto3==1.35.80
 # OCR Processing
 PyMuPDF==1.26.5
 Pillow==11.0.0
-pytesseract==0.3.13
+numpy>=1.23.0
+paddlepaddle==3.0.0
+paddleocr>=3.2.0
 
 # AI Processing
 openai==1.101.0

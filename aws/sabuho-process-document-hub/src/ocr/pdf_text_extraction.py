@@ -1,11 +1,16 @@
-"""PDF text extraction module using PyMuPDF with parallel processing"""
+"""PDF text extraction module using PyMuPDF with PaddleOCR and parallel processing"""
 import fitz  # PyMuPDF
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from ocr.ocr_processing import extract_text_from_image_with_ocr, OCR_AVAILABLE
+from ocr.ocr_processing import extract_text_from_image_with_ocr, extract_text_from_page_image, OCR_AVAILABLE
 
 
 def process_single_page(doc, page_num: int, total_pages: int) -> tuple:
     """Process a single page: extract text and OCR images
+
+    Strategy:
+    1. Extract text with PyMuPDF (fast, works for native PDFs)
+    2. If little/no text found, render page as image and use PaddleOCR (scanned documents)
+    3. If images are embedded, extract and OCR them individually
 
     Returns:
         tuple: (page_num, text_content, image_text_content, has_images)
@@ -15,27 +20,40 @@ def process_single_page(doc, page_num: int, total_pages: int) -> tuple:
     # Extract text with PyMuPDF (optimized with "text" mode for speed)
     text = page.get_text("text")
     text_content = None
-    if text.strip():
+    page_is_scanned = False
+
+    # Check if page has minimal extractable text (likely a scanned image)
+    if text.strip() and len(text.strip()) > 50:
+        # Page has sufficient text content
         text_content = f"--- Page {page_num + 1} ---\n{text}"
         print(f"[process_single_page] Page {page_num + 1}: Extracted {len(text)} characters of text")
+    elif OCR_AVAILABLE:
+        # Page has little/no text - likely scanned or image-based
+        # Use PaddleOCR on the entire page
+        print(f"[process_single_page] Page {page_num + 1}: Minimal text detected ({len(text.strip())} chars), using full-page OCR")
+        page_is_scanned = True
+        ocr_text = extract_text_from_page_image(page, page_num + 1)
+        if ocr_text.strip():
+            text_content = f"--- Page {page_num + 1} (OCR) ---\n{ocr_text}"
+            print(f"[process_single_page] Page {page_num + 1}: Extracted {len(ocr_text)} characters with full-page OCR")
 
-    # Check for images on this page (only process if OCR is available)
+    # Check for embedded images on this page (only if not already processed as full-page OCR)
     image_text_content = None
     has_images = False
-    if OCR_AVAILABLE:
+    if OCR_AVAILABLE and not page_is_scanned:
         image_list = page.get_images()
         if image_list:
             has_images = True
-            print(f"[process_single_page] Page {page_num + 1}: Found {len(image_list)} image(s)")
+            print(f"[process_single_page] Page {page_num + 1}: Found {len(image_list)} embedded image(s)")
 
-            # Extract text from each image using OCR
+            # Extract text from each embedded image using PaddleOCR
             page_image_texts = []
             for img_index, img in enumerate(image_list):
                 try:
                     image_text = extract_text_from_image_with_ocr(page, img, page_num + 1, img_index + 1)
                     if image_text.strip():
                         page_image_texts.append(f"Image {img_index + 1}: {image_text.strip()}")
-                        print(f"[process_single_page] Page {page_num + 1}, Image {img_index + 1}: Extracted {len(image_text)} characters with OCR")
+                        print(f"[process_single_page] Page {page_num + 1}, Image {img_index + 1}: Extracted {len(image_text)} characters with PaddleOCR")
                 except Exception as ocr_error:
                     print(f"[process_single_page] Page {page_num + 1}, Image {img_index + 1}: OCR failed - {str(ocr_error)}")
 
@@ -46,14 +64,19 @@ def process_single_page(doc, page_num: int, total_pages: int) -> tuple:
 
 
 def extract_text_with_pymupdf_and_ocr(pdf_buffer: bytes) -> str:
-    """Extract text from PDF using PyMuPDF and OCR for images with pytesseract
+    """Extract text from PDF using PyMuPDF and PaddleOCR for images
+
+    Strategy:
+    - Fast text extraction with PyMuPDF for native PDFs
+    - Full-page OCR with PaddleOCR for scanned documents
+    - Individual image OCR for embedded images in PDFs
 
     Returns:
         str: Combined text extracted from PDF (both direct text and OCR from images)
     """
     print(f"[START][extract_text_with_pymupdf_and_ocr] [buffer_size: {len(pdf_buffer)} bytes]")
     if not OCR_AVAILABLE:
-        print(f"[WARNING][extract_text_with_pymupdf_and_ocr] OCR not available - will extract text only with PyMuPDF")
+        print(f"[WARNING][extract_text_with_pymupdf_and_ocr] PaddleOCR not available - will extract text only with PyMuPDF")
 
     try:
         # Open PDF from memory buffer

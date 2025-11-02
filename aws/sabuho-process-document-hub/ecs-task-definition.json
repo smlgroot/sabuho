@@ -1,0 +1,103 @@
+{
+  "family": "sabuho-processor",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::801935245468:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::801935245468:role/sabuho-processor-task-role",
+  "containerDefinitions": [
+    {
+      "name": "sabuho-processor",
+      "image": "801935245468.dkr.ecr.us-east-1.amazonaws.com/ortosaurio/sabuho:latest",
+      "essential": true,
+      "environment": [
+        {
+          "name": "APP_ENV_TYPE",
+          "value": "production"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "MAX_WORKERS",
+          "value": "4"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "value": "INFO"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "SUPABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:801935245468:secret:sabuho/supabase-url"
+        },
+        {
+          "name": "SUPABASE_SERVICE_ROLE_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:801935245468:secret:sabuho/supabase-key"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:801935245468:secret:sabuho/openai-key"
+        },
+        {
+          "name": "AWS_S3_BUCKET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:801935245468:secret:sabuho/s3-bucket"
+        },
+        {
+          "name": "AWS_S3_OCR_BUCKET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:801935245468:secret:sabuho/s3-ocr-bucket"
+        },
+        {
+          "name": "S3_EVENTS_QUEUE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:801935245468:secret:sabuho/s3-events-queue-url"
+        },
+        {
+          "name": "PROCESSING_QUEUE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:801935245468:secret:sabuho/processing-queue-url"
+        },
+        {
+          "name": "PROCESSING_DLQ_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:801935245468:secret:sabuho/processing-dlq-url"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "paddleocr-models",
+          "containerPath": "/root/.paddlex",
+          "readOnly": false
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/sabuho-processor",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "paddleocr-models",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-XXXXXXXXX",
+        "rootDirectory": "/paddleocr-models",
+        "transitEncryption": "ENABLED",
+        "authorizationConfig": {
+          "iam": "ENABLED"
+        }
+      }
+    }
+  ]
+}

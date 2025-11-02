@@ -3,7 +3,8 @@
     "allow": [
       "WebFetch(domain:paddlepaddle.github.io)",
       "WebFetch(domain:www.paddleocr.ai)",
-      "WebFetch(domain:pypi.org)"
+      "WebFetch(domain:pypi.org)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
