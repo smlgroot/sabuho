@@ -9,6 +9,7 @@ import {
   pollResourceSessionStatus,
   fetchResourceSessionDomains
 } from "@/services/resourceSessionService";
+import { fetchQuestionsByDomainIds } from "@/services/supabaseService";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
@@ -30,6 +31,7 @@ export default function HomePage() {
   const [currentProcessingState, setCurrentProcessingState] = useState("");
   const [resultExpanded, setResultExpanded] = useState(false);
   const [topics, setTopics] = useState([]);
+  const [questions, setQuestions] = useState([]);
   const [questionsCount, setQuestionsCount] = useState(0);
   const [s3Key, setS3Key] = useState(null);
   const [processingError, setProcessingError] = useState(null);
@@ -121,6 +123,7 @@ export default function HomePage() {
     setResultExpanded(false);
     setQuizGenerated(false);
     setTopics([]);
+    setQuestions([]);
     setQuestionsCount(0);
     setS3Key(null);
     setProcessingError(null);
@@ -189,8 +192,27 @@ export default function HomePage() {
       const topicsData = completedSession.topic_page_range?.topics || [];
       setTopics(topicsData);
 
-      // Estimate question count based on topics
-      setQuestionsCount(topicsData.length * 3); // Rough estimate
+      // Fetch domains and questions for this session
+      const { data: domains, error: domainsError } = await fetchResourceSessionDomains(completedSession.id);
+
+      if (domainsError) {
+        console.error('Error fetching domains:', domainsError);
+      }
+
+      let questionsData = [];
+      if (domains && domains.length > 0) {
+        const domainIds = domains.map(d => d.domain_id);
+        const { data: fetchedQuestions, error: questionsError } = await fetchQuestionsByDomainIds(domainIds);
+
+        if (questionsError) {
+          console.error('Error fetching questions:', questionsError);
+        } else {
+          questionsData = fetchedQuestions || [];
+        }
+      }
+
+      setQuestions(questionsData);
+      setQuestionsCount(questionsData.length);
 
       setIsProcessing(false);
       setCurrentProcessingState("");
@@ -200,6 +222,7 @@ export default function HomePage() {
         props: {
           fileType: uploadedFile.type,
           topicsCount: topicsData.length,
+          questionsCount: questionsData.length,
           sessionId: completedSession.id
         }
       });
@@ -257,6 +280,7 @@ export default function HomePage() {
     setCurrentProcessingState("");
     setResultExpanded(false);
     setTopics([]);
+    setQuestions([]);
     setQuestionsCount(0);
     setS3Key(null);
     setProcessingError(null);
@@ -583,18 +607,34 @@ export default function HomePage() {
                         <FileText className="w-5 h-5 text-purple-600" />
                         Questions Generated
                       </h4>
-                      <div className="space-y-3">
-                        {sampleQuestions.map((q, index) => (
-                          <div key={index} className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                            <p className="text-sm font-semibold text-gray-900 mb-2">
-                              {index + 1}. {q.question}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <CheckCircle className="w-3 h-3" />
-                              <span>{q.type}</span>
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {questions.length > 0 ? (
+                          questions.slice(0, 5).map((q, index) => (
+                            <div key={q.id} className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                              <p className="text-sm font-semibold text-gray-900 mb-2">
+                                {index + 1}. {q.body}
+                              </p>
+                              {q.options && q.options.length > 0 && (
+                                <div className="mt-2 space-y-1">
+                                  {q.options.map((option, optIdx) => (
+                                    <div key={optIdx} className="text-xs text-gray-600 pl-4">
+                                      • {option}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-gray-500 italic">
+                            No questions generated yet
                           </div>
-                        ))}
+                        )}
+                        {questions.length > 5 && (
+                          <p className="text-xs text-gray-500 italic text-center">
+                            Showing 5 of {questions.length} questions
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
