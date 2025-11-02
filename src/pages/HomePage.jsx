@@ -7,9 +7,9 @@ import { usePostHog } from "@/components/PostHogProvider";
 import {
   uploadFileToS3,
   pollResourceSessionStatus,
-  fetchResourceSessionDomains
+  fetchResourceSessionDomains,
+  fetchResourceSessionQuestions
 } from "@/services/resourceSessionService";
-import { fetchQuestionsByDomainIds } from "@/services/supabaseService";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
@@ -192,27 +192,16 @@ export default function HomePage() {
       const topicsData = completedSession.topic_page_range?.topics || [];
       setTopics(topicsData);
 
-      // Fetch domains and questions for this session
-      const { data: domains, error: domainsError } = await fetchResourceSessionDomains(completedSession.id);
+      // Fetch questions for this resource session
+      const { data: questionsData, error: questionsError } = await fetchResourceSessionQuestions(completedSession.id);
 
-      if (domainsError) {
-        console.error('Error fetching domains:', domainsError);
+      if (questionsError) {
+        console.error('Error fetching questions:', questionsError);
       }
 
-      let questionsData = [];
-      if (domains && domains.length > 0) {
-        const domainIds = domains.map(d => d.domain_id);
-        const { data: fetchedQuestions, error: questionsError } = await fetchQuestionsByDomainIds(domainIds);
-
-        if (questionsError) {
-          console.error('Error fetching questions:', questionsError);
-        } else {
-          questionsData = fetchedQuestions || [];
-        }
-      }
-
-      setQuestions(questionsData);
-      setQuestionsCount(questionsData.length);
+      const questions = questionsData || [];
+      setQuestions(questions);
+      setQuestionsCount(questions.length);
 
       setIsProcessing(false);
       setCurrentProcessingState("");
@@ -222,7 +211,7 @@ export default function HomePage() {
         props: {
           fileType: uploadedFile.type,
           topicsCount: topicsData.length,
-          questionsCount: questionsData.length,
+          questionsCount: questions.length,
           sessionId: completedSession.id
         }
       });

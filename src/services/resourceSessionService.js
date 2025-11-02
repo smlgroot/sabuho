@@ -189,6 +189,21 @@ export async function fetchResourceSessionDomains(sessionId) {
   return { data, error }
 }
 
+/**
+ * Fetch questions for a resource session
+ * @param {string} sessionId - Resource session ID
+ * @returns {Promise<object>} - { data, error }
+ */
+export async function fetchResourceSessionQuestions(sessionId) {
+  const { data, error } = await supabase
+    .from('resource_session_questions')
+    .select('*')
+    .eq('resource_session_id', sessionId)
+    .order('created_at', { ascending: true })
+
+  return { data, error }
+}
+
 // ============================================================================
 // POLLING MECHANISM
 // ============================================================================
