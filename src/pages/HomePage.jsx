@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from "react-router-dom";
-import { Globe, Brain, Target, Trophy, BookOpen, BarChart3, Sparkles, Upload, FileText, CheckCircle, Clock, Zap, Shield, Lock } from "lucide-react";
+import { Globe, Brain, Target, Trophy, BookOpen, BarChart3, Sparkles, Upload, FileText, CheckCircle, Clock, Zap, Shield, Lock, Cog, Scan, AlertCircle, RotateCcw } from "lucide-react";
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { usePostHog } from "@/components/PostHogProvider";
@@ -131,6 +131,53 @@ export default function HomePage() {
     trackEvent('file_selected', { props: { fileType: file.type, fileName: file.name } });
   };
 
+  // Separate function for polling and fetching results
+  const pollAndFetchResults = async (s3Key) => {
+    // Poll for completion using S3 key
+    const completedSession = await pollResourceSessionStatus(
+      { filePath: s3Key },
+      {
+        intervalMs: 2000,
+        timeoutMs: 300000, // 5 minutes
+        maxWaitForRecord: 60000, // 1 minute to wait for backend to create record
+        onStatusChange: (status, sessionData) => {
+          console.log('Status changed to:', status);
+          setCurrentProcessingState(status);
+        }
+      }
+    );
+
+    console.log('Processing completed:', completedSession);
+
+    // Extract results
+    const topicsData = completedSession.topic_page_range?.topics || [];
+    setTopics(topicsData);
+
+    // Fetch questions for this resource session
+    const { data: questionsData, error: questionsError } = await fetchResourceSessionQuestions(completedSession.id);
+
+    if (questionsError) {
+      console.error('Error fetching questions:', questionsError);
+    }
+
+    const questions = questionsData || [];
+    setQuestions(questions);
+    setQuestionsCount(questions.length);
+
+    setIsProcessing(false);
+    setCurrentProcessingState("");
+    setQuizGenerated(true);
+    setCurrentStep(3);
+    trackEvent('quiz_generated', {
+      props: {
+        fileType: uploadedFile.type,
+        topicsCount: topicsData.length,
+        questionsCount: questions.length,
+        sessionId: completedSession.id
+      }
+    });
+  };
+
   const handleProcessClick = async () => {
     if (!uploadedFile || currentStep < 2) return;
 
@@ -172,56 +219,40 @@ export default function HomePage() {
       // We poll by S3 key (which is unique per upload)
       console.log('Polling for processing completion by S3 key:', key);
 
-      // Poll for completion using S3 key
-      const completedSession = await pollResourceSessionStatus(
-        { filePath: key },
-        {
-          intervalMs: 2000,
-          timeoutMs: 300000, // 5 minutes
-          maxWaitForRecord: 60000, // 1 minute to wait for backend to create record
-          onStatusChange: (status, sessionData) => {
-            console.log('Status changed to:', status);
-            setCurrentProcessingState(status);
-          }
-        }
-      );
-
-      console.log('Processing completed:', completedSession);
-
-      // Extract results
-      const topicsData = completedSession.topic_page_range?.topics || [];
-      setTopics(topicsData);
-
-      // Fetch questions for this resource session
-      const { data: questionsData, error: questionsError } = await fetchResourceSessionQuestions(completedSession.id);
-
-      if (questionsError) {
-        console.error('Error fetching questions:', questionsError);
-      }
-
-      const questions = questionsData || [];
-      setQuestions(questions);
-      setQuestionsCount(questions.length);
-
-      setIsProcessing(false);
-      setCurrentProcessingState("");
-      setQuizGenerated(true);
-      setCurrentStep(3);
-      trackEvent('quiz_generated', {
-        props: {
-          fileType: uploadedFile.type,
-          topicsCount: topicsData.length,
-          questionsCount: questions.length,
-          sessionId: completedSession.id
-        }
-      });
+      await pollAndFetchResults(key);
 
     } catch (error) {
       console.error('Processing error:', error);
       setProcessingError(error.message);
       setIsProcessing(false);
       setCurrentProcessingState("");
-      alert(`Processing failed: ${error.message}`);
+    }
+  };
+
+  const handleRetry = async () => {
+    if (!s3Key) {
+      alert('No file to retry. Please upload a file first.');
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessingError(null);
+    setCurrentProcessingState("processing");
+
+    try {
+      trackEvent('processing_retried', {
+        props: {
+          s3Key: s3Key
+        }
+      });
+
+      await pollAndFetchResults(s3Key);
+
+    } catch (error) {
+      console.error('Retry error:', error);
+      setProcessingError(error.message);
+      setIsProcessing(false);
+      setCurrentProcessingState("");
     }
   };
 
@@ -478,26 +509,36 @@ export default function HomePage() {
 
                 {/* Step 2: Process */}
                 <div className={`bg-white rounded-lg shadow-lg border-2 p-8 transition-all duration-300 ${
+                  processingError ? 'border-red-500' :
                   currentStep === 2 && !isProcessing ? 'border-blue-500 cursor-pointer hover:shadow-xl hover:scale-105' :
                   isProcessing ? 'border-blue-500 animate-pulse' :
                   'border-gray-200 opacity-50 cursor-not-allowed'
                 }`}
                 onClick={() => {
-                  if (currentStep === 2 && !isProcessing) {
+                  if (currentStep === 2 && !isProcessing && !processingError) {
                     handleProcessClick();
                   }
                 }}>
                   <div className="flex flex-col items-center justify-center h-full">
                     <div className={`rounded-full p-4 mb-4 transition-all duration-500 ${
+                      processingError ? 'bg-red-100' :
                       isProcessing ? 'bg-purple-200 scale-110' : 'bg-purple-100'
                     }`}>
-                      {isProcessing ? (
+                      {processingError ? (
+                        <AlertCircle className="w-12 h-12 text-red-600" />
+                      ) : isProcessing ? (
                         <>
                           {currentProcessingState === "uploading" && (
                             <Upload className="w-12 h-12 text-purple-600 animate-bounce" />
                           )}
+                          {currentProcessingState === "processing" && (
+                            <Cog className="w-12 h-12 text-purple-600 animate-spin" />
+                          )}
                           {currentProcessingState === "decoding" && (
                             <FileText className="w-12 h-12 text-purple-600 animate-spin" style={{ animationDuration: '2s' }} />
+                          )}
+                          {currentProcessingState === "ocr_completed" && (
+                            <Scan className="w-12 h-12 text-purple-600 animate-pulse" />
                           )}
                           {currentProcessingState === "ai_processing" && (
                             <Sparkles className="w-12 h-12 text-purple-600 animate-pulse" />
@@ -510,20 +551,36 @@ export default function HomePage() {
                       )}
                     </div>
                     <h3 className="font-bold text-gray-900 mb-2 text-lg">Step 2</h3>
-                    <p className={`text-sm text-gray-600 mb-4 text-center transition-all duration-300 ${
-                      isProcessing ? 'font-semibold text-purple-700 animate-pulse' : ''
+                    <p className={`text-sm mb-4 text-center transition-all duration-300 ${
+                      processingError ? 'text-red-600 font-medium' :
+                      isProcessing ? 'font-semibold text-purple-700 animate-pulse text-gray-600' : 'text-gray-600'
                     }`}>
-                      {isProcessing ? (
+                      {processingError ? (
+                        <span className="text-xs">{processingError}</span>
+                      ) : isProcessing ? (
                         <>
                           {currentProcessingState === "uploading" && "Uploading..."}
+                          {currentProcessingState === "processing" && "Processing..."}
                           {currentProcessingState === "decoding" && "Decoding..."}
+                          {currentProcessingState === "ocr_completed" && "OCR Completed..."}
                           {currentProcessingState === "ai_processing" && "AI Processing..."}
                         </>
                       ) : (
                         currentStep >= 2 ? 'Click to process' : 'Process'
                       )}
                     </p>
-                    {currentStep === 2 && !isProcessing && (
+                    {processingError ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRetry();
+                        }}
+                        className="btn btn-error btn-sm hover:scale-110 transition-transform"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-1" />
+                        Retry
+                      </button>
+                    ) : currentStep === 2 && !isProcessing && (
                       <button className="btn btn-primary btn-sm hover:scale-110 transition-transform">
                         Start
                       </button>
@@ -604,12 +661,23 @@ export default function HomePage() {
                                 {index + 1}. {q.body}
                               </p>
                               {q.options && q.options.length > 0 && (
-                                <div className="mt-2 space-y-1">
-                                  {q.options.map((option, optIdx) => (
-                                    <div key={optIdx} className="text-xs text-gray-600 pl-4">
-                                      • {option}
-                                    </div>
-                                  ))}
+                                <div className="mt-3 space-y-2">
+                                  {q.options.map((option, optIdx) => {
+                                    const isCorrect = option.includes('[correct]');
+                                    const displayText = option.replace('[correct]', '').trim();
+                                    return (
+                                      <div
+                                        key={optIdx}
+                                        className={`text-xs pl-4 py-1 rounded ${
+                                          isCorrect
+                                            ? 'font-bold text-green-700 bg-green-50 border-l-2 border-green-500'
+                                            : 'text-gray-600'
+                                        }`}
+                                      >
+                                        • {displayText}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </div>
