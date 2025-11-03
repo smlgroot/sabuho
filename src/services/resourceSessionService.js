@@ -192,16 +192,33 @@ export async function fetchResourceSessionDomains(sessionId) {
 /**
  * Fetch questions for a resource session
  * @param {string} sessionId - Resource session ID
- * @returns {Promise<object>} - { data, error }
+ * @returns {Promise<object>} - { data, error, total, sampleCount }
  */
 export async function fetchResourceSessionQuestions(sessionId) {
+  // Get sample questions (is_sample=false)
   const { data, error } = await supabase
     .from('resource_session_questions')
     .select('*')
     .eq('resource_session_id', sessionId)
+    .eq('is_sample', false)
     .order('created_at', { ascending: true })
 
-  return { data, error }
+  if (error) {
+    return { data: null, error, total: 0, sampleCount: 0 }
+  }
+
+  // Get total count of all questions
+  const { count, error: countError } = await supabase
+    .from('resource_session_questions')
+    .select('*', { count: 'exact', head: true })
+    .eq('resource_session_id', sessionId)
+
+  return {
+    data,
+    error: null,
+    total: count || 0,
+    sampleCount: data?.length || 0
+  }
 }
 
 // ============================================================================

@@ -6,7 +6,7 @@ services:
     container_name: sabuho-processor
     volumes:
       - ./src:/app:ro
-      - /tmp/paddleocr-models:/root/.paddlex
+      - /tmp/.paddlex:/root/.paddlex
     environment:
       - APP_ENV_TYPE=${APP_ENV_TYPE:-production}
       - PYTHONUNBUFFERED=1

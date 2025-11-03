@@ -204,7 +204,11 @@ app.get('/rest/v1/resource_session_domains', (c) => {
 app.get('/rest/v1/resource_session_questions', (c) => {
   const url = new URL(c.req.url);
   const sessionIdParam = url.searchParams.get('resource_session_id');
-  const selectParam = url.searchParams.get('select') || '*';
+  const isSampleParam = url.searchParams.get('is_sample');
+  const preferHeader = c.req.header('Prefer') || '';
+
+  // Check if this is a count-only request
+  const isCountRequest = preferHeader.includes('count=exact');
 
   // Parse resource_session_id query: resource_session_id=eq.uuid
   let sessionId: string | null = null;
@@ -215,12 +219,40 @@ app.get('/rest/v1/resource_session_questions', (c) => {
     }
   }
 
-  if (sessionId) {
-    const questions = sessionStore.getQuestionsBySessionId(sessionId);
-    console.log(`❓ Questions requested for session: ${sessionId} - Count: ${questions.length}`);
-    return c.json(questions);
+  // Parse is_sample query: is_sample=eq.false or is_sample=eq.true
+  let isSampleFilter: boolean | null = null;
+  if (isSampleParam) {
+    const match = isSampleParam.match(/^eq\.(true|false)$/);
+    if (match) {
+      isSampleFilter = match[1] === 'true';
+    }
   }
 
+  if (sessionId) {
+    const allQuestions = sessionStore.getQuestionsBySessionId(sessionId);
+
+    // Filter by is_sample if provided
+    const filteredQuestions = isSampleFilter !== null
+      ? allQuestions.filter(q => q.is_sample === isSampleFilter)
+      : allQuestions;
+
+    const count = filteredQuestions.length;
+
+    console.log(`❓ Questions requested for session: ${sessionId} - Total: ${allQuestions.length}, is_sample=${isSampleFilter}, Count request: ${isCountRequest}, Returning: ${count}`);
+
+    // Set Content-Range header (Supabase standard for counts)
+    c.header('Content-Range', `0-${count > 0 ? count - 1 : 0}/${count}`);
+
+    // For count-only requests, return empty array (Supabase client reads count from header)
+    if (isCountRequest) {
+      return c.json([]);
+    }
+
+    // Return array directly (like Supabase PostgREST does)
+    return c.json(filteredQuestions);
+  }
+
+  c.header('Content-Range', `0-0/0`);
   return c.json([]);
 });
 
@@ -252,7 +284,9 @@ console.log(`
 ║                                                               ║
 ║   📊 Mock Data:                                              ║
 ║   • 10 topics per document                                   ║
-║   • 100 questions per document                               ║
+║   • 100 questions total (25 with is_sample=false)            ║
+║   • Query is_sample=eq.false → returns 25 sample questions  ║
+║   • Query without is_sample filter → returns all 100        ║
 ║                                                               ║
 ║   ⚙️  Configuration:                                         ║
 ║   Update your .env.local with:                               ║

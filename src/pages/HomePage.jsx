@@ -33,6 +33,7 @@ export default function HomePage() {
   const [topics, setTopics] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [questionsCount, setQuestionsCount] = useState(0);
+  const [totalQuestionsGenerated, setTotalQuestionsGenerated] = useState(0);
   const [s3Key, setS3Key] = useState(null);
   const [processingError, setProcessingError] = useState(null);
 
@@ -125,6 +126,7 @@ export default function HomePage() {
     setTopics([]);
     setQuestions([]);
     setQuestionsCount(0);
+    setTotalQuestionsGenerated(0);
     setS3Key(null);
     setProcessingError(null);
 
@@ -154,7 +156,7 @@ export default function HomePage() {
     setTopics(topicsData);
 
     // Fetch questions for this resource session
-    const { data: questionsData, error: questionsError } = await fetchResourceSessionQuestions(completedSession.id);
+    const { data: questionsData, error: questionsError, total, sampleCount } = await fetchResourceSessionQuestions(completedSession.id);
 
     if (questionsError) {
       console.error('Error fetching questions:', questionsError);
@@ -162,7 +164,8 @@ export default function HomePage() {
 
     const questions = questionsData || [];
     setQuestions(questions);
-    setQuestionsCount(questions.length);
+    setQuestionsCount(sampleCount || questions.length);
+    setTotalQuestionsGenerated(total || 0);
 
     setIsProcessing(false);
     setCurrentProcessingState("");
@@ -302,6 +305,7 @@ export default function HomePage() {
     setTopics([]);
     setQuestions([]);
     setQuestionsCount(0);
+    setTotalQuestionsGenerated(0);
     setS3Key(null);
     setProcessingError(null);
     if (fileInputRef.current) {
@@ -432,10 +436,10 @@ export default function HomePage() {
 
       {/* Hero Section - AI Document to Quiz */}
       <section className="hero min-h-[85vh] bg-gradient-to-b from-blue-50 to-white">
-        <div className="hero-content text-center px-6 w-full py-16">
+        <div className="hero-content px-6 w-full py-16">
           <div className="max-w-5xl w-full">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 text-gray-900 leading-tight tracking-tight">
-              <div className="flex items-center justify-center gap-6 flex-wrap">
+              <div className="flex items-center gap-6 flex-wrap">
                 <span className="bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">Any Document</span>
 
                 <div className="relative group">
@@ -451,19 +455,19 @@ export default function HomePage() {
               </div>
             </h1>
 
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 mb-12 max-w-2xl">
               Upload your content and watch AI instantly create personalized, interactive quizzes tailored to what you need to learn
             </p>
 
             {/* 3-Step Process Section */}
-            <div className="max-w-4xl mx-auto mb-8">
+            <div className="max-w-4xl mb-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Step 1: Choose a file */}
                 <div className={`bg-white rounded-lg shadow-lg border-2 p-8 transition-all ${
                   currentStep === 1 ? 'border-blue-500' : 'border-gray-200'
                 }`}>
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className={`rounded-full p-4 mb-4 ${
+                  <div className="flex flex-col h-full">
+                    <div className={`rounded-full p-4 mb-4 w-fit ${
                       uploadedFile ? 'bg-green-100' : 'bg-blue-100'
                     }`}>
                       {uploadedFile ? (
@@ -473,7 +477,7 @@ export default function HomePage() {
                       )}
                     </div>
                     <h3 className="font-bold text-gray-900 mb-2 text-lg">Step 1</h3>
-                    <p className="text-sm text-gray-600 mb-4 text-center">
+                    <p className="text-sm text-gray-600 mb-4">
                       {uploadedFile ? 'File selected' : 'Choose a file'}
                     </p>
 
@@ -489,12 +493,12 @@ export default function HomePage() {
                     {!uploadedFile ? (
                       <label
                         htmlFor="file-upload-step"
-                        className="btn btn-primary btn-sm cursor-pointer"
+                        className="btn btn-primary btn-sm cursor-pointer w-fit"
                       >
                         Select File
                       </label>
                     ) : (
-                      <div className="text-center">
+                      <div>
                         <p className="text-xs text-gray-700 font-medium mb-2">{uploadedFile.name}</p>
                         <label
                           htmlFor="file-upload-step"
@@ -519,8 +523,8 @@ export default function HomePage() {
                     handleProcessClick();
                   }
                 }}>
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className={`rounded-full p-4 mb-4 transition-all duration-500 ${
+                  <div className="flex flex-col h-full">
+                    <div className={`rounded-full p-4 mb-4 w-fit transition-all duration-500 ${
                       processingError ? 'bg-red-100' :
                       isProcessing ? 'bg-purple-200 scale-110' : 'bg-purple-100'
                     }`}>
@@ -551,7 +555,7 @@ export default function HomePage() {
                       )}
                     </div>
                     <h3 className="font-bold text-gray-900 mb-2 text-lg">Step 2</h3>
-                    <p className={`text-sm mb-4 text-center transition-all duration-300 ${
+                    <p className={`text-sm mb-4 transition-all duration-300 ${
                       processingError ? 'text-red-600 font-medium' :
                       isProcessing ? 'font-semibold text-purple-700 animate-pulse text-gray-600' : 'text-gray-600'
                     }`}>
@@ -575,13 +579,13 @@ export default function HomePage() {
                           e.stopPropagation();
                           handleRetry();
                         }}
-                        className="btn btn-error btn-sm hover:scale-110 transition-transform"
+                        className="btn btn-error btn-sm hover:scale-110 transition-transform w-fit"
                       >
                         <RotateCcw className="w-4 h-4 mr-1" />
                         Retry
                       </button>
                     ) : currentStep === 2 && !isProcessing && (
-                      <button className="btn btn-primary btn-sm hover:scale-110 transition-transform">
+                      <button className="btn btn-primary btn-sm hover:scale-110 transition-transform w-fit">
                         Start
                       </button>
                     )}
@@ -598,15 +602,15 @@ export default function HomePage() {
                     setResultExpanded(!resultExpanded);
                   }
                 }}>
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="bg-green-100 rounded-full p-4 mb-4">
+                  <div className="flex flex-col h-full">
+                    <div className="bg-green-100 rounded-full p-4 mb-4 w-fit">
                       <Trophy className="w-12 h-12 text-green-600" />
                     </div>
                     <h3 className="font-bold text-gray-900 mb-2 text-lg">Step 3</h3>
-                    <p className="text-sm text-gray-600 mb-4 text-center">
+                    <p className="text-sm text-gray-600 mb-4">
                       {currentStep === 3 ? (
                         <>
-                          {questionsCount} questions<br />
+                          {totalQuestionsGenerated} questions<br />
                           {topics.length} topics
                         </>
                       ) : (
@@ -614,7 +618,7 @@ export default function HomePage() {
                       )}
                     </p>
                     {currentStep === 3 && (
-                      <button className="btn btn-primary btn-sm">
+                      <button className="btn btn-primary btn-sm w-fit">
                         {resultExpanded ? 'Hide' : 'View'}
                       </button>
                     )}
@@ -624,88 +628,137 @@ export default function HomePage() {
 
               {/* Expanded Result Section */}
               {resultExpanded && currentStep === 3 && (
-                <div className="mt-6 bg-white rounded-lg shadow-lg border border-gray-200 p-8 animate-fadeIn">
-                  <div className="grid md:grid-cols-2 gap-8">
+                <div className="mt-6 bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                  <div className="grid md:grid-cols-2 gap-6">
                     {/* Topics */}
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-blue-600" />
-                        Topics Discovered
-                      </h4>
-                      <div className="space-y-2">
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="mb-4 pb-3 border-b border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <BookOpen className="w-5 h-5 text-blue-600" />
+                            Topics Discovered
+                          </h4>
+                        </div>
+                        <div className="text-sm">
+                          <span className="text-gray-600">Total topics: </span>
+                          <span className="font-bold text-blue-600">{topics.length}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
                         {topics.map((topic, index) => (
-                          <div key={index} className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <Target className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                            <div className="flex-1">
-                              <span className="text-sm text-gray-900 font-medium">{topic.name}</span>
-                              <span className="text-xs text-gray-500 ml-2">
-                                (Pages {topic.start}-{topic.end})
-                              </span>
+                          <div key={index} className="p-3 bg-gray-50 border border-gray-200 rounded">
+                            <div className="flex items-start gap-3">
+                              <span className="font-bold text-blue-600 text-sm">{index + 1}.</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 mb-1">{topic.name}</p>
+                                <p className="text-sm text-gray-500">Pages {topic.start}-{topic.end}</p>
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Questions Preview */}
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-purple-600" />
-                        Questions Generated
-                      </h4>
-                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {/* Questions */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="mb-4 pb-3 border-b border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-purple-600" />
+                            Questions Generated
+                          </h4>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600">Showing sample: </span>
+                            <span className="font-bold text-purple-600">{questionsCount}</span>
+                          </div>
+                          <div className="text-gray-400">•</div>
+                          <div>
+                            <span className="text-gray-600">Total generated: </span>
+                            <span className="font-bold text-gray-900">{totalQuestionsGenerated}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
                         {questions.length > 0 ? (
-                          questions.slice(0, 5).map((q, index) => (
-                            <div key={q.id} className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                              <p className="text-sm font-semibold text-gray-900 mb-2">
-                                {index + 1}. {q.body}
-                              </p>
-                              {q.options && q.options.length > 0 && (
-                                <div className="mt-3 space-y-2">
-                                  {q.options.map((option, optIdx) => {
-                                    const isCorrect = option.includes('[correct]');
-                                    const displayText = option.replace('[correct]', '').trim();
-                                    return (
-                                      <div
-                                        key={optIdx}
-                                        className={`text-xs pl-4 py-1 rounded ${
-                                          isCorrect
-                                            ? 'font-bold text-green-700 bg-green-50 border-l-2 border-green-500'
-                                            : 'text-gray-600'
-                                        }`}
-                                      >
-                                        • {displayText}
-                                      </div>
-                                    );
-                                  })}
+                          <>
+                            {questions.map((q, index) => (
+                              <div key={q.id} className="p-3 bg-gray-50 border border-gray-200 rounded">
+                                <p className="font-medium text-gray-900 mb-3">
+                                  <span className="font-bold text-purple-600">{index + 1}.</span> {q.body}
+                                </p>
+                                {q.options && q.options.length > 0 && (
+                                  <div className="space-y-1.5 pl-5">
+                                    {q.options.map((option, optIdx) => {
+                                      const isCorrect = option.includes('[correct]');
+                                      const displayText = option.replace('[correct]', '').trim();
+                                      return (
+                                        <div
+                                          key={optIdx}
+                                          className={`text-sm py-1 ${
+                                            isCorrect ? 'font-semibold text-green-700' : 'text-gray-700'
+                                          }`}
+                                        >
+                                          {String.fromCharCode(65 + optIdx)}. {displayText}
+                                          {isCorrect && ' ✓'}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            {totalQuestionsGenerated > questionsCount && (
+                              <div className="bg-amber-50 border-2 border-amber-400 rounded-lg overflow-hidden">
+                                <div className="p-5">
+                                  <div className="flex items-start gap-3">
+                                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1">
+                                      <p className="text-sm font-semibold text-amber-900 mb-1">
+                                        {totalQuestionsGenerated - questionsCount} more questions not shown
+                                      </p>
+                                      <p className="text-sm text-amber-800">
+                                        {user
+                                          ? 'Save this quiz to access all generated questions.'
+                                          : 'Sign up and save this quiz to access all generated questions.'}
+                                      </p>
+                                    </div>
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-                          ))
+                                <div className="bg-amber-100/50 px-5 py-4 flex justify-end gap-3">
+                                  <button onClick={handleReset} className="btn btn-ghost">
+                                    Start Over
+                                  </button>
+                                  <button onClick={handleSaveQuiz} className="btn btn-primary">
+                                    <CheckCircle className="w-5 h-5 mr-2" />
+                                    {user ? "Save Quiz" : "Sign Up to Save"}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </>
                         ) : (
-                          <div className="text-sm text-gray-500 italic">
+                          <div className="text-sm text-gray-500 italic text-center">
                             No questions generated yet
                           </div>
-                        )}
-                        {questions.length > 5 && (
-                          <p className="text-xs text-gray-500 italic text-center">
-                            Showing 5 of {questions.length} questions
-                          </p>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex justify-end mt-6 gap-3">
-                    <button onClick={handleReset} className="btn bg-gray-100 hover:bg-gray-200 text-gray-700 border-0 rounded-lg font-semibold px-6">
-                      Start Over
-                    </button>
-                    <button onClick={handleSaveQuiz} className="btn bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-lg font-semibold px-6 shadow-md hover:shadow-lg transition-all">
-                      <CheckCircle className="w-5 h-5 mr-2" />
-                      {user ? "Save Quiz" : "Sign Up to Save"}
-                    </button>
-                  </div>
+                  {/* Action Buttons - Only show when all questions are displayed */}
+                  {totalQuestionsGenerated <= questionsCount && (
+                    <div className="flex justify-end mt-6 gap-3 pt-4 border-t border-gray-200">
+                      <button onClick={handleReset} className="btn btn-ghost">
+                        Start Over
+                      </button>
+                      <button onClick={handleSaveQuiz} className="btn btn-primary">
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        {user ? "Save Quiz" : "Sign Up to Save"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -12,6 +12,7 @@ export interface MockQuestion {
   options: string[];
   created_at: string;
   resource_session_id: string;
+  is_sample: boolean;
 }
 
 export interface MockResourceSession {
@@ -97,10 +98,24 @@ export const generateMockQuestions = (sessionId: string, topics: MockTopic[]): M
         body: questionBody,
         options: [...options],
         created_at: new Date().toISOString(),
-        resource_session_id: sessionId
+        resource_session_id: sessionId,
+        is_sample: true // Default all to sample (true)
       });
     }
   });
+
+  // Mark only 25% of questions as is_sample=false (evenly distributed)
+  // These are the ones that will be returned when filtering by is_sample=false
+  const totalQuestions = questions.length;
+  const returnSize = Math.floor(totalQuestions * 0.25); // 25% to return
+  const interval = Math.floor(totalQuestions / returnSize);
+
+  for (let i = 0; i < returnSize; i++) {
+    const index = i * interval;
+    if (index < totalQuestions) {
+      questions[index].is_sample = false; // Only 25% have is_sample=false
+    }
+  }
 
   return questions;
 };
