@@ -171,6 +171,7 @@ export default function HomePage() {
     setCurrentProcessingState("");
     setQuizGenerated(true);
     setCurrentStep(3);
+    setResultExpanded(true); // Auto-expand results when processing completes
     trackEvent('quiz_generated', {
       props: {
         fileType: uploadedFile.type,
@@ -573,6 +574,14 @@ export default function HomePage() {
                         currentStep >= 2 ? 'Click to process' : 'Process'
                       )}
                     </p>
+                    {s3Key && (
+                      <div className="mb-3 p-2 bg-purple-50 border border-purple-200 rounded text-xs">
+                        <p className="text-purple-700 font-semibold mb-1">File Path ID:</p>
+                        <p className="text-purple-600 font-mono break-all text-[10px]">
+                          {s3Key}
+                        </p>
+                      </div>
+                    )}
                     {processingError ? (
                       <button
                         onClick={(e) => {

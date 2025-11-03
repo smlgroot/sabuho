@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import * as supabaseService from '@/services/supabaseService'
-import { upsertUserProfile, getUserProfile } from '@/services/userProfileService'
+import { upsertUserProfile } from '@/services/userProfileService'
 
 const AuthContext = createContext(undefined)
 
@@ -10,16 +10,25 @@ export function AuthProvider({ children }) {
   const [userProfile, setUserProfile] = useState(null)
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadingProfile, setLoadingProfile] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
   const loadUserProfile = async (userId) => {
+    // Prevent duplicate calls
+    if (loadingProfile) {
+      return
+    }
+
     try {
-      await upsertUserProfile(userId)
-      const { data: profile } = await getUserProfile(userId)
+      setLoadingProfile(true)
+      // upsertUserProfile now returns the profile data, no need for separate getUserProfile call
+      const { data: profile } = await upsertUserProfile(userId)
       setUserProfile(profile)
     } catch (error) {
       console.error('Failed to load user profile:', error)
+    } finally {
+      setLoadingProfile(false)
     }
   }
 

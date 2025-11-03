@@ -64,40 +64,23 @@ export async function getUserProfile(userId) {
 export async function upsertUserProfile(userId, updates = {}) {
   const now = new Date().toISOString()
 
-  // Check if profile exists first
-  const { data: existingProfile } = await supabase
+  // Use native upsert to avoid multiple queries
+  const { data, error } = await supabase
     .from('user_profiles')
-    .select('id')
-    .eq('user_id', userId)
+    .upsert({
+      user_id: userId,
+      display_name: updates.display_name || '',
+      ...updates,
+      last_active_at: now,
+      updated_at: now
+    }, {
+      onConflict: 'user_id',
+      ignoreDuplicates: false
+    })
+    .select()
     .single()
 
-  let result
-  if (existingProfile) {
-    // Update existing profile
-    result = await supabase
-      .from('user_profiles')
-      .update({
-        ...updates,
-        last_active_at: now,
-        updated_at: now
-      })
-      .eq('user_id', userId)
-      .select()
-  } else {
-    // Create new profile
-    result = await supabase
-      .from('user_profiles')
-      .insert({
-        user_id: userId,
-        display_name: updates.display_name || '',
-        ...updates,
-        last_active_at: now,
-        updated_at: now
-      })
-      .select()
-  }
-
-  return result
+  return { data, error }
 }
 
 export async function updateUserProfile(userId, updates) {

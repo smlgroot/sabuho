@@ -421,11 +421,19 @@ export default function AdminPage() {
     <aside className="min-w-20 sidebar-dark text-base-content flex flex-col h-full">
       {/* App Logo */}
       <div className="p-3">
-        <img
-          src="/sabuho_logo_3.png"
-          alt="Sabuho"
-          className="w-12 h-12 mx-auto object-contain"
-        />
+        <button
+          onClick={() => {
+            trackEvent('logo_clicked', { props: { source: 'admin_sidebar' } });
+            navigate('/');
+          }}
+          className="btn btn-ghost p-0 hover:bg-transparent"
+        >
+          <img
+            src="/sabuho_logo_3.png"
+            alt="Sabuho"
+            className="w-12 h-12 mx-auto object-contain"
+          />
+        </button>
       </div>
 
       {/* Main Navigation Menu */}
