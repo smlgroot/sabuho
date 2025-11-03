@@ -1,15 +1,17 @@
 import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from "react-router-dom";
 import { Globe, Brain, Target, Trophy, BookOpen, BarChart3, Sparkles, Upload, FileText, CheckCircle, Clock, Zap, Shield, Lock, Cog, Scan, AlertCircle, RotateCcw } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { usePostHog } from "@/components/PostHogProvider";
+import { toast } from "sonner";
 import {
   uploadFileToS3,
   pollResourceSessionStatus,
   fetchResourceSessionDomains,
   fetchResourceSessionQuestions
 } from "@/services/resourceSessionService";
+import { migrateResourceSessionToUserData } from "@/services/resourceSessionMigrationService";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
@@ -69,6 +71,43 @@ export default function HomePage() {
   const changeLanguage = (lng) => {
     trackEvent('language_changed', { props: { language: lng, source: 'homepage' } });
     setLanguage(lng);
+  };
+
+  // DEV ONLY: Test save flow directly
+  const testSaveButton = async () => {
+    const testS3Key = import.meta.env.VITE_TEST_PENDING_QUIZ_S3_KEY;
+
+    if (!testS3Key) {
+      toast.error('Please set VITE_TEST_PENDING_QUIZ_S3_KEY in .env file');
+      return;
+    }
+
+    // Set s3Key and trigger save
+    setS3Key(testS3Key);
+
+    // Use the s3Key directly for save
+    if (user) {
+      toast.loading('Saving your quiz...');
+      const result = await migrateResourceSessionToUserData(testS3Key, user.id);
+
+      if (result.success) {
+        toast.dismiss();
+        toast.success(`Quiz saved! Created ${result.questionCount} questions in ${result.domainIds.length} topics`);
+        navigate("/admin");
+      } else {
+        toast.dismiss();
+        const errorMessage = result.error?.message || 'Unknown error';
+        if (errorMessage.includes('already been saved')) {
+          toast.info(errorMessage);
+          setTimeout(() => navigate("/admin"), 1500);
+        } else {
+          toast.error(`Failed to save quiz: ${errorMessage}`);
+        }
+      }
+    } else {
+      localStorage.setItem('pendingQuizS3Key', testS3Key);
+      navigate("/auth");
+    }
   };
 
   // File upload handlers
@@ -286,14 +325,50 @@ export default function HomePage() {
     }
   };
 
-  const handleSaveQuiz = () => {
+  const handleSaveQuiz = async () => {
     trackEvent('save_quiz_clicked', { props: { source: 'homepage' } });
+
     if (user) {
-      navigate("/admin");
+      // User is already logged in, check for s3Key in state or localStorage or env
+      const keyToUse = s3Key || localStorage.getItem('pendingQuizS3Key') || import.meta.env.VITE_TEST_PENDING_QUIZ_S3_KEY;
+
+      if (!keyToUse) {
+        toast.error('No quiz data to save');
+        return;
+      }
+
+      // Clear localStorage if we're using it
+      if (localStorage.getItem('pendingQuizS3Key')) {
+        localStorage.removeItem('pendingQuizS3Key');
+      }
+
+      toast.loading('Saving your quiz...');
+      const result = await migrateResourceSessionToUserData(keyToUse, user.id);
+
+      if (result.success) {
+        toast.dismiss();
+        toast.success(`Quiz saved! Created ${result.questionCount} questions in ${result.domainIds.length} topics`);
+        navigate("/admin");
+      } else {
+        toast.dismiss();
+        const errorMessage = result.error?.message || 'Unknown error';
+        if (errorMessage.includes('already been saved')) {
+          toast.info(errorMessage);
+          // Still navigate to admin so user can see their saved quiz
+          setTimeout(() => navigate("/admin"), 1500);
+        } else {
+          toast.error(`Failed to save quiz: ${errorMessage}`);
+        }
+      }
     } else {
+      // User not logged in, store s3Key and redirect to auth
+      if (s3Key) {
+        localStorage.setItem('pendingQuizS3Key', s3Key);
+      }
       navigate("/auth");
     }
   };
+
 
   const handleReset = () => {
     setUploadedFile(null);
@@ -391,6 +466,17 @@ export default function HomePage() {
         </div>
         <div className="flex-none">
           <div className="flex items-center gap-2">
+            {/* DEV ONLY: Test Save Button */}
+            {import.meta.env.DEV && (
+              <button
+                onClick={testSaveButton}
+                className="btn btn-sm btn-warning"
+                title="Test save/signup flow with VITE_TEST_PENDING_QUIZ_S3_KEY"
+              >
+                Test Save
+              </button>
+            )}
+
             {/* Language Selector */}
             <div className="dropdown dropdown-end">
               <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
