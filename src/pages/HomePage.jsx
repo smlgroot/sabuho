@@ -785,20 +785,21 @@ export default function HomePage() {
                   {/* Vertical Tab Layout - Simple Extension */}
                   <div className="flex">
                     {/* Topics Sidebar */}
-                    <div className="w-64 flex-shrink-0 space-y-2">
+                    <div className="w-64 flex-shrink-0 space-y-2 py-6">
                       {/* All Topics Tab */}
                       <div
                         onClick={() => setSelectedTopicIndex(null)}
-                        className={`px-4 py-3 cursor-pointer transition-all relative rounded-l-lg ${
+                        className={`px-4 py-3 cursor-pointer transition-all relative rounded-l-lg border-l-2 border-t-2 border-b-2 ${
                           selectedTopicIndex === null
-                            ? 'bg-blue-50 pr-6 -mr-2 z-10'
-                            : 'bg-gray-100 hover:bg-gray-200'
+                            ? 'bg-blue-50 pr-6 z-10 border-blue-500'
+                            : 'bg-gray-100 hover:bg-gray-200 border-gray-100'
                         }`}
+                        style={ selectedTopicIndex === null ? { marginRight: '-2px' } : { marginRight: '0px' } }
                       >
                         <div className="flex items-center gap-3">
-                          <BookOpen className="w-4 h-4 flex-shrink-0 text-blue-600" />
+                          <BookOpen className={`w-4 h-4 flex-shrink-0 ${selectedTopicIndex === null ? 'text-blue-600' : 'text-gray-500'}`} />
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm text-gray-900">All Topics</p>
+                            <p className={`font-semibold text-sm ${selectedTopicIndex === null ? 'text-blue-900' : 'text-gray-900'}`}>All Topics</p>
                             <p className="text-xs text-gray-500">{questionsCount} questions</p>
                           </div>
                         </div>
@@ -822,16 +823,21 @@ export default function HomePage() {
                           <div
                             key={index}
                             onClick={() => setSelectedTopicIndex(index)}
-                            className={`px-4 py-3 cursor-pointer transition-all relative rounded-l-lg ${
+                            className={`px-4 py-3 cursor-pointer transition-all relative rounded-l-lg border-l-2 border-t-2 border-b-2 ${
                               selectedTopicIndex === index
-                                ? 'bg-blue-50 pr-6 -mr-2 z-10'
-                                : 'bg-gray-100 hover:bg-gray-200'
+                                ? 'bg-blue-50 z-10 border-blue-500'
+                                : 'bg-gray-100 hover:bg-gray-200 border-gray-100'
                             }`}
+                            style={ selectedTopicIndex === index ? { marginRight: '-2px' } : { marginRight: '0px' } }
                           >
                             <div className="flex items-start gap-3">
-                              <span className="font-bold text-sm text-blue-600 flex-shrink-0">{index + 1}.</span>
+                              <span className={`font-bold text-sm flex-shrink-0 ${
+                                selectedTopicIndex === index ? 'text-blue-600' : 'text-gray-500'
+                              }`}>{index + 1}.</span>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">{topic.name}</p>
+                                <p className={`font-medium text-sm mb-1 line-clamp-2 ${
+                                  selectedTopicIndex === index ? 'text-blue-900' : 'text-gray-900'
+                                }`}>{topic.name}</p>
                                 <p className="text-xs text-gray-500">
                                   Pages {topic.start}-{topic.end}
                                   {topicQuestions.length > 0 && ` • ${topicQuestions.length} questions`}
@@ -844,10 +850,10 @@ export default function HomePage() {
                     </div>
 
                     {/* Questions Content Area */}
-                    <div className="flex-1 bg-blue-50 border border-gray-200 rounded-r-lg rounded-bl-lg p-6">
-                      <div className="mb-4">
-                        <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                          <FileText className="w-5 h-5 text-purple-600" />
+                    <div className="flex-1 bg-blue-50 border-2 border-blue-500 rounded-lg p-6">
+                      <div className="mb-4 pb-3 border-b border-blue-400">
+                        <h4 className="text-lg font-bold text-blue-900 flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-blue-600" />
                           {selectedTopicIndex === null
                             ? 'All Questions'
                             : `Questions for ${topics[selectedTopicIndex]?.name}`}
