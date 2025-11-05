@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from "react-router-dom";
-import { Globe, Brain, Target, Trophy, BookOpen, BarChart3, Sparkles, Upload, FileText, CheckCircle, Clock, Zap, Shield, Lock, Cog, Scan, AlertCircle, RotateCcw } from "lucide-react";
+import { Globe, Brain, Target, Trophy, BookOpen, BarChart3, Sparkles, Upload, FileText, CheckCircle, Clock, Zap, Shield, Lock, Cog, Scan, AlertCircle, RotateCcw, DollarSign } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { usePostHog } from "@/components/PostHogProvider";
@@ -578,27 +578,31 @@ export default function HomePage() {
               Upload your content and watch AI instantly create personalized, interactive quizzes tailored to what you need to learn
             </p>
 
-            {/* 3-Step Process Section */}
-            <div className="max-w-4xl mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* 4-Step Process Section */}
+            <div className="max-w-5xl mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Step 1: Choose a file */}
-                <div className={`bg-white rounded-lg shadow-lg border-2 p-8 transition-all ${
+                <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
                   currentStep === 1 ? 'border-blue-500' : 'border-gray-200'
                 }`}>
                   <div className="flex flex-col h-full">
-                    <div className={`rounded-full p-4 mb-4 w-fit ${
-                      uploadedFile ? 'bg-green-100' : 'bg-blue-100'
-                    }`}>
-                      {uploadedFile ? (
-                        <CheckCircle className="w-12 h-12 text-green-600" />
-                      ) : (
-                        <Upload className="w-12 h-12 text-blue-600" />
-                      )}
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className={`rounded-full p-2 flex-shrink-0 ${
+                        uploadedFile ? 'bg-green-100' : 'bg-blue-100'
+                      }`}>
+                        {uploadedFile ? (
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        ) : (
+                          <Upload className="w-5 h-5 text-blue-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-sm mb-1">Step 1</h3>
+                        <p className="text-xs text-gray-600">
+                          {uploadedFile ? 'File selected' : 'Choose a file'}
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="font-bold text-gray-900 mb-2 text-lg">Step 1</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      {uploadedFile ? 'File selected' : 'Choose a file'}
-                    </p>
 
                     <input
                       ref={fileInputRef}
@@ -612,18 +616,18 @@ export default function HomePage() {
                     {!uploadedFile ? (
                       <label
                         htmlFor="file-upload-step"
-                        className="btn btn-primary btn-sm cursor-pointer w-fit"
+                        className="btn btn-primary btn-sm cursor-pointer w-full mt-auto"
                       >
                         Select File
                       </label>
                     ) : (
-                      <div>
-                        <p className="text-xs text-gray-700 font-medium mb-2">{uploadedFile.name}</p>
+                      <div className="mt-auto">
+                        <p className="text-xs text-gray-700 font-medium mb-2 truncate">{uploadedFile.name}</p>
                         <label
                           htmlFor="file-upload-step"
-                          className="btn btn-ghost btn-xs cursor-pointer"
+                          className="btn btn-ghost btn-sm cursor-pointer w-full"
                         >
-                          Change
+                          Change File
                         </label>
                       </div>
                     )}
@@ -631,9 +635,9 @@ export default function HomePage() {
                 </div>
 
                 {/* Step 2: Process */}
-                <div className={`bg-white rounded-lg shadow-lg border-2 p-8 transition-all duration-300 ${
+                <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
                   processingError ? 'border-red-500' :
-                  currentStep === 2 && !isProcessing ? 'border-blue-500 cursor-pointer hover:shadow-xl hover:scale-105' :
+                  currentStep === 2 && !isProcessing ? 'border-blue-500 cursor-pointer hover:shadow-lg' :
                   isProcessing ? 'border-blue-500 animate-pulse' :
                   'border-gray-200 opacity-50 cursor-not-allowed'
                 }`}
@@ -643,85 +647,79 @@ export default function HomePage() {
                   }
                 }}>
                   <div className="flex flex-col h-full">
-                    <div className={`rounded-full p-4 mb-4 w-fit transition-all duration-500 ${
-                      processingError ? 'bg-red-100' :
-                      isProcessing ? 'bg-purple-200 scale-110' : 'bg-purple-100'
-                    }`}>
-                      {processingError ? (
-                        <AlertCircle className="w-12 h-12 text-red-600" />
-                      ) : isProcessing ? (
-                        <>
-                          {currentProcessingState === "uploading" && (
-                            <Upload className="w-12 h-12 text-purple-600 animate-bounce" />
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className={`rounded-full p-2 flex-shrink-0 transition-all ${
+                        processingError ? 'bg-red-100' :
+                        isProcessing ? 'bg-purple-200' : 'bg-purple-100'
+                      }`}>
+                        {processingError ? (
+                          <AlertCircle className="w-5 h-5 text-red-600" />
+                        ) : isProcessing ? (
+                          <>
+                            {currentProcessingState === "uploading" && (
+                              <Upload className="w-5 h-5 text-purple-600 animate-bounce" />
+                            )}
+                            {currentProcessingState === "processing" && (
+                              <Cog className="w-5 h-5 text-purple-600 animate-spin" />
+                            )}
+                            {currentProcessingState === "decoding" && (
+                              <FileText className="w-5 h-5 text-purple-600 animate-spin" style={{ animationDuration: '2s' }} />
+                            )}
+                            {currentProcessingState === "ocr_completed" && (
+                              <Scan className="w-5 h-5 text-purple-600 animate-pulse" />
+                            )}
+                            {currentProcessingState === "ai_processing" && (
+                              <Sparkles className="w-5 h-5 text-purple-600 animate-pulse" />
+                            )}
+                          </>
+                        ) : (
+                          <Brain className="w-5 h-5 text-purple-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-sm mb-1">Step 2</h3>
+                        <p className={`text-xs ${
+                          processingError ? 'text-red-600 font-medium' :
+                          isProcessing ? 'font-semibold text-purple-700' : 'text-gray-600'
+                        }`}>
+                          {processingError ? (
+                            <span className="text-xs">{processingError}</span>
+                          ) : isProcessing ? (
+                            <>
+                              {currentProcessingState === "uploading" && "Uploading..."}
+                              {currentProcessingState === "processing" && "Processing..."}
+                              {currentProcessingState === "decoding" && "Decoding..."}
+                              {currentProcessingState === "ocr_completed" && "OCR..."}
+                              {currentProcessingState === "ai_processing" && "AI Processing..."}
+                            </>
+                          ) : (
+                            currentStep >= 2 ? 'Click to process' : 'Process'
                           )}
-                          {currentProcessingState === "processing" && (
-                            <Cog className="w-12 h-12 text-purple-600 animate-spin" />
-                          )}
-                          {currentProcessingState === "decoding" && (
-                            <FileText className="w-12 h-12 text-purple-600 animate-spin" style={{ animationDuration: '2s' }} />
-                          )}
-                          {currentProcessingState === "ocr_completed" && (
-                            <Scan className="w-12 h-12 text-purple-600 animate-pulse" />
-                          )}
-                          {currentProcessingState === "ai_processing" && (
-                            <Sparkles className="w-12 h-12 text-purple-600 animate-pulse" />
-                          )}
-                        </>
-                      ) : (
-                        <Brain className={`w-12 h-12 text-purple-600 transition-transform duration-300 ${
-                          currentStep === 2 ? 'hover:scale-125' : ''
-                        }`} />
-                      )}
-                    </div>
-                    <h3 className="font-bold text-gray-900 mb-2 text-lg">Step 2</h3>
-                    <p className={`text-sm mb-4 transition-all duration-300 ${
-                      processingError ? 'text-red-600 font-medium' :
-                      isProcessing ? 'font-semibold text-purple-700 animate-pulse text-gray-600' : 'text-gray-600'
-                    }`}>
-                      {processingError ? (
-                        <span className="text-xs">{processingError}</span>
-                      ) : isProcessing ? (
-                        <>
-                          {currentProcessingState === "uploading" && "Uploading..."}
-                          {currentProcessingState === "processing" && "Processing..."}
-                          {currentProcessingState === "decoding" && "Decoding..."}
-                          {currentProcessingState === "ocr_completed" && "OCR Completed..."}
-                          {currentProcessingState === "ai_processing" && "AI Processing..."}
-                        </>
-                      ) : (
-                        currentStep >= 2 ? 'Click to process' : 'Process'
-                      )}
-                    </p>
-                    {s3Key && (
-                      <div className="mb-3 p-2 bg-purple-50 border border-purple-200 rounded text-xs">
-                        <p className="text-purple-700 font-semibold mb-1">File Path ID:</p>
-                        <p className="text-purple-600 font-mono break-all text-[10px]">
-                          {s3Key}
                         </p>
                       </div>
-                    )}
+                    </div>
                     {processingError ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRetry();
                         }}
-                        className="btn btn-error btn-sm hover:scale-110 transition-transform w-fit"
+                        className="btn btn-error btn-sm w-full mt-auto"
                       >
                         <RotateCcw className="w-4 h-4 mr-1" />
                         Retry
                       </button>
                     ) : currentStep === 2 && !isProcessing && (
-                      <button className="btn btn-primary btn-sm hover:scale-110 transition-transform w-fit">
-                        Start
+                      <button className="btn btn-primary btn-sm w-full mt-auto">
+                        Start Processing
                       </button>
                     )}
                   </div>
                 </div>
 
                 {/* Step 3: Result */}
-                <div className={`bg-white rounded-lg shadow-lg border-2 p-8 transition-all ${
-                  currentStep === 3 ? 'border-blue-500 cursor-pointer hover:shadow-xl' :
+                <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
+                  currentStep === 3 ? 'border-blue-500 cursor-pointer hover:shadow-lg' :
                   'border-gray-200 opacity-50 cursor-not-allowed'
                 }`}
                 onClick={() => {
@@ -730,25 +728,56 @@ export default function HomePage() {
                   }
                 }}>
                   <div className="flex flex-col h-full">
-                    <div className="bg-green-100 rounded-full p-4 mb-4 w-fit">
-                      <Trophy className="w-12 h-12 text-green-600" />
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="bg-green-100 rounded-full p-2 flex-shrink-0">
+                        <Trophy className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-sm mb-1">Step 3</h3>
+                        <p className="text-xs text-gray-600">
+                          {currentStep === 3 ? (
+                            <>
+                              {totalQuestionsGenerated} questions<br />
+                              {topics.length} topics
+                            </>
+                          ) : (
+                            'Result'
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="font-bold text-gray-900 mb-2 text-lg">Step 3</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      {currentStep === 3 ? (
-                        <>
-                          {totalQuestionsGenerated} questions<br />
-                          {topics.length} topics
-                        </>
-                      ) : (
-                        'Result'
-                      )}
-                    </p>
                     {currentStep === 3 && (
-                      <button className="btn btn-primary btn-sm w-fit">
-                        {resultExpanded ? 'Hide' : 'View'}
+                      <button className="btn btn-primary btn-sm w-full mt-auto">
+                        {resultExpanded ? 'Hide Results' : 'View Results'}
                       </button>
                     )}
+                  </div>
+                </div>
+
+                {/* Step 4: Share/Sell/Make Money */}
+                <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
+                  quizGenerated ? 'border-yellow-500' : 'border-gray-200 opacity-50'
+                }`}>
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className={`rounded-full p-2 flex-shrink-0 ${
+                        quizGenerated ? 'bg-yellow-100' : 'bg-gray-100'
+                      }`}>
+                        <DollarSign className={`w-5 h-5 ${quizGenerated ? 'text-yellow-600' : 'text-gray-400'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-bold text-sm mb-1 ${quizGenerated ? 'text-gray-900' : 'text-gray-400'}`}>Step 4</h3>
+                        <p className={`text-xs ${quizGenerated ? 'text-gray-600' : 'text-gray-400'}`}>
+                          Share & Earn
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      className={`btn btn-sm w-full mt-auto ${quizGenerated ? 'btn-warning' : 'btn-disabled'}`}
+                      disabled={!quizGenerated}
+                    >
+                      {quizGenerated ? 'Coming Soon' : 'Locked'}
+                    </button>
                   </div>
                 </div>
               </div>
