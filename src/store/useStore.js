@@ -1,5 +1,24 @@
 import { create } from 'zustand'
 
+// Load expanded domains from localStorage
+const loadExpandedDomains = () => {
+  try {
+    const stored = localStorage.getItem('sabuho-expanded-domains')
+    return stored ? new Set(JSON.parse(stored)) : new Set()
+  } catch (e) {
+    return new Set()
+  }
+}
+
+// Save expanded domains to localStorage
+const saveExpandedDomains = (expandedDomains) => {
+  try {
+    localStorage.setItem('sabuho-expanded-domains', JSON.stringify(Array.from(expandedDomains)))
+  } catch (e) {
+    console.error('Failed to save expanded domains', e)
+  }
+}
+
 export const useStore = create((set, get) => ({
   domains: [],
   selectedDomain: null,
@@ -8,8 +27,8 @@ export const useStore = create((set, get) => ({
   loading: false,
   error: null,
   searchQuery: '',
-  collapsedDomains: new Set(),
-  
+  expandedDomains: loadExpandedDomains(),
+
   setDomains: (domains) => set({ domains }),
   setSelectedDomain: (domain) => set({ selectedDomain: domain }),
   setQuizzes: (quizzes) => set({ quizzes }),
@@ -17,21 +36,22 @@ export const useStore = create((set, get) => ({
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   setSearchQuery: (query) => set({ searchQuery: query }),
-  
+
   toggleDomainCollapsed: (domainId) => {
-    const { collapsedDomains } = get()
-    const newCollapsedDomains = new Set(collapsedDomains)
-    if (newCollapsedDomains.has(domainId)) {
-      newCollapsedDomains.delete(domainId)
+    const { expandedDomains } = get()
+    const newExpandedDomains = new Set(expandedDomains)
+    if (newExpandedDomains.has(domainId)) {
+      newExpandedDomains.delete(domainId)
     } else {
-      newCollapsedDomains.add(domainId)
+      newExpandedDomains.add(domainId)
     }
-    set({ collapsedDomains: newCollapsedDomains })
+    saveExpandedDomains(newExpandedDomains)
+    set({ expandedDomains: newExpandedDomains })
   },
-  
+
   isDomainCollapsed: (domainId) => {
-    const { collapsedDomains } = get()
-    return collapsedDomains.has(domainId)
+    const { expandedDomains } = get()
+    return !expandedDomains.has(domainId)
   },
   
   addDomain: (domain) => {
