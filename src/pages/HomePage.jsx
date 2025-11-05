@@ -202,8 +202,23 @@ export default function HomePage() {
 
     console.log('Processing completed:', completedSession);
 
-    // Extract results
-    const topicsData = completedSession.topic_page_range?.topics || [];
+    // Fetch domains (topics) from resource_session_domains table
+    const { data: domainsData, error: domainsError } = await fetchResourceSessionDomains(completedSession.id);
+
+    if (domainsError) {
+      console.error('Error fetching domains:', domainsError);
+    }
+
+    // Use domains from the table, or fallback to JSONB topics for backward compatibility
+    const topicsData = domainsData && domainsData.length > 0
+      ? domainsData.map(d => ({
+          id: d.id,
+          name: d.name,
+          start: d.page_range_start,
+          end: d.page_range_end
+        }))
+      : (completedSession.topic_page_range?.topics || []);
+
     setTopics(topicsData);
 
     // Fetch questions for this resource session
@@ -214,6 +229,10 @@ export default function HomePage() {
     }
 
     const questions = questionsData || [];
+    console.log('=== FETCHED DATA ===');
+    console.log('Domains:', domainsData);
+    console.log('Topics (transformed):', topicsData);
+    console.log('Questions sample:', questions[0]);
     setQuestions(questions);
     setQuestionsCount(sampleCount || questions.length);
     setTotalQuestionsGenerated(total || 0);
@@ -788,8 +807,14 @@ export default function HomePage() {
                       {/* Individual Topic Tabs */}
                       {topics.map((topic, index) => {
                         const topicQuestions = questions.filter(q => {
-                          if (q.domain_id) return q.domain_id === topic.domain_id;
-                          if (q.page_number) return q.page_number >= topic.start && q.page_number <= topic.end;
+                          // Match by resource_session_domain_id (from resource_session_domains table)
+                          if (q.resource_session_domain_id && topic.id) {
+                            return q.resource_session_domain_id === topic.id;
+                          }
+                          // Fallback to page number range for legacy data
+                          if (q.page_number && topic.start && topic.end) {
+                            return q.page_number >= topic.start && q.page_number <= topic.end;
+                          }
                           return false;
                         });
 
@@ -834,9 +859,16 @@ export default function HomePage() {
                           let filteredQuestions = questions;
                           if (selectedTopicIndex !== null) {
                             const selectedTopic = topics[selectedTopicIndex];
+
                             filteredQuestions = questions.filter(q => {
-                              if (q.domain_id) return q.domain_id === selectedTopic.domain_id;
-                              if (q.page_number) return q.page_number >= selectedTopic.start && q.page_number <= selectedTopic.end;
+                              // Match by resource_session_domain_id (from resource_session_domains table)
+                              if (q.resource_session_domain_id && selectedTopic.id) {
+                                return q.resource_session_domain_id === selectedTopic.id;
+                              }
+                              // Fallback to page number range for legacy data
+                              if (q.page_number && selectedTopic.start && selectedTopic.end) {
+                                return q.page_number >= selectedTopic.start && q.page_number <= selectedTopic.end;
+                              }
                               return false;
                             });
                           }

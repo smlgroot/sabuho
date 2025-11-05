@@ -1,7 +1,8 @@
-import type { MockResourceSession, MockQuestion } from './mockData';
+import type { MockResourceSession, MockQuestion, MockDomain } from './mockData';
 
 interface SessionData {
   session: MockResourceSession;
+  domains: MockDomain[];
   questions: MockQuestion[];
   stateTimer?: NodeJS.Timeout;
 }
@@ -11,8 +12,8 @@ class SessionStore {
   private sessionsByFilePath: Map<string, string> = new Map(); // filePath -> sessionId
 
   // Add a new session
-  addSession(session: MockResourceSession, questions: MockQuestion[]): void {
-    this.sessions.set(session.id, { session, questions });
+  addSession(session: MockResourceSession, domains: MockDomain[], questions: MockQuestion[]): void {
+    this.sessions.set(session.id, { session, domains, questions });
     this.sessionsByFilePath.set(session.file_path, session.id);
   }
 
@@ -65,6 +66,12 @@ class SessionStore {
   getQuestionsBySessionId(sessionId: string): MockQuestion[] {
     const sessionData = this.sessions.get(sessionId);
     return sessionData?.questions || [];
+  }
+
+  // Get all domains for a session
+  getDomainsBySessionId(sessionId: string): MockDomain[] {
+    const sessionData = this.sessions.get(sessionId);
+    return sessionData?.domains || [];
   }
 
   // Clear all sessions (useful for testing)

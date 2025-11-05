@@ -6,12 +6,23 @@ export interface MockTopic {
   end: number;
 }
 
+export interface MockDomain {
+  id: string;
+  resource_session_id: string;
+  name: string;
+  page_range_start: number;
+  page_range_end: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface MockQuestion {
   id: string;
   body: string;
   options: string[];
   created_at: string;
   resource_session_id: string;
+  resource_session_domain_id: string;
   is_sample: boolean;
 }
 
@@ -56,10 +67,23 @@ export const generateMockTopics = (): MockTopic[] => {
   });
 };
 
-// Generate 100 mock questions distributed across topics
-export const generateMockQuestions = (sessionId: string, topics: MockTopic[]): MockQuestion[] => {
+// Generate domains from topics (matching resource_session_domains table schema)
+export const generateMockDomains = (sessionId: string, topics: MockTopic[]): MockDomain[] => {
+  return topics.map(topic => ({
+    id: uuidv4(),
+    resource_session_id: sessionId,
+    name: topic.name,
+    page_range_start: topic.start,
+    page_range_end: topic.end,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }));
+};
+
+// Generate 100 mock questions distributed across domains
+export const generateMockQuestions = (sessionId: string, domains: MockDomain[]): MockQuestion[] => {
   const questions: MockQuestion[] = [];
-  const questionsPerTopic = 10; // 100 questions / 10 topics = 10 per topic
+  const questionsPerDomain = 10; // 100 questions / 10 domains = 10 per domain
 
   const questionTemplates = [
     'What is the primary focus of {topic}?',
@@ -87,10 +111,10 @@ export const generateMockQuestions = (sessionId: string, topics: MockTopic[]): M
     ['It provides valuable insights [correct]', 'It raises more questions', 'It contradicts other findings', 'It has limited application']
   ];
 
-  topics.forEach((topic, topicIndex) => {
-    for (let i = 0; i < questionsPerTopic; i++) {
-      const templateIndex = (topicIndex * questionsPerTopic + i) % questionTemplates.length;
-      const questionBody = questionTemplates[templateIndex].replace('{topic}', topic.name);
+  domains.forEach((domain, domainIndex) => {
+    for (let i = 0; i < questionsPerDomain; i++) {
+      const templateIndex = (domainIndex * questionsPerDomain + i) % questionTemplates.length;
+      const questionBody = questionTemplates[templateIndex].replace('{topic}', domain.name);
       const options = optionTemplates[templateIndex % optionTemplates.length];
 
       questions.push({
@@ -99,6 +123,7 @@ export const generateMockQuestions = (sessionId: string, topics: MockTopic[]): M
         options: [...options],
         created_at: new Date().toISOString(),
         resource_session_id: sessionId,
+        resource_session_domain_id: domain.id,
         is_sample: true // Default all to sample (true)
       });
     }
@@ -128,6 +153,7 @@ export const generateMockSession = (
   jobId: string
 ): {
   session: MockResourceSession;
+  domains: MockDomain[];
   questions: MockQuestion[];
 } => {
   const topics = generateMockTopics();
@@ -147,7 +173,8 @@ export const generateMockSession = (
     updated_at: new Date().toISOString()
   };
 
-  const questions = generateMockQuestions(sessionId, topics);
+  const domains = generateMockDomains(sessionId, topics);
+  const questions = generateMockQuestions(sessionId, domains);
 
-  return { session, questions };
+  return { session, domains, questions };
 };

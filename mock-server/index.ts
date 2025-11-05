@@ -95,13 +95,14 @@ app.put('/uploads/*', async (c) => {
   console.log(`📁 S3 Key: ${filePath}`);
   console.log(`🆔 Job ID: ${jobId}`);
 
-  // Generate mock session and questions
-  const { session, questions } = generateMockSession(filename, filePath, contentType, jobId);
+  // Generate mock session, domains, and questions
+  const { session, domains, questions } = generateMockSession(filename, filePath, contentType, jobId);
 
   // Store in memory
-  sessionStore.addSession(session, questions);
+  sessionStore.addSession(session, domains, questions);
 
   console.log(`✅ Session created with ID: ${session.id}`);
+  console.log(`📚 Generated ${domains.length} domains`);
   console.log(`📝 Generated ${questions.length} questions`);
   console.log(`🔄 Starting state transitions...`);
 
@@ -188,13 +189,9 @@ app.get('/rest/v1/resource_session_domains', (c) => {
   }
 
   if (sessionId) {
-    const sessionData = sessionStore.getSessionById(sessionId);
-    if (sessionData) {
-      // For now, return empty array as domains aren't used in the current flow
-      // Can be extended if needed
-      console.log(`📚 Domains requested for session: ${sessionId}`);
-      return c.json([]);
-    }
+    const domains = sessionStore.getDomainsBySessionId(sessionId);
+    console.log(`📚 Domains requested for session: ${sessionId} - Returning ${domains.length} domains`);
+    return c.json(domains);
   }
 
   return c.json([]);
