@@ -682,7 +682,7 @@ export default function HomePage() {
                     ) : (
                       <button
                         onClick={handleResetClick}
-                        className="btn btn-ghost btn-sm w-full mt-auto"
+                        className="btn btn-outline btn-sm w-full mt-auto hover:btn-error"
                       >
                         <RotateCcw className="w-4 h-4 mr-1" />
                         Start Over
