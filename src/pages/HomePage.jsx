@@ -595,10 +595,10 @@ export default function HomePage() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Step 1: Choose a file */}
                 <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
-                  currentStep === 1 ? 'border-blue-500' : 'border-gray-200'
+                  uploadedFile ? 'border-green-500 shadow-lg' : currentStep === 1 ? 'border-blue-500' : 'border-gray-200'
                 }`}>
                   <div className="flex flex-col h-full">
-                    <div className="flex items-start gap-3 mb-4">
+                    <div className="flex items-start gap-3 mb-3">
                       <div className={`rounded-full p-2 flex-shrink-0 ${
                         uploadedFile ? 'bg-green-100' : 'bg-blue-100'
                       }`}>
@@ -611,7 +611,7 @@ export default function HomePage() {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-gray-900 text-sm mb-1">Step 1</h3>
                         <p className="text-xs text-gray-600">
-                          {uploadedFile ? 'File selected' : 'Choose a file'}
+                          {uploadedFile ? 'File ready!' : 'Choose a file'}
                         </p>
                       </div>
                     </div>
@@ -625,6 +625,53 @@ export default function HomePage() {
                       id="file-upload-step"
                     />
 
+                    {/* File Details */}
+                    {uploadedFile && (
+                      <div className="space-y-2 mb-3">
+                        {/* File Name */}
+                        <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-green-50">
+                          <div className="flex-shrink-0 text-green-600">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-green-700 truncate">{uploadedFile.name}</p>
+                          </div>
+                        </div>
+
+                        {/* File Type */}
+                        <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-blue-50">
+                          <div className="flex-shrink-0 text-blue-600">
+                            {uploadedFile.name.toLowerCase().endsWith('.pdf') && <FileText className="w-4 h-4" />}
+                            {uploadedFile.name.toLowerCase().endsWith('.docx') && <FileText className="w-4 h-4" />}
+                            {(uploadedFile.name.toLowerCase().endsWith('.txt') || uploadedFile.name.toLowerCase().endsWith('.md')) && <FileText className="w-4 h-4" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-medium text-blue-700">Type</span>
+                          </div>
+                          <div className="flex-shrink-0">
+                            <span className="text-xs font-bold text-blue-900 uppercase">
+                              {uploadedFile.name.split('.').pop()}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* File Size */}
+                        <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-purple-50">
+                          <div className="flex-shrink-0 text-purple-600">
+                            <BarChart3 className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-medium text-purple-700">Size</span>
+                          </div>
+                          <div className="flex-shrink-0">
+                            <span className="text-xs font-bold text-purple-900">
+                              {(uploadedFile.size / 1024).toFixed(1)} KB
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {!uploadedFile ? (
                       <label
                         htmlFor="file-upload-step"
@@ -633,16 +680,13 @@ export default function HomePage() {
                         Select File
                       </label>
                     ) : (
-                      <div className="mt-auto">
-                        <p className="text-xs text-gray-700 font-medium mb-2 truncate">{uploadedFile.name}</p>
-                        <button
-                          onClick={handleResetClick}
-                          className="btn btn-ghost btn-sm w-full"
-                        >
-                          <RotateCcw className="w-4 h-4 mr-1" />
-                          Start Over
-                        </button>
-                      </div>
+                      <button
+                        onClick={handleResetClick}
+                        className="btn btn-ghost btn-sm w-full mt-auto"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-1" />
+                        Start Over
+                      </button>
                     )}
                   </div>
                 </div>
@@ -691,8 +735,8 @@ export default function HomePage() {
                     {isProcessing && (
                       <div className="space-y-2 mb-3">
                         {/* Upload Stage */}
-                        <div className={`flex items-center gap-2 px-2 py-1.5 rounded ${
-                          currentProcessingState === "uploading" ? 'bg-purple-100' :
+                        <div className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
+                          currentProcessingState === "uploading" ? 'bg-purple-100 animate-pulse' :
                           ["processing", "decoding", "ocr_completed", "ai_processing"].includes(currentProcessingState) ? 'bg-green-50' :
                           'bg-gray-50'
                         }`}>
@@ -702,7 +746,7 @@ export default function HomePage() {
                             'text-gray-400'
                           }`}>
                             {currentProcessingState === "uploading" ? (
-                              <Upload className="w-4 h-4 animate-bounce" />
+                              <Upload className="w-4 h-4 animate-spin" style={{ animationDuration: '1.5s' }} />
                             ) : ["processing", "decoding", "ocr_completed", "ai_processing"].includes(currentProcessingState) ? (
                               <CheckCircle className="w-4 h-4" />
                             ) : (
@@ -710,17 +754,26 @@ export default function HomePage() {
                             )}
                           </div>
                           <span className={`text-xs font-medium ${
-                            currentProcessingState === "uploading" ? 'text-purple-700' :
+                            currentProcessingState === "uploading" ? 'text-purple-700 font-bold' :
                             ["processing", "decoding", "ocr_completed", "ai_processing"].includes(currentProcessingState) ? 'text-green-700' :
                             'text-gray-500'
                           }`}>
                             Uploading
                           </span>
+                          {currentProcessingState === "uploading" && (
+                            <div className="ml-auto">
+                              <div className="flex gap-0.5">
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.6s' }}></div>
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s', animationDuration: '0.6s' }}></div>
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s', animationDuration: '0.6s' }}></div>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Decoding Stage */}
-                        <div className={`flex items-center gap-2 px-2 py-1.5 rounded ${
-                          currentProcessingState === "decoding" ? 'bg-purple-100' :
+                        <div className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
+                          currentProcessingState === "decoding" ? 'bg-purple-100 animate-pulse' :
                           ["ocr_completed", "ai_processing"].includes(currentProcessingState) ? 'bg-green-50' :
                           'bg-gray-50'
                         }`}>
@@ -730,7 +783,7 @@ export default function HomePage() {
                             'text-gray-400'
                           }`}>
                             {currentProcessingState === "decoding" ? (
-                              <FileText className="w-4 h-4 animate-pulse" />
+                              <FileText className="w-4 h-4 animate-spin" style={{ animationDuration: '1.5s' }} />
                             ) : ["ocr_completed", "ai_processing"].includes(currentProcessingState) ? (
                               <CheckCircle className="w-4 h-4" />
                             ) : (
@@ -738,17 +791,26 @@ export default function HomePage() {
                             )}
                           </div>
                           <span className={`text-xs font-medium ${
-                            currentProcessingState === "decoding" ? 'text-purple-700' :
+                            currentProcessingState === "decoding" ? 'text-purple-700 font-bold' :
                             ["ocr_completed", "ai_processing"].includes(currentProcessingState) ? 'text-green-700' :
                             'text-gray-500'
                           }`}>
                             Decoding Document
                           </span>
+                          {currentProcessingState === "decoding" && (
+                            <div className="ml-auto">
+                              <div className="flex gap-0.5">
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.6s' }}></div>
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s', animationDuration: '0.6s' }}></div>
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s', animationDuration: '0.6s' }}></div>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* OCR Stage */}
-                        <div className={`flex items-center gap-2 px-2 py-1.5 rounded ${
-                          currentProcessingState === "ocr_completed" ? 'bg-purple-100' :
+                        <div className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
+                          currentProcessingState === "ocr_completed" ? 'bg-purple-100 animate-pulse' :
                           currentProcessingState === "ai_processing" ? 'bg-green-50' :
                           'bg-gray-50'
                         }`}>
@@ -758,7 +820,7 @@ export default function HomePage() {
                             'text-gray-400'
                           }`}>
                             {currentProcessingState === "ocr_completed" ? (
-                              <Scan className="w-4 h-4 animate-pulse" />
+                              <Scan className="w-4 h-4 animate-spin" style={{ animationDuration: '1.5s' }} />
                             ) : currentProcessingState === "ai_processing" ? (
                               <CheckCircle className="w-4 h-4" />
                             ) : (
@@ -766,32 +828,50 @@ export default function HomePage() {
                             )}
                           </div>
                           <span className={`text-xs font-medium ${
-                            currentProcessingState === "ocr_completed" ? 'text-purple-700' :
+                            currentProcessingState === "ocr_completed" ? 'text-purple-700 font-bold' :
                             currentProcessingState === "ai_processing" ? 'text-green-700' :
                             'text-gray-500'
                           }`}>
                             Extracting Text
                           </span>
+                          {currentProcessingState === "ocr_completed" && (
+                            <div className="ml-auto">
+                              <div className="flex gap-0.5">
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.6s' }}></div>
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s', animationDuration: '0.6s' }}></div>
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s', animationDuration: '0.6s' }}></div>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* AI Processing Stage */}
-                        <div className={`flex items-center gap-2 px-2 py-1.5 rounded ${
-                          currentProcessingState === "ai_processing" ? 'bg-purple-100' : 'bg-gray-50'
+                        <div className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
+                          currentProcessingState === "ai_processing" ? 'bg-purple-100 animate-pulse' : 'bg-gray-50'
                         }`}>
                           <div className={`flex-shrink-0 ${
                             currentProcessingState === "ai_processing" ? 'text-purple-600' : 'text-gray-400'
                           }`}>
                             {currentProcessingState === "ai_processing" ? (
-                              <Sparkles className="w-4 h-4 animate-pulse" />
+                              <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: '1.5s' }} />
                             ) : (
                               <Clock className="w-4 h-4" />
                             )}
                           </div>
                           <span className={`text-xs font-medium ${
-                            currentProcessingState === "ai_processing" ? 'text-purple-700' : 'text-gray-500'
+                            currentProcessingState === "ai_processing" ? 'text-purple-700 font-bold' : 'text-gray-500'
                           }`}>
                             Generating Questions
                           </span>
+                          {currentProcessingState === "ai_processing" && (
+                            <div className="ml-auto">
+                              <div className="flex gap-0.5">
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.6s' }}></div>
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s', animationDuration: '0.6s' }}></div>
+                                <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s', animationDuration: '0.6s' }}></div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -890,10 +970,10 @@ export default function HomePage() {
 
                 {/* Step 4: Share/Sell/Make Money */}
                 <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
-                  quizGenerated ? 'border-yellow-500' : 'border-gray-200 opacity-50'
+                  quizGenerated ? 'border-yellow-500 shadow-lg' : 'border-gray-200 opacity-50'
                 }`}>
                   <div className="flex flex-col h-full">
-                    <div className="flex items-start gap-3 mb-4">
+                    <div className="flex items-start gap-3 mb-3">
                       <div className={`rounded-full p-2 flex-shrink-0 ${
                         quizGenerated ? 'bg-yellow-100' : 'bg-gray-100'
                       }`}>
@@ -902,16 +982,68 @@ export default function HomePage() {
                       <div className="flex-1 min-w-0">
                         <h3 className={`font-bold text-sm mb-1 ${quizGenerated ? 'text-gray-900' : 'text-gray-400'}`}>Step 4</h3>
                         <p className={`text-xs ${quizGenerated ? 'text-gray-600' : 'text-gray-400'}`}>
-                          Share & Earn
+                          {quizGenerated ? 'Coming Soon!' : 'Share & Earn'}
                         </p>
                       </div>
                     </div>
-                    <button
-                      className={`btn btn-sm w-full mt-auto ${quizGenerated ? 'btn-warning' : 'btn-disabled'}`}
-                      disabled={!quizGenerated}
-                    >
-                      {quizGenerated ? 'Coming Soon' : 'Locked'}
-                    </button>
+
+                    {/* Coming Soon Features */}
+                    {quizGenerated && (
+                      <div className="space-y-2 mb-3">
+                        {/* Share Feature */}
+                        <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-yellow-50">
+                          <div className="flex-shrink-0 text-yellow-600">
+                            <Globe className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-medium text-yellow-700">Share Your Quiz</span>
+                          </div>
+                          <div className="flex-shrink-0">
+                            <Lock className="w-3 h-3 text-yellow-600" />
+                          </div>
+                        </div>
+
+                        {/* Sell Feature */}
+                        <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-yellow-50">
+                          <div className="flex-shrink-0 text-yellow-600">
+                            <DollarSign className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-medium text-yellow-700">Monetize Content</span>
+                          </div>
+                          <div className="flex-shrink-0">
+                            <Lock className="w-3 h-3 text-yellow-600" />
+                          </div>
+                        </div>
+
+                        {/* Analytics Feature */}
+                        <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-yellow-50">
+                          <div className="flex-shrink-0 text-yellow-600">
+                            <BarChart3 className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-medium text-yellow-700">Track Performance</span>
+                          </div>
+                          <div className="flex-shrink-0">
+                            <Lock className="w-3 h-3 text-yellow-600" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {!quizGenerated ? (
+                      <div className="mt-auto">
+                        <button className="btn btn-sm w-full btn-disabled" disabled>
+                          <Lock className="w-4 h-4 mr-1" />
+                          Locked
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-auto pt-2 border-t border-yellow-200 flex items-center justify-center gap-2 text-yellow-600">
+                        <Clock className="w-4 h-4" />
+                        <span className="text-xs font-semibold">Coming Soon</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
