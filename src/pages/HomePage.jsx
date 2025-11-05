@@ -31,7 +31,6 @@ export default function HomePage() {
   // 3-step process state
   const [currentStep, setCurrentStep] = useState(1);
   const [currentProcessingState, setCurrentProcessingState] = useState("");
-  const [resultExpanded, setResultExpanded] = useState(false);
   const [topics, setTopics] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [questionsCount, setQuestionsCount] = useState(0);
@@ -161,7 +160,6 @@ export default function HomePage() {
     setCurrentStep(2);
     setIsProcessing(false);
     setCurrentProcessingState("");
-    setResultExpanded(false);
     setQuizGenerated(false);
     setTopics([]);
     setQuestions([]);
@@ -241,7 +239,6 @@ export default function HomePage() {
     setCurrentProcessingState("");
     setQuizGenerated(true);
     setCurrentStep(3);
-    setResultExpanded(true); // Auto-expand results when processing completes
     trackEvent('quiz_generated', {
       props: {
         fileType: uploadedFile.type,
@@ -408,7 +405,6 @@ export default function HomePage() {
     setQuizGenerated(false);
     setCurrentStep(1);
     setCurrentProcessingState("");
-    setResultExpanded(false);
     setTopics([]);
     setQuestions([]);
     setQuestionsCount(0);
@@ -719,22 +715,19 @@ export default function HomePage() {
 
                 {/* Step 3: Result */}
                 <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
-                  currentStep === 3 ? 'border-blue-500 cursor-pointer hover:shadow-lg' :
-                  'border-gray-200 opacity-50 cursor-not-allowed'
-                }`}
-                onClick={() => {
-                  if (currentStep === 3) {
-                    setResultExpanded(!resultExpanded);
-                  }
-                }}>
+                  currentStep === 3 ? 'border-green-500' :
+                  'border-gray-200 opacity-50'
+                }`}>
                   <div className="flex flex-col h-full">
                     <div className="flex items-start gap-3 mb-4">
-                      <div className="bg-green-100 rounded-full p-2 flex-shrink-0">
-                        <Trophy className="w-5 h-5 text-green-600" />
+                      <div className={`rounded-full p-2 flex-shrink-0 ${
+                        currentStep === 3 ? 'bg-green-100' : 'bg-gray-100'
+                      }`}>
+                        <Trophy className={`w-5 h-5 ${currentStep === 3 ? 'text-green-600' : 'text-gray-400'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-900 text-sm mb-1">Step 3</h3>
-                        <p className="text-xs text-gray-600">
+                        <h3 className={`font-bold text-sm mb-1 ${currentStep === 3 ? 'text-gray-900' : 'text-gray-400'}`}>Step 3</h3>
+                        <p className={`text-xs ${currentStep === 3 ? 'text-gray-600' : 'text-gray-400'}`}>
                           {currentStep === 3 ? (
                             <>
                               {totalQuestionsGenerated} questions<br />
@@ -747,9 +740,9 @@ export default function HomePage() {
                       </div>
                     </div>
                     {currentStep === 3 && (
-                      <button className="btn btn-primary btn-sm w-full mt-auto">
-                        {resultExpanded ? 'Hide Results' : 'View Results'}
-                      </button>
+                      <div className="mt-auto flex items-center justify-center text-green-600">
+                        <CheckCircle className="w-5 h-5" />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -782,8 +775,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Expanded Result Section - Merged Topics and Questions */}
-              {resultExpanded && currentStep === 3 && (
+              {/* Result Section - Topics and Questions */}
+              {currentStep === 3 && (
                 <div className="mt-6 bg-white rounded-lg shadow-lg border border-gray-200 p-6">
                   {/* Header with Stats */}
                   <div className="mb-6 pb-4 border-b border-gray-200">
@@ -799,16 +792,39 @@ export default function HomePage() {
                         </div>
                         <div className="text-gray-400">•</div>
                         <div>
-                          <span className="text-gray-600">Showing: </span>
-                          <span className="font-bold text-purple-600">{questionsCount}</span>
-                        </div>
-                        <div className="text-gray-400">•</div>
-                        <div>
-                          <span className="text-gray-600">Total: </span>
+                          <span className="text-gray-600">Total Questions: </span>
                           <span className="font-bold text-gray-900">{totalQuestionsGenerated}</span>
                         </div>
                       </div>
                     </div>
+
+                    {/* Sign Up / Save Quiz Banner */}
+                    {totalQuestionsGenerated > questionsCount && (
+                      <div className="mt-4 bg-amber-50 border-2 border-amber-400 rounded-lg overflow-hidden">
+                        <div className="p-4">
+                          <div className="flex items-center justify-between gap-4 flex-wrap">
+                            <div className="flex items-start gap-3 flex-1 min-w-[200px]">
+                              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-sm font-semibold text-amber-900 mb-1">
+                                  Showing {questionsCount} of {totalQuestionsGenerated} questions
+                                </p>
+                                <p className="text-sm text-amber-800">
+                                  {user ? 'Save this quiz to access all generated questions.' : 'Sign up and save this quiz to access all generated questions.'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-3">
+                              <button onClick={handleReset} className="btn btn-ghost btn-sm">Start Over</button>
+                              <button onClick={handleSaveQuiz} className="btn btn-primary btn-sm">
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                {user ? "Save Quiz" : "Sign Up to Save"}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Vertical Tab Layout - Simple Extension */}
@@ -950,33 +966,7 @@ export default function HomePage() {
                         })()}
                       </div>
 
-                      {/* More Questions Warning */}
-                      {totalQuestionsGenerated > questionsCount && (
-                        <div className="mt-6 bg-amber-50 border-2 border-amber-400 rounded-lg overflow-hidden">
-                          <div className="p-5">
-                            <div className="flex items-start gap-3">
-                              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                              <div className="flex-1">
-                                <p className="text-sm font-semibold text-amber-900 mb-1">
-                                  {totalQuestionsGenerated - questionsCount} more questions not shown
-                                </p>
-                                <p className="text-sm text-amber-800">
-                                  {user ? 'Save this quiz to access all generated questions.' : 'Sign up and save this quiz to access all generated questions.'}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="bg-amber-100/50 px-5 py-4 flex justify-end gap-3">
-                            <button onClick={handleReset} className="btn btn-ghost">Start Over</button>
-                            <button onClick={handleSaveQuiz} className="btn btn-primary">
-                              <CheckCircle className="w-5 h-5 mr-2" />
-                              {user ? "Save Quiz" : "Sign Up to Save"}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Action Buttons - Only show when all questions are displayed */}
+                      {/* Action Buttons - Show when all questions are displayed */}
                       {totalQuestionsGenerated <= questionsCount && (
                         <div className="flex justify-end mt-6 gap-3 pt-4 border-t border-gray-200">
                           <button onClick={handleReset} className="btn btn-ghost">Start Over</button>
