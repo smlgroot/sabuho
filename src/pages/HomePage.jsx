@@ -38,6 +38,7 @@ export default function HomePage() {
   const [totalQuestionsGenerated, setTotalQuestionsGenerated] = useState(0);
   const [s3Key, setS3Key] = useState(null);
   const [processingError, setProcessingError] = useState(null);
+  const [selectedTopicIndex, setSelectedTopicIndex] = useState(null);
 
   const handleMainButton = () => {
     if (user) {
@@ -168,19 +169,30 @@ export default function HomePage() {
     setTotalQuestionsGenerated(0);
     setS3Key(null);
     setProcessingError(null);
+    setSelectedTopicIndex(null);
 
     trackEvent('file_selected', { props: { fileType: file.type, fileName: file.name } });
   };
 
   // Separate function for polling and fetching results
   const pollAndFetchResults = async (s3Key) => {
+    // Use shorter intervals in dev mode for faster testing
+    const isDev = import.meta.env.DEV;
+    const pollingConfig = isDev ? {
+      intervalMs: 500,        // 0.5 seconds in dev (vs 2 seconds in prod)
+      timeoutMs: 60000,       // 1 minute in dev (vs 5 minutes in prod)
+      maxWaitForRecord: 10000 // 10 seconds in dev (vs 1 minute in prod)
+    } : {
+      intervalMs: 2000,
+      timeoutMs: 300000,
+      maxWaitForRecord: 60000
+    };
+
     // Poll for completion using S3 key
     const completedSession = await pollResourceSessionStatus(
       { filePath: s3Key },
       {
-        intervalMs: 2000,
-        timeoutMs: 300000, // 5 minutes
-        maxWaitForRecord: 60000, // 1 minute to wait for backend to create record
+        ...pollingConfig,
         onStatusChange: (status, sessionData) => {
           console.log('Status changed to:', status);
           setCurrentProcessingState(status);
@@ -384,6 +396,7 @@ export default function HomePage() {
     setTotalQuestionsGenerated(0);
     setS3Key(null);
     setProcessingError(null);
+    setSelectedTopicIndex(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -721,139 +734,193 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Expanded Result Section */}
+              {/* Expanded Result Section - Merged Topics and Questions */}
               {resultExpanded && currentStep === 3 && (
                 <div className="mt-6 bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Topics */}
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <div className="mb-4 pb-3 border-b border-gray-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <BookOpen className="w-5 h-5 text-blue-600" />
-                            Topics Discovered
-                          </h4>
-                        </div>
-                        <div className="text-sm">
-                          <span className="text-gray-600">Total topics: </span>
+                  {/* Header with Stats */}
+                  <div className="mb-6 pb-4 border-b border-gray-200">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                      <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <BookOpen className="w-6 h-6 text-blue-600" />
+                        Topics & Questions
+                      </h3>
+                      <div className="flex items-center gap-6 text-sm">
+                        <div>
+                          <span className="text-gray-600">Topics: </span>
                           <span className="font-bold text-blue-600">{topics.length}</span>
                         </div>
-                      </div>
-                      <div className="space-y-3">
-                        {topics.map((topic, index) => (
-                          <div key={index} className="p-3 bg-gray-50 border border-gray-200 rounded">
-                            <div className="flex items-start gap-3">
-                              <span className="font-bold text-blue-600 text-sm">{index + 1}.</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-900 mb-1">{topic.name}</p>
-                                <p className="text-sm text-gray-500">Pages {topic.start}-{topic.end}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Questions */}
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <div className="mb-4 pb-3 border-b border-gray-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-purple-600" />
-                            Questions Generated
-                          </h4>
+                        <div className="text-gray-400">•</div>
+                        <div>
+                          <span className="text-gray-600">Showing: </span>
+                          <span className="font-bold text-purple-600">{questionsCount}</span>
                         </div>
-                        <div className="flex items-center gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-600">Showing sample: </span>
-                            <span className="font-bold text-purple-600">{questionsCount}</span>
-                          </div>
-                          <div className="text-gray-400">•</div>
-                          <div>
-                            <span className="text-gray-600">Total generated: </span>
-                            <span className="font-bold text-gray-900">{totalQuestionsGenerated}</span>
-                          </div>
+                        <div className="text-gray-400">•</div>
+                        <div>
+                          <span className="text-gray-600">Total: </span>
+                          <span className="font-bold text-gray-900">{totalQuestionsGenerated}</span>
                         </div>
-                      </div>
-                      <div className="space-y-4">
-                        {questions.length > 0 ? (
-                          <>
-                            {questions.map((q, index) => (
-                              <div key={q.id} className="p-3 bg-gray-50 border border-gray-200 rounded">
-                                <p className="font-medium text-gray-900 mb-3">
-                                  <span className="font-bold text-purple-600">{index + 1}.</span> {q.body}
-                                </p>
-                                {q.options && q.options.length > 0 && (
-                                  <div className="space-y-1.5 pl-5">
-                                    {q.options.map((option, optIdx) => {
-                                      const isCorrect = option.includes('[correct]');
-                                      const displayText = option.replace('[correct]', '').trim();
-                                      return (
-                                        <div
-                                          key={optIdx}
-                                          className={`text-sm py-1 ${
-                                            isCorrect ? 'font-semibold text-green-700' : 'text-gray-700'
-                                          }`}
-                                        >
-                                          {String.fromCharCode(65 + optIdx)}. {displayText}
-                                          {isCorrect && ' ✓'}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                            {totalQuestionsGenerated > questionsCount && (
-                              <div className="bg-amber-50 border-2 border-amber-400 rounded-lg overflow-hidden">
-                                <div className="p-5">
-                                  <div className="flex items-start gap-3">
-                                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                                    <div className="flex-1">
-                                      <p className="text-sm font-semibold text-amber-900 mb-1">
-                                        {totalQuestionsGenerated - questionsCount} more questions not shown
-                                      </p>
-                                      <p className="text-sm text-amber-800">
-                                        {user
-                                          ? 'Save this quiz to access all generated questions.'
-                                          : 'Sign up and save this quiz to access all generated questions.'}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="bg-amber-100/50 px-5 py-4 flex justify-end gap-3">
-                                  <button onClick={handleReset} className="btn btn-ghost">
-                                    Start Over
-                                  </button>
-                                  <button onClick={handleSaveQuiz} className="btn btn-primary">
-                                    <CheckCircle className="w-5 h-5 mr-2" />
-                                    {user ? "Save Quiz" : "Sign Up to Save"}
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="text-sm text-gray-500 italic text-center">
-                            No questions generated yet
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Action Buttons - Only show when all questions are displayed */}
-                  {totalQuestionsGenerated <= questionsCount && (
-                    <div className="flex justify-end mt-6 gap-3 pt-4 border-t border-gray-200">
-                      <button onClick={handleReset} className="btn btn-ghost">
-                        Start Over
-                      </button>
-                      <button onClick={handleSaveQuiz} className="btn btn-primary">
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        {user ? "Save Quiz" : "Sign Up to Save"}
-                      </button>
+                  {/* Vertical Tab Layout - Simple Extension */}
+                  <div className="flex">
+                    {/* Topics Sidebar */}
+                    <div className="w-64 flex-shrink-0 space-y-2">
+                      {/* All Topics Tab */}
+                      <div
+                        onClick={() => setSelectedTopicIndex(null)}
+                        className={`px-4 py-3 cursor-pointer transition-all relative rounded-l-lg ${
+                          selectedTopicIndex === null
+                            ? 'bg-blue-50 pr-6 -mr-2 z-10'
+                            : 'bg-gray-100 hover:bg-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <BookOpen className="w-4 h-4 flex-shrink-0 text-blue-600" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-gray-900">All Topics</p>
+                            <p className="text-xs text-gray-500">{questionsCount} questions</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Individual Topic Tabs */}
+                      {topics.map((topic, index) => {
+                        const topicQuestions = questions.filter(q => {
+                          if (q.domain_id) return q.domain_id === topic.domain_id;
+                          if (q.page_number) return q.page_number >= topic.start && q.page_number <= topic.end;
+                          return false;
+                        });
+
+                        return (
+                          <div
+                            key={index}
+                            onClick={() => setSelectedTopicIndex(index)}
+                            className={`px-4 py-3 cursor-pointer transition-all relative rounded-l-lg ${
+                              selectedTopicIndex === index
+                                ? 'bg-blue-50 pr-6 -mr-2 z-10'
+                                : 'bg-gray-100 hover:bg-gray-200'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className="font-bold text-sm text-blue-600 flex-shrink-0">{index + 1}.</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">{topic.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  Pages {topic.start}-{topic.end}
+                                  {topicQuestions.length > 0 && ` • ${topicQuestions.length} questions`}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
+
+                    {/* Questions Content Area */}
+                    <div className="flex-1 bg-blue-50 border border-gray-200 rounded-r-lg rounded-bl-lg p-6">
+                      <div className="mb-4">
+                        <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-purple-600" />
+                          {selectedTopicIndex === null
+                            ? 'All Questions'
+                            : `Questions for ${topics[selectedTopicIndex]?.name}`}
+                        </h4>
+                      </div>
+
+                      <div className="space-y-4">
+                        {(() => {
+                          let filteredQuestions = questions;
+                          if (selectedTopicIndex !== null) {
+                            const selectedTopic = topics[selectedTopicIndex];
+                            filteredQuestions = questions.filter(q => {
+                              if (q.domain_id) return q.domain_id === selectedTopic.domain_id;
+                              if (q.page_number) return q.page_number >= selectedTopic.start && q.page_number <= selectedTopic.end;
+                              return false;
+                            });
+                          }
+
+                          if (filteredQuestions.length === 0) {
+                            return (
+                              <div className="text-center py-8">
+                                <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-sm text-gray-500">No questions available for this topic</p>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <>
+                              {filteredQuestions.map((q, index) => (
+                                <div key={q.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                  <p className="font-medium text-gray-900 mb-3">
+                                    <span className="font-bold text-purple-600">{index + 1}.</span> {q.body}
+                                  </p>
+                                  {q.options && q.options.length > 0 && (
+                                    <div className="space-y-2 pl-5">
+                                      {q.options.map((option, optIdx) => {
+                                        const isCorrect = option.includes('[correct]');
+                                        const displayText = option.replace('[correct]', '').trim();
+                                        return (
+                                          <div
+                                            key={optIdx}
+                                            className={`text-sm py-1.5 px-2 rounded ${
+                                              isCorrect ? 'font-semibold text-green-700 bg-green-50' : 'text-gray-700'
+                                            }`}
+                                          >
+                                            {String.fromCharCode(65 + optIdx)}. {displayText}
+                                            {isCorrect && ' ✓'}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                      {/* More Questions Warning */}
+                      {totalQuestionsGenerated > questionsCount && (
+                        <div className="mt-6 bg-amber-50 border-2 border-amber-400 rounded-lg overflow-hidden">
+                          <div className="p-5">
+                            <div className="flex items-start gap-3">
+                              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-amber-900 mb-1">
+                                  {totalQuestionsGenerated - questionsCount} more questions not shown
+                                </p>
+                                <p className="text-sm text-amber-800">
+                                  {user ? 'Save this quiz to access all generated questions.' : 'Sign up and save this quiz to access all generated questions.'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="bg-amber-100/50 px-5 py-4 flex justify-end gap-3">
+                            <button onClick={handleReset} className="btn btn-ghost">Start Over</button>
+                            <button onClick={handleSaveQuiz} className="btn btn-primary">
+                              <CheckCircle className="w-5 h-5 mr-2" />
+                              {user ? "Save Quiz" : "Sign Up to Save"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Buttons - Only show when all questions are displayed */}
+                      {totalQuestionsGenerated <= questionsCount && (
+                        <div className="flex justify-end mt-6 gap-3 pt-4 border-t border-gray-200">
+                          <button onClick={handleReset} className="btn btn-ghost">Start Over</button>
+                          <button onClick={handleSaveQuiz} className="btn btn-primary">
+                            <CheckCircle className="w-5 h-5 mr-2" />
+                            {user ? "Save Quiz" : "Sign Up to Save"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
