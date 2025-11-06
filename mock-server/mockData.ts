@@ -32,7 +32,8 @@ export interface MockResourceSession {
   file_path: string;
   url: null;
   mime_type: string;
-  status: 'uploading' | 'processing' | 'decoding' | 'ocr_completed' | 'ai_processing' | 'completed' | 'failed';
+  // Status can be fixed states or dynamic progress states like "ocr_processing_1_of_10"
+  status: 'uploading' | 'processing' | 'ocr_completed' | 'ai_processing' | 'completed' | 'failed' | string;
   topic_page_range: {
     topics: MockTopic[];
   };

@@ -1,5 +1,34 @@
 import { Brain, Cog, AlertCircle, Upload, FileText, Scan, Sparkles, CheckCircle, Clock, RotateCcw } from "lucide-react";
 
+/**
+ * Parse dynamic progress states like "ocr_processing_1_of_10" or "ai_identifying_topics_2_of_5"
+ * Returns { stage: string, current: number, total: number } or null if not a progress state
+ */
+function parseProgressState(state) {
+  if (!state) return null;
+
+  // Match pattern: stage_current_of_total
+  const match = state.match(/^(.+)_(\d+)_of_(\d+)$/);
+  if (match) {
+    return {
+      stage: match[1],
+      current: parseInt(match[2], 10),
+      total: parseInt(match[3], 10)
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Get the base stage from either a static state or a dynamic progress state
+ * Examples: "processing" -> "processing", "ocr_processing_1_of_10" -> "ocr_processing"
+ */
+function getBaseStage(state) {
+  const progress = parseProgressState(state);
+  return progress ? progress.stage : state;
+}
+
 export default function ProcessingStep({
   currentStep,
   isProcessing,
@@ -10,6 +39,19 @@ export default function ProcessingStep({
 }) {
   // Determine if processing is completed (step 3 or higher means processing is done)
   const isCompleted = currentStep >= 3;
+
+  // Parse current processing state for progress tracking
+  const progressInfo = parseProgressState(currentProcessingState);
+  const baseStage = getBaseStage(currentProcessingState);
+
+  // Debug logging
+  if (isProcessing) {
+    console.log('ProcessingStep DEBUG:', {
+      currentProcessingState,
+      baseStage,
+      progressInfo
+    });
+  }
 
   return (
     <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
@@ -63,33 +105,33 @@ export default function ProcessingStep({
           <div className="space-y-2 mb-3">
             {/* Upload Stage */}
             <div className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
-              isProcessing && currentProcessingState === "uploading" ? 'bg-purple-100 animate-pulse' :
-              isProcessing && ["processing", "decoding", "ocr_completed", "ai_processing"].includes(currentProcessingState) ? 'bg-green-50' :
+              isProcessing && baseStage === "uploading" ? 'bg-purple-100 animate-pulse' :
+              isProcessing && ["processing", "ocr_page", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'bg-green-50' :
               isCompleted ? 'bg-green-50' :
               'bg-gray-50'
             }`}>
               <div className={`flex-shrink-0 ${
-                isProcessing && currentProcessingState === "uploading" ? 'text-purple-600' :
-                isProcessing && ["processing", "decoding", "ocr_completed", "ai_processing"].includes(currentProcessingState) ? 'text-green-600' :
+                isProcessing && baseStage === "uploading" ? 'text-purple-600' :
+                isProcessing && ["processing", "ocr_page", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'text-green-600' :
                 isCompleted ? 'text-green-600' :
                 'text-gray-400'
               }`}>
-                {isProcessing && currentProcessingState === "uploading" ? (
+                {isProcessing && baseStage === "uploading" ? (
                   <Upload className="w-4 h-4 animate-spin" style={{ animationDuration: '1.5s' }} />
-                ) : (isProcessing && ["processing", "decoding", "ocr_completed", "ai_processing"].includes(currentProcessingState)) || isCompleted ? (
+                ) : (isProcessing && ["processing", "ocr_page", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage)) || isCompleted ? (
                   <CheckCircle className="w-4 h-4" />
                 ) : (
                   <Clock className="w-4 h-4" />
                 )}
               </div>
               <span className={`text-xs font-medium ${
-                isProcessing && currentProcessingState === "uploading" ? 'text-purple-700 font-bold' :
-                (isProcessing && ["processing", "decoding", "ocr_completed", "ai_processing"].includes(currentProcessingState)) || isCompleted ? 'text-green-700' :
+                isProcessing && baseStage === "uploading" ? 'text-purple-700 font-bold' :
+                (isProcessing && ["processing", "ocr_page", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage)) || isCompleted ? 'text-green-700' :
                 'text-gray-500'
               }`}>
                 Uploading
               </span>
-              {isProcessing && currentProcessingState === "uploading" && (
+              {isProcessing && baseStage === "uploading" && (
                 <div className="ml-auto">
                   <div className="flex gap-0.5">
                     <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.6s' }}></div>
@@ -100,74 +142,42 @@ export default function ProcessingStep({
               )}
             </div>
 
-            {/* Decoding Stage */}
+            {/* OCR Stage - Show progress if available */}
             <div className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
-              isProcessing && currentProcessingState === "decoding" ? 'bg-purple-100 animate-pulse' :
-              isProcessing && ["ocr_completed", "ai_processing"].includes(currentProcessingState) ? 'bg-green-50' :
+              isProcessing && ["processing", "ocr_page"].includes(baseStage) ? 'bg-purple-100 animate-pulse' :
+              isProcessing && ["ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'bg-green-50' :
               isCompleted ? 'bg-green-50' :
               'bg-gray-50'
             }`}>
               <div className={`flex-shrink-0 ${
-                isProcessing && currentProcessingState === "decoding" ? 'text-purple-600' :
-                isProcessing && ["ocr_completed", "ai_processing"].includes(currentProcessingState) ? 'text-green-600' :
+                isProcessing && ["processing", "ocr_page"].includes(baseStage) ? 'text-purple-600' :
+                isProcessing && ["ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'text-green-600' :
                 isCompleted ? 'text-green-600' :
                 'text-gray-400'
               }`}>
-                {isProcessing && currentProcessingState === "decoding" ? (
-                  <FileText className="w-4 h-4 animate-spin" style={{ animationDuration: '1.5s' }} />
-                ) : (isProcessing && ["ocr_completed", "ai_processing"].includes(currentProcessingState)) || isCompleted ? (
-                  <CheckCircle className="w-4 h-4" />
-                ) : (
-                  <Clock className="w-4 h-4" />
-                )}
-              </div>
-              <span className={`text-xs font-medium ${
-                isProcessing && currentProcessingState === "decoding" ? 'text-purple-700 font-bold' :
-                (isProcessing && ["ocr_completed", "ai_processing"].includes(currentProcessingState)) || isCompleted ? 'text-green-700' :
-                'text-gray-500'
-              }`}>
-                Decoding Document
-              </span>
-              {isProcessing && currentProcessingState === "decoding" && (
-                <div className="ml-auto">
-                  <div className="flex gap-0.5">
-                    <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.6s' }}></div>
-                    <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s', animationDuration: '0.6s' }}></div>
-                    <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s', animationDuration: '0.6s' }}></div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* OCR Stage */}
-            <div className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
-              isProcessing && currentProcessingState === "ocr_completed" ? 'bg-purple-100 animate-pulse' :
-              isProcessing && currentProcessingState === "ai_processing" ? 'bg-green-50' :
-              isCompleted ? 'bg-green-50' :
-              'bg-gray-50'
-            }`}>
-              <div className={`flex-shrink-0 ${
-                isProcessing && currentProcessingState === "ocr_completed" ? 'text-purple-600' :
-                isProcessing && currentProcessingState === "ai_processing" ? 'text-green-600' :
-                isCompleted ? 'text-green-600' :
-                'text-gray-400'
-              }`}>
-                {isProcessing && currentProcessingState === "ocr_completed" ? (
+                {isProcessing && ["processing", "ocr_page"].includes(baseStage) ? (
                   <Scan className="w-4 h-4 animate-spin" style={{ animationDuration: '1.5s' }} />
-                ) : (isProcessing && currentProcessingState === "ai_processing") || isCompleted ? (
+                ) : (isProcessing && ["ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage)) || isCompleted ? (
                   <CheckCircle className="w-4 h-4" />
                 ) : (
                   <Clock className="w-4 h-4" />
                 )}
               </div>
-              <span className={`text-xs font-medium ${
-                isProcessing && currentProcessingState === "ocr_completed" ? 'text-purple-700 font-bold' :
-                (isProcessing && currentProcessingState === "ai_processing") || isCompleted ? 'text-green-700' :
-                'text-gray-500'
-              }`}>
-                Extracting Text
-              </span>
-              {isProcessing && currentProcessingState === "ocr_completed" && (
+              <div className="flex-1 flex items-center justify-between gap-2">
+                <span className={`text-xs font-medium ${
+                  isProcessing && ["processing", "ocr_page"].includes(baseStage) ? 'text-purple-700 font-bold' :
+                  (isProcessing && ["ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage)) || isCompleted ? 'text-green-700' :
+                  'text-gray-500'
+                }`}>
+                  Extracting Text
+                </span>
+                {isProcessing && baseStage === "ocr_page" && progressInfo && (
+                  <span className="text-xs text-purple-600 font-medium">
+                    {progressInfo.current}/{progressInfo.total}
+                  </span>
+                )}
+              </div>
+              {isProcessing && ["processing", "ocr_page"].includes(baseStage) && !progressInfo && (
                 <div className="ml-auto">
                   <div className="flex gap-0.5">
                     <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.6s' }}></div>
@@ -178,18 +188,18 @@ export default function ProcessingStep({
               )}
             </div>
 
-            {/* AI Processing Stage */}
+            {/* AI Processing Stage - Show progress if available */}
             <div className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
-              isProcessing && currentProcessingState === "ai_processing" ? 'bg-purple-100 animate-pulse' :
+              isProcessing && ["ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'bg-purple-100 animate-pulse' :
               isCompleted ? 'bg-green-50' :
               'bg-gray-50'
             }`}>
               <div className={`flex-shrink-0 ${
-                isProcessing && currentProcessingState === "ai_processing" ? 'text-purple-600' :
+                isProcessing && ["ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'text-purple-600' :
                 isCompleted ? 'text-green-600' :
                 'text-gray-400'
               }`}>
-                {isProcessing && currentProcessingState === "ai_processing" ? (
+                {isProcessing && ["ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? (
                   <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: '1.5s' }} />
                 ) : isCompleted ? (
                   <CheckCircle className="w-4 h-4" />
@@ -197,14 +207,24 @@ export default function ProcessingStep({
                   <Clock className="w-4 h-4" />
                 )}
               </div>
-              <span className={`text-xs font-medium ${
-                isProcessing && currentProcessingState === "ai_processing" ? 'text-purple-700 font-bold' :
-                isCompleted ? 'text-green-700' :
-                'text-gray-500'
-              }`}>
-                Generating Questions
-              </span>
-              {isProcessing && currentProcessingState === "ai_processing" && (
+              <div className="flex-1 flex items-center justify-between gap-2">
+                <span className={`text-xs font-medium ${
+                  isProcessing && ["ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'text-purple-700 font-bold' :
+                  isCompleted ? 'text-green-700' :
+                  'text-gray-500'
+                }`}>
+                  {baseStage === "ai_chunking" ? "Analyzing Document" :
+                   baseStage === "ai_topics_identified" ? "Identifying Topics" :
+                   baseStage === "ai_batch" ? "Generating Questions" :
+                   "AI Processing"}
+                </span>
+                {isProcessing && ["ai_chunking", "ai_batch"].includes(baseStage) && progressInfo && (
+                  <span className="text-xs text-purple-600 font-medium">
+                    {progressInfo.current}/{progressInfo.total}
+                  </span>
+                )}
+              </div>
+              {isProcessing && ["ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) && !progressInfo && (
                 <div className="ml-auto">
                   <div className="flex gap-0.5">
                     <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.6s' }}></div>

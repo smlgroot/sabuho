@@ -26,33 +26,65 @@ app.use('*', async (c, next) => {
   await next();
 });
 
-// State transition sequence with 2-second delays
-const STATE_SEQUENCE: Array<'processing' | 'decoding' | 'ocr_completed' | 'ai_processing' | 'completed'> = [
-  'processing',
-  'decoding',
-  'ocr_completed',
-  'ai_processing',
-  'completed'
-];
+// Generate realistic state sequence with progress tracking
+const generateStateSequence = (): string[] => {
+  const states: string[] = [];
 
-const STATE_DELAY = 500; // 2 seconds
+  // 1. Initial processing state
+  states.push('processing');
+
+  // 2. OCR page-by-page processing (simulate 10 pages)
+  const totalPages = 10;
+  for (let i = 1; i <= totalPages; i++) {
+    states.push(`ocr_page_${i}_of_${totalPages}`);
+  }
+
+  // 3. OCR completed
+  states.push('ocr_completed');
+
+  // 4. AI processing starts
+  states.push('ai_processing');
+
+  // 5. Optional: Chunking for large documents (simulate 3 chunks)
+  // Uncomment to test chunking states
+  // const totalChunks = 3;
+  // for (let i = 1; i <= totalChunks; i++) {
+  //   states.push(`ai_chunking_${i}_of_${totalChunks}`);
+  // }
+
+  // 6. Topics identified
+  states.push('ai_topics_identified');
+
+  // 7. Question generation in batches (simulate 5 batches)
+  const totalBatches = 5;
+  for (let i = 1; i <= totalBatches; i++) {
+    states.push(`ai_batch_${i}_of_${totalBatches}`);
+  }
+
+  // 8. Completed
+  states.push('completed');
+
+  return states;
+};
+
+const STATE_DELAY = 400; // 400ms between state transitions (faster for demo)
 
 // Helper to transition states
-const scheduleStateTransition = (sessionId: string, currentStateIndex: number) => {
-  if (currentStateIndex >= STATE_SEQUENCE.length - 1) {
+const scheduleStateTransition = (sessionId: string, stateSequence: string[], currentStateIndex: number) => {
+  if (currentStateIndex >= stateSequence.length - 1) {
     // Already at completed state
     return;
   }
 
   const nextStateIndex = currentStateIndex + 1;
-  const nextState = STATE_SEQUENCE[nextStateIndex];
+  const nextState = stateSequence[nextStateIndex];
 
   const timer = setTimeout(() => {
-    console.log(`📊 Session ${sessionId}: ${STATE_SEQUENCE[currentStateIndex]} → ${nextState}`);
+    console.log(`📊 Session ${sessionId}: ${stateSequence[currentStateIndex]} → ${nextState}`);
     sessionStore.updateSessionStatus(sessionId, nextState);
 
     // Schedule next transition
-    scheduleStateTransition(sessionId, nextStateIndex);
+    scheduleStateTransition(sessionId, stateSequence, nextStateIndex);
   }, STATE_DELAY);
 
   sessionStore.setStateTimer(sessionId, timer);
@@ -106,8 +138,10 @@ app.put('/uploads/*', async (c) => {
   console.log(`📝 Generated ${questions.length} questions`);
   console.log(`🔄 Starting state transitions...`);
 
-  // Start state transition sequence (processing is already set)
-  scheduleStateTransition(session.id, 0);
+  // Generate state sequence and start transitions
+  const stateSequence = generateStateSequence();
+  console.log(`📋 State sequence: ${stateSequence.length} states`);
+  scheduleStateTransition(session.id, stateSequence, 0);
 
   return c.text('', 200);
 });
@@ -275,9 +309,10 @@ console.log(`
 ║   • GET  /rest/v1/resource_session_questions - Get questions ║
 ║   • GET  /health - Health check                              ║
 ║                                                               ║
-║   🔄 State Transitions (2s each):                            ║
-║   processing → decoding → ocr_completed → ai_processing      ║
-║              → completed                                      ║
+║   🔄 State Transitions (400ms each):                         ║
+║   processing → ocr_page_1_of_10 → ... → ocr_page_10_of_10  ║
+║   → ocr_completed → ai_processing → ai_topics_identified    ║
+║   → ai_batch_1_of_5 → ... → ai_batch_5_of_5 → completed    ║
 ║                                                               ║
 ║   📊 Mock Data:                                              ║
 ║   • 10 topics per document                                   ║
