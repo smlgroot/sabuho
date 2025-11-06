@@ -34,7 +34,8 @@
       "Bash(chmod:*)",
       "Bash(docker logs:*)",
       "Bash(docker-compose up:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

@@ -10,6 +10,7 @@ services:
     environment:
       - APP_ENV_TYPE=${APP_ENV_TYPE:-production}
       - PYTHONUNBUFFERED=1
+      - OCR_ENGINE=${OCR_ENGINE:-tesseract}
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -20,7 +21,7 @@ services:
       - AWS_S3_OCR_BUCKET=${AWS_S3_OCR_BUCKET:-sabuho-files-ocr}
       - TEST_FILE_PATH=${TEST_FILE_PATH:-uploads/test-compendio.pdf}
       # Allowed TEST_MESSAGE_TYPE values: ocr_process, ai_process
-      - TEST_MESSAGE_TYPE=${TEST_MESSAGE_TYPE:-ocr_process}
+      - TEST_MESSAGE_TYPE=${TEST_MESSAGE_TYPE:-ai_process}
       - TEST_SESSION_ID=${TEST_SESSION_ID:-a01c29d9-e52c-49ab-9bcd-5c20f95c7d2b}
       # Production SQS configuration
       - S3_EVENTS_QUEUE_URL=${S3_EVENTS_QUEUE_URL}

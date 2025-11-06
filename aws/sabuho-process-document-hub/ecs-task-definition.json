@@ -21,6 +21,10 @@
           "value": "us-east-1"
         },
         {
+          "name": "OCR_ENGINE",
+          "value": "paddleocr"
+        },
+        {
           "name": "MAX_WORKERS",
           "value": "4"
         },
