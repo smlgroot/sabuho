@@ -1,4 +1,4 @@
-import { FileText, CheckCircle, Plus, CheckSquare, ChevronDown, ChevronRight } from "lucide-react";
+import { FileText, CheckCircle, Plus, CheckSquare, ChevronDown, ChevronRight, Trash2, AlertCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 export default function QuestionsPanel({
@@ -17,6 +17,7 @@ export default function QuestionsPanel({
   const [selectedQuestions, setSelectedQuestions] = useState(new Set());
   const [hoveredQuestionId, setHoveredQuestionId] = useState(null);
   const [localQuestions, setLocalQuestions] = useState([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const textareaRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -158,7 +159,28 @@ export default function QuestionsPanel({
   };
 
   const toggleSelectMode = () => {
-    setSelectMode(prev => !prev);
+    setSelectMode(prev => {
+      const newSelectMode = !prev;
+
+      // When entering select mode, collapse all questions
+      if (newSelectMode) {
+        const newState = {};
+        filteredQuestions.forEach(q => {
+          newState[q.id] = false;
+        });
+        setExpandedQuestions(newState);
+      } else {
+        // When exiting select mode, expand all questions
+        const newState = {};
+        filteredQuestions.forEach(q => {
+          newState[q.id] = true;
+        });
+        setExpandedQuestions(newState);
+      }
+
+      return newSelectMode;
+    });
+
     if (selectMode) {
       setSelectedQuestions(new Set());
     }
@@ -176,13 +198,45 @@ export default function QuestionsPanel({
     });
   };
 
-  const selectAll = () => {
-    const allIds = new Set(filteredQuestions.map(q => q.id));
-    setSelectedQuestions(allIds);
+  const toggleSelectAll = () => {
+    if (selectedQuestions.size === filteredQuestions.length) {
+      // All are selected, so unselect all
+      setSelectedQuestions(new Set());
+    } else {
+      // Not all are selected, so select all
+      const allIds = new Set(filteredQuestions.map(q => q.id));
+      setSelectedQuestions(allIds);
+    }
   };
 
-  const unselectAll = () => {
+  const handleDeleteSelected = () => {
+    if (selectedQuestions.size === 0) return;
+    setShowDeleteDialog(true);
+  };
+
+  const performDelete = () => {
+    // Filter out selected questions from local questions
+    const updatedLocalQuestions = localQuestions.filter(q => !selectedQuestions.has(q.id));
+    setLocalQuestions(updatedLocalQuestions);
+
+    // Filter out selected questions from prop questions
+    // Note: This modifies the questions array directly. In a real app, you'd want to handle this differently
+    // For now, we'll just remove them from the local state
+    const selectedIds = Array.from(selectedQuestions);
+    selectedIds.forEach(id => {
+      const index = questions.findIndex(q => q.id === id);
+      if (index !== -1) {
+        questions.splice(index, 1);
+      }
+    });
+
+    // Clear selection and close dialog
     setSelectedQuestions(new Set());
+    setShowDeleteDialog(false);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteDialog(false);
   };
 
   const handleAddQuestion = () => {
@@ -274,18 +328,20 @@ export default function QuestionsPanel({
             <div className="flex items-center gap-2">
               <button
                 className="btn btn-sm btn-ghost gap-2"
-                onClick={selectAll}
-                title="Select all questions"
+                onClick={toggleSelectAll}
+                title={selectedQuestions.size === filteredQuestions.length ? "Unselect all questions" : "Select all questions"}
               >
                 <CheckSquare className="w-4 h-4" />
-                Select All
+                {selectedQuestions.size === filteredQuestions.length ? "Unselect All" : "Select All"}
               </button>
               <button
-                className="btn btn-sm btn-ghost gap-2"
-                onClick={unselectAll}
-                title="Unselect all questions"
+                className="btn btn-sm btn-error gap-2"
+                onClick={handleDeleteSelected}
+                disabled={selectedQuestions.size === 0}
+                title="Delete selected questions"
               >
-                Unselect All
+                <Trash2 className="w-4 h-4" />
+                Delete Selected
               </button>
             </div>
             <span className="text-sm text-blue-700">
@@ -445,6 +501,31 @@ export default function QuestionsPanel({
           </button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <dialog className={`modal ${showDeleteDialog ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg flex items-center gap-2">
+            <AlertCircle className="w-6 h-6 text-error" />
+            Delete Selected Questions?
+          </h3>
+          <p className="py-4">
+            Are you sure you want to delete {selectedQuestions.size} selected question{selectedQuestions.size !== 1 ? 's' : ''}? This action cannot be undone.
+          </p>
+          <div className="modal-action">
+            <button onClick={cancelDelete} className="btn btn-ghost">
+              Cancel
+            </button>
+            <button onClick={performDelete} className="btn btn-error">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop" onClick={cancelDelete}>
+          <button>close</button>
+        </form>
+      </dialog>
     </div>
   );
 }
