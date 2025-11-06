@@ -1,4 +1,4 @@
-import { FileText, CheckCircle } from "lucide-react";
+import { FileText, CheckCircle, Plus, CheckSquare, ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 export default function QuestionsPanel({
@@ -12,6 +12,10 @@ export default function QuestionsPanel({
 }) {
   const [editingField, setEditingField] = useState(null);
   const [editValues, setEditValues] = useState({});
+  const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedQuestions, setSelectedQuestions] = useState(new Set());
+  const [hoveredQuestionId, setHoveredQuestionId] = useState(null);
   const textareaRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -103,15 +107,91 @@ export default function QuestionsPanel({
     });
   }
 
+  const toggleQuestionExpand = (questionId) => {
+    setExpandedQuestions(prev => ({
+      ...prev,
+      [questionId]: !prev[questionId]
+    }));
+  };
+
+  const handleCollapseExpandAll = () => {
+    const allExpanded = filteredQuestions.every(q => expandedQuestions[q.id]);
+    const newState = {};
+    filteredQuestions.forEach(q => {
+      newState[q.id] = !allExpanded;
+    });
+    setExpandedQuestions(newState);
+  };
+
+  const toggleSelectMode = () => {
+    setSelectMode(prev => !prev);
+    if (selectMode) {
+      setSelectedQuestions(new Set());
+    }
+  };
+
+  const toggleQuestionSelection = (questionId) => {
+    setSelectedQuestions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId);
+      } else {
+        newSet.add(questionId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="flex-1 bg-blue-50 border-2 border-blue-500 rounded-lg p-6">
       <div className="mb-4 pb-3 border-b border-blue-400">
-        <h4 className="text-lg font-bold text-blue-900 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-blue-600" />
-          {selectedTopicIndex === null
-            ? 'All Questions'
-            : `Questions for ${topics[selectedTopicIndex]?.name}`}
-        </h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-lg font-bold text-blue-900 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-blue-600" />
+            {selectedTopicIndex === null
+              ? 'All Questions'
+              : `Questions for ${topics[selectedTopicIndex]?.name}`}
+          </h4>
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex items-center gap-2">
+          <button
+            className="btn btn-sm btn-ghost gap-2"
+            onClick={() => {/* TODO: Implement add question */}}
+            title="Add a new question"
+          >
+            <Plus className="w-4 h-4" />
+            Add Question
+          </button>
+
+          <button
+            className={`btn btn-sm ${selectMode ? 'btn-primary' : 'btn-ghost'} gap-2`}
+            onClick={toggleSelectMode}
+            title="Toggle select mode"
+          >
+            <CheckSquare className="w-4 h-4" />
+            {selectMode ? 'Exit Select' : 'Select Mode'}
+          </button>
+
+          <button
+            className="btn btn-sm btn-ghost gap-2"
+            onClick={handleCollapseExpandAll}
+            title="Collapse or expand all questions"
+          >
+            {filteredQuestions.every(q => expandedQuestions[q.id]) ? (
+              <>
+                <ChevronRight className="w-4 h-4" />
+                Collapse All
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-4 h-4" />
+                Expand All
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -124,34 +204,72 @@ export default function QuestionsPanel({
           <>
             {filteredQuestions.map((q, index) => {
               const isEditingBody = editingField?.questionId === q.id && editingField?.type === 'body';
+              const isExpanded = expandedQuestions[q.id] !== false; // Default to expanded
+              const isHovered = hoveredQuestionId === q.id;
+              const isSelected = selectedQuestions.has(q.id);
 
               return (
-                <div key={q.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                  <p
-                    className={`font-medium text-gray-900 mb-3 cursor-pointer rounded px-2 py-1 transition-colors ${
-                      isEditingBody ? 'bg-blue-100' : 'hover:bg-gray-100'
-                    }`}
-                    onClick={() => !isEditingBody && handleEditStart(q.id, 'body', q.body)}
-                    title="Click to edit question"
-                  >
-                    <span className="font-bold text-purple-600">{index + 1}.</span>{' '}
-                    {isEditingBody ? (
-                      <textarea
-                        ref={textareaRef}
-                        value={editValues[q.id]}
-                        onChange={(e) => handleValueChange(q.id, e.target.value)}
-                        onBlur={handleEditSave}
-                        onKeyDown={handleKeyDown}
-                        className="font-medium text-gray-900 bg-transparent border-none outline-none resize-none align-top p-0 m-0"
-                        rows="1"
-                        style={{ minHeight: '1.5em', width: 'calc(100% - 2rem)' }}
-                      />
-                    ) : (
-                      q.body
-                    )}
-                  </p>
+                <div
+                  key={q.id}
+                  className={`p-4 bg-gray-50 border rounded-lg transition-colors ${
+                    isSelected ? 'border-primary bg-primary/5' : 'border-gray-200'
+                  }`}
+                  onMouseEnter={() => setHoveredQuestionId(q.id)}
+                  onMouseLeave={() => setHoveredQuestionId(null)}
+                >
+                  <div className="flex items-start gap-2">
+                    {/* Chevron - only visible on hover */}
+                    <button
+                      onClick={() => toggleQuestionExpand(q.id)}
+                      className={`flex-shrink-0 mt-1 transition-opacity ${
+                        isHovered ? 'opacity-100' : 'opacity-0'
+                      }`}
+                      title={isExpanded ? "Collapse answers" : "Expand answers"}
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-gray-500" />
+                      )}
+                    </button>
 
-                  {q.options && q.options.length > 0 && (
+                    {/* Select checkbox - visible in select mode */}
+                    {selectMode && (
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleQuestionSelection(q.id)}
+                        className="checkbox checkbox-primary checkbox-sm flex-shrink-0 mt-1"
+                      />
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`font-medium text-gray-900 mb-3 cursor-pointer rounded px-2 py-1 transition-colors ${
+                          isEditingBody ? 'bg-blue-100' : 'hover:bg-gray-100'
+                        }`}
+                        onClick={() => !isEditingBody && handleEditStart(q.id, 'body', q.body)}
+                        title="Click to edit question"
+                      >
+                        <span className="font-bold text-purple-600">{index + 1}.</span>{' '}
+                        {isEditingBody ? (
+                          <textarea
+                            ref={textareaRef}
+                            value={editValues[q.id]}
+                            onChange={(e) => handleValueChange(q.id, e.target.value)}
+                            onBlur={handleEditSave}
+                            onKeyDown={handleKeyDown}
+                            className="font-medium text-gray-900 bg-transparent border-none outline-none resize-none align-top p-0 m-0"
+                            rows="1"
+                            style={{ minHeight: '1.5em', width: 'calc(100% - 2rem)' }}
+                          />
+                        ) : (
+                          q.body
+                        )}
+                      </p>
+
+                      {/* Answer options - only shown when expanded */}
+                      {isExpanded && q.options && q.options.length > 0 && (
                     <div className="space-y-1 pl-5">
                       {q.options.map((option, optIdx) => {
                         const isCorrect = option.includes('[correct]');
@@ -203,7 +321,9 @@ export default function QuestionsPanel({
                         );
                       })}
                     </div>
-                  )}
+                      )}
+                    </div>
+                  </div>
                 </div>
               );
             })}
