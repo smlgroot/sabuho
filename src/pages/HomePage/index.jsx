@@ -435,8 +435,8 @@ export default function HomePage() {
                   </div>
 
                   {/* Document Header Tab */}
-                  <div className="mb-4 flex items-center gap-1">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border-2 border-blue-500 rounded-t-lg max-w-xs">
+                  <div className="flex items-center gap-1 border-b-2 border-gray-300">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border-2 border-gray-300 border-b-0 rounded-t-lg max-w-xs relative" style={{ marginBottom: '-2px' }}>
                       <BookOpen className="w-4 h-4 text-blue-600 flex-shrink-0" />
                       <p className="text-xs font-semibold text-blue-900 truncate">
                         {uploadedFile ? uploadedFile.name : 'Processed Document'}
@@ -444,7 +444,7 @@ export default function HomePage() {
                     </div>
                     <button
                       onClick={handleResetClick}
-                      className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+                      className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors mb-2"
                       title="Start new document"
                     >
                       <Plus className="w-4 h-4 text-gray-600" />
@@ -452,7 +452,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Vertical Tab Layout */}
-                  <div className="flex">
+                  <div className="flex border-2 border-t-0 border-gray-300 rounded-b-lg p-4">
                     <TopicsSidebar
                       topics={topics}
                       questions={questions}
