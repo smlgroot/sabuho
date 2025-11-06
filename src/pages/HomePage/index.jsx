@@ -8,12 +8,12 @@ import { toast } from "sonner";
 import { migrateResourceSessionToUserData } from "@/services/resourceSessionMigrationService";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useQuizProcessing } from "@/hooks/useQuizProcessing";
-import FileUploadStep from "@/components/FileUploadStep";
-import ProcessingStep from "@/components/ProcessingStep";
-import ResultsStep from "@/components/ResultsStep";
-import ShareMonetizeStep from "@/components/ShareMonetizeStep";
-import TopicsSidebar from "@/components/TopicsSidebar";
-import QuestionsPanel from "@/components/QuestionsPanel";
+import FileUploadStep from "./components/steps/file-upload-step";
+import ProcessingStep from "./components/steps/processing-step";
+import ResultsStep from "./components/steps/results-step";
+import ShareMonetizeStep from "./components/steps/share-monetize-step";
+import TopicsSidebar from "./components/results/topics-sidebar";
+import QuestionsPanel from "./components/results/questions-panel";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
