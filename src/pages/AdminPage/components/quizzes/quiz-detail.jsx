@@ -121,7 +121,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
         // Don't revert state on success - let the parent component handle updates
       } catch (error) {
         // Revert the local state if save fails
-        console.error('Failed to save domain selection:', error)
+
         setSelected(previousSelected)
       }
     }
@@ -134,7 +134,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
       try {
         await handleDomainListSave(allDomainIds)
       } catch (error) {
-        console.error('Failed to select all domains:', error)
+
         setSelected(previousSelected)
       }
     }
@@ -147,7 +147,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
       try {
         await handleDomainListSave([])
       } catch (error) {
-        console.error('Failed to deselect all domains:', error)
+
         setSelected(previousSelected)
       }
     }
@@ -179,7 +179,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
       })
       setEditingField(null)
     } catch (error) {
-      console.error('Failed to save quiz field:', error)
+
     } finally {
       setIsSaving(false)
     }
@@ -196,7 +196,7 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
         domainIds
       })
     } catch (error) {
-      console.error('Failed to save domain list:', error)
+
       throw error // Re-throw so caller can handle it
     } finally {
       setIsDomainListSaving(false)
@@ -211,25 +211,25 @@ export function QuizDetail({ quiz, domains, onSave, onQuizUpdate, onDelete }) {
 
   // Handle quiz publish
   const handlePublishQuiz = async () => {
-    console.log('handlePublishQuiz');
+
   }
 
   // Handle quiz deletion
   const handleDeleteQuiz = async () => {
     if (!quiz?.id || !onDelete) {
-      console.error('Cannot delete quiz: missing quiz ID or onDelete handler', { quiz: quiz?.id, onDelete: !!onDelete })
+
       return
     }
 
-    console.log('Starting quiz deletion:', quiz.id)
+
     setIsDeleting(true)
     try {
       await onDelete(quiz.id)
       setShowDeleteDialog(false)
       showToast(t('Quiz deleted successfully'), 'success')
-      console.log('Quiz deleted successfully')
+
     } catch (error) {
-      console.error('Failed to delete quiz:', error)
+
       showToast(error.message || t('Failed to delete quiz. Please try again.'), 'error')
     } finally {
       setIsDeleting(false)

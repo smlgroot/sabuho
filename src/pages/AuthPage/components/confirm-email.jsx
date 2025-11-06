@@ -26,7 +26,7 @@ export function ConfirmEmail() {
         const { error } = await supabaseService.verifyOtp(token_hash, 'email')
 
         if (error) {
-          console.error('Email confirmation error:', error)
+
           if (error.message.includes('expired')) {
             setStatus('expired')
             setMessage('This confirmation link has expired. Please sign up again to receive a new confirmation email.')
@@ -39,7 +39,7 @@ export function ConfirmEmail() {
           setMessage('Your email has been confirmed successfully! You can now sign in.')
         }
       } catch (err) {
-        console.error('Confirmation exception:', err)
+
         setStatus('error')
         setMessage('An unexpected error occurred. Please try again.')
       }

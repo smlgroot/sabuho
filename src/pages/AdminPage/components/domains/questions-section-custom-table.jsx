@@ -126,7 +126,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
       setEditValue('');
       setOriginalValue('');
     } catch (error) {
-      console.error('Failed to update question:', error);
+
       setDialog({
         type: 'alert',
         title: 'Error',
@@ -347,7 +347,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
           setSelectedCells(new Set());
           setActiveQuestionGroup(null);
         } catch (error) {
-          console.error('Failed to delete questions:', error);
+
           setDialog({
             type: 'alert',
             title: 'Error',
@@ -402,7 +402,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
           setSelectedCells(new Set());
           setActiveQuestionGroup(null);
         } catch (error) {
-          console.error('Failed to delete options:', error);
+
           setDialog({
             type: 'alert',
             title: 'Error',
@@ -462,7 +462,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
       // Only clear selection
       setSelectedCells(new Set());
     } catch (error) {
-      console.error('Failed to insert option:', error);
+
       setDialog({
         type: 'alert',
         title: 'Error',
@@ -510,7 +510,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
         onDomainUpdate(updatedDomain);
       }
     } catch (error) {
-      console.error('Failed to toggle correct answer:', error);
+
       setDialog({
         type: 'alert',
         title: 'Error',
@@ -564,7 +564,7 @@ export default function QuestionsSectionCustomTable({ domain, onDomainUpdate }) 
       setSelectedCells(new Set());
       setActiveQuestionGroup(null);
     } catch (error) {
-      console.error('Failed to create question:', error);
+
       setDialog({
         type: 'alert',
         title: 'Error',

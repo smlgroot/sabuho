@@ -16,7 +16,7 @@ export function DeleteDomainDialog({ isOpen, onClose, domain, onConfirm }) {
       await onConfirm(domain)
       onClose()
     } catch (error) {
-      console.error('Failed to delete domain:', error)
+
     } finally {
       setLoading(false)
     }

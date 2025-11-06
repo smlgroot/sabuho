@@ -72,11 +72,10 @@ export default function HomePage() {
       try {
         const { error } = await signOut();
         if (error) {
-          console.error("Logout error:", error);
+          // Error handled silently
         }
         navigate("/");
       } catch (err) {
-        console.error("Logout exception:", err);
         navigate("/");
       }
     } else {

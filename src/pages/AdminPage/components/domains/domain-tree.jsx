@@ -197,7 +197,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
       // Find the dragged domain in the tree
       const draggedDomain = findDomainById(allDomains, draggedData.id)
       if (!draggedDomain) {
-        console.error('Dragged domain not found in tree')
+
         return
       }
 
@@ -207,7 +207,7 @@ function DomainNode({ domain, level, onSelectDomain, onCreateDomain, onEditDomai
       // Call the move handler
       onMoveDomain(draggedData.id, domain.id)
     } catch (error) {
-      console.error('Error handling drop:', error)
+
     }
   }
 
@@ -460,7 +460,7 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
       // Check if domain exists in tree
       const draggedDomain = findDomainById(domains, draggedData.id)
       if (!draggedDomain) {
-        console.error('Dragged domain not found in tree')
+
         return
       }
 
@@ -470,7 +470,7 @@ export function DomainTree({ domains, onSelectDomain, onCreateDomain, onEditDoma
       // Move to root (null parent)
       onMoveDomain(draggedData.id, null)
     } catch (error) {
-      console.error('Error handling drop:', error)
+
     }
   }
 

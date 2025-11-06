@@ -523,7 +523,7 @@ export async function deleteResource(resourceId) {
   if (resource.file_path) {
     const { error: storageError } = await deleteResourceFile(resource.file_path)
     if (storageError) {
-      console.warn('Failed to delete file from storage:', storageError.message)
+      // Failed to delete file from storage
     }
   }
 

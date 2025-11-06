@@ -20,13 +20,13 @@ export function ProfileSidebar({ onClose }) {
     try {
       const { error } = await signOut();
       if (error) {
-        console.error('Failed to sign out:', error);
+
         toast.error('Failed to sign out. Please try again.');
       } else {
         navigate('/');
       }
     } catch (err) {
-      console.error('Sign out error:', err);
+
       toast.error('Failed to sign out. Please try again.');
     }
   };

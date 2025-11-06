@@ -119,7 +119,6 @@ export default function AdminPage() {
       if (error) throw error;
       setUserCredits(credits?.credits || 0);
     } catch (error) {
-      console.error('Failed to load user credits:', error);
       setUserCredits(0);
     } finally {
       setIsLoadingCredits(false);
@@ -337,19 +336,14 @@ export default function AdminPage() {
   };
 
   const handleDeleteQuiz = async (quizId) => {
-    console.log('Admin handleDeleteQuiz called with:', quizId)
     try {
-      console.log('Calling deleteQuizApi...')
       await deleteQuizApi(quizId);
-      console.log('deleteQuizApi completed, updating store...')
       deleteQuizFromStore(quizId);
       if (selectedQuiz?.id === quizId) {
         setSelectedQuiz(null);
       }
       toast.success(t('Quiz deleted successfully'));
-      console.log('Quiz deletion completed successfully')
     } catch (err) {
-      console.error('Delete quiz error:', err)
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete quiz';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -367,7 +361,7 @@ export default function AdminPage() {
         setSelectedQuiz(updatedQuiz);
       }
     } catch (err) {
-      console.error('Failed to refresh quiz data:', err);
+      // Failed to refresh quiz data
     }
   };
 
@@ -386,7 +380,6 @@ export default function AdminPage() {
         setSelectedQuiz(quiz);
       }
     } catch (err) {
-      console.error('Failed to reload quiz data:', err);
       // Fallback to the quiz from the list if reload fails
       setSelectedQuiz(quiz);
     }

@@ -29,7 +29,7 @@ export function ResourcesSection({ domain, onUploadResource, onDomainUpdate }) {
         onDomainUpdate(updatedDomain)
       }
     } catch (error) {
-      console.error('Failed to check resource status:', error)
+
     } finally {
       setCheckingResourceStatus(prev => {
         const newSet = new Set(prev)

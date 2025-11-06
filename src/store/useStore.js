@@ -15,7 +15,7 @@ const saveExpandedDomains = (expandedDomains) => {
   try {
     localStorage.setItem('sabuho-expanded-domains', JSON.stringify(Array.from(expandedDomains)))
   } catch (e) {
-    console.error('Failed to save expanded domains', e)
+    // Failed to save to localStorage
   }
 }
 

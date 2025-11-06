@@ -35,7 +35,9 @@
       "Bash(docker logs:*)",
       "Bash(docker-compose up:*)",
       "Bash(rm:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(find:*)",
+      "Bash(perl -i -pe:*)"
     ],
     "deny": [],
     "ask": []

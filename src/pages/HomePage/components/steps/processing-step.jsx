@@ -44,15 +44,6 @@ export default function ProcessingStep({
   const progressInfo = parseProgressState(currentProcessingState);
   const baseStage = getBaseStage(currentProcessingState);
 
-  // Debug logging
-  if (isProcessing) {
-    console.log('ProcessingStep DEBUG:', {
-      currentProcessingState,
-      baseStage,
-      progressInfo
-    });
-  }
-
   return (
     <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
       processingError ? 'border-red-500' :

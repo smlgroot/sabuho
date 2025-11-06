@@ -38,20 +38,13 @@ export function useQuizProcessing() {
       {
         ...pollingConfig,
         onStatusChange: (status, sessionData) => {
-          console.log('Status changed to:', status);
           setCurrentProcessingState(status);
         }
       }
     );
 
-    console.log('Processing completed:', completedSession);
-
     // Fetch domains (topics) from resource_session_domains table
     const { data: domainsData, error: domainsError } = await fetchResourceSessionDomains(completedSession.id);
-
-    if (domainsError) {
-      console.error('Error fetching domains:', domainsError);
-    }
 
     // Use domains from the table, or fallback to JSONB topics for backward compatibility
     const topicsData = domainsData && domainsData.length > 0
@@ -68,15 +61,7 @@ export function useQuizProcessing() {
     // Fetch questions for this resource session
     const { data: questionsData, error: questionsError, total, sampleCount } = await fetchResourceSessionQuestions(completedSession.id);
 
-    if (questionsError) {
-      console.error('Error fetching questions:', questionsError);
-    }
-
     const questions = questionsData || [];
-    console.log('=== FETCHED DATA ===');
-    console.log('Domains:', domainsData);
-    console.log('Topics (transformed):', topicsData);
-    console.log('Questions sample:', questions[0]);
     setQuestions(questions);
     setQuestionsCount(sampleCount || questions.length);
     setTotalQuestionsGenerated(total || 0);
@@ -119,7 +104,6 @@ export function useQuizProcessing() {
         throw new Error(`File upload failed: ${uploadError.message}`);
       }
 
-      console.log('File uploaded to S3:', { key, jobId });
       setS3Key(key);
 
       trackEvent('file_uploaded', {
@@ -134,12 +118,9 @@ export function useQuizProcessing() {
       // S3 upload triggers event -> SQS -> ECS backend processing
       // Backend will create resource_session record automatically
       // We poll by S3 key (which is unique per upload)
-      console.log('Polling for processing completion by S3 key:', key);
-
       await pollAndFetchResults(key, uploadedFile);
 
     } catch (error) {
-      console.error('Processing error:', error);
       setProcessingError(error.message);
       setIsProcessing(false);
       setCurrentProcessingState("");
@@ -166,7 +147,6 @@ export function useQuizProcessing() {
       await pollAndFetchResults(s3Key, null);
 
     } catch (error) {
-      console.error('Retry error:', error);
       setProcessingError(error.message);
       setIsProcessing(false);
       setCurrentProcessingState("");

@@ -45,7 +45,7 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
         const domains = await fetchDomains()
         setAvailableDomains(domains)
       } catch (error) {
-        console.error('Failed to fetch domains:', error)
+
       }
     }
     loadDomains()
@@ -128,7 +128,7 @@ export function DomainDetail({ domain, onUploadResource, onDomainUpdate }) {
         onDomainUpdate(updatedDomainWithChildren)
       }
     } catch (error) {
-      console.error('Failed to update domain:', error)
+
     } finally {
       setIsUpdatingDomain(false)
     }

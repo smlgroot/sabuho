@@ -30,7 +30,7 @@ export function DomainCodesSection({ domain, onCodesCountUpdate }) {
         onCodesCountUpdate(codes?.length || 0)
       }
     } catch (error) {
-      console.error('Failed to load domain codes:', error)
+
     } finally {
       setIsLoadingCodes(false)
     }
@@ -44,7 +44,7 @@ export function DomainCodesSection({ domain, onCodesCountUpdate }) {
       if (error) throw error
       setUserCredits(credits?.credits || 0)
     } catch (error) {
-      console.error('Failed to load user credits:', error)
+
     }
   }
 
@@ -93,7 +93,7 @@ export function DomainCodesSection({ domain, onCodesCountUpdate }) {
       setShowCodeDialog(false)
       setShowSuccessDialog(true)
     } catch (error) {
-      console.error('Failed to create domain code:', error)
+
       alert('Failed to create domain code. Please try again.')
     } finally {
       setIsCreatingCode(false)

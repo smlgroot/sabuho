@@ -71,7 +71,7 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
 
       // S3 upload automatically triggers processing via S3 event -> SQS -> ECS backend
       // No need to call external service - processing happens automatically
-      console.log('File uploaded, processing will start automatically via S3 events')
+
 
       setUploadProgress(100)
       
@@ -81,7 +81,7 @@ export function ResourceUpload({ isOpen, onClose, domainId, onUpload }) {
       setDescription('')
       onClose()
     } catch (error) {
-      console.error('Upload failed:', error)
+
     } finally {
       setUploading(false)
       setUploadProgress(0)

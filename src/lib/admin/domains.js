@@ -11,7 +11,6 @@ export async function fetchDomains() {
   const { data, error } = await supabaseService.fetchDomains(session.user.id)
 
   if (error) {
-    console.error('Database error:', error)
     throw new Error(`Failed to fetch domains: ${error.message}`)
   }
 
@@ -28,7 +27,6 @@ export async function createDomain(domain) {
   const { data, error } = await supabaseService.createDomain(domain, session.user.id)
 
   if (error) {
-    console.error('Database error:', error)
     throw new Error(`Failed to create domain: ${error.message}`)
   }
 

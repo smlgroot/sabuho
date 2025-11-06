@@ -45,7 +45,7 @@ export function QuizInsights({ quiz, selected, idToName }) {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
       if (sessionError || !session) {
-        console.error('Failed to get session:', sessionError)
+
         alert(t('Please sign in to start a challenge'))
         setIsCreatingAttempt(false)
         return
@@ -61,7 +61,7 @@ export function QuizInsights({ quiz, selected, idToName }) {
       })
 
       if (error) {
-        console.error('Failed to create quiz attempt:', error)
+
         alert(t('Failed to create challenge. Please try again.'))
         setIsCreatingAttempt(false)
         return
@@ -70,7 +70,7 @@ export function QuizInsights({ quiz, selected, idToName }) {
       // Navigate to online quiz screen
       navigate(`/online-game/${data.quizAttempt.id}`)
     } catch (error) {
-      console.error('Error creating challenge:', error)
+
       alert(t('An error occurred. Please try again.'))
       setIsCreatingAttempt(false)
     }
@@ -89,13 +89,13 @@ export function QuizInsights({ quiz, selected, idToName }) {
         const { data, error } = await supabaseService.fetchQuizInsightsData(quiz.id, selected)
 
         if (error) {
-          console.error('Failed to fetch quiz insights:', error)
+
           setInsightsData(null)
         } else {
           setInsightsData(data)
         }
       } catch (error) {
-        console.error('Failed to fetch quiz insights:', error)
+
         setInsightsData(null)
       } finally {
         setIsLoading(false)

@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
       const { data: profile } = await upsertUserProfile(userId)
       setUserProfile(profile)
     } catch (error) {
-      console.error('Failed to load user profile:', error)
+      // Failed to load user profile
     } finally {
       setLoadingProfile(false)
     }
@@ -94,12 +94,10 @@ export function AuthProvider({ children }) {
     try {
       const { error } = await supabaseService.signOut('local')
       if (error) {
-        console.error('Sign out error:', error)
         return { error }
       }
       return { error: null }
     } catch (err) {
-      console.error('Sign out exception:', err)
       return { error: err }
     }
   }

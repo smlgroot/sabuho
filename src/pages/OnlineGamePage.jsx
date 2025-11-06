@@ -88,14 +88,14 @@ function OnlineQuizScreen() {
       const { data: questionsData, error: questionsError } = await quizAttemptService.fetchQuizAttemptQuestionsWithDetails(attemptId)
 
       if (questionsError) {
-        console.error('Error loading quiz attempt questions:', questionsError)
+
         alert(t('Failed to load quiz. Please try again.'))
         navigate('/admin/quizzes')
         return
       }
 
       if (!questionsData || questionsData.length === 0) {
-        console.error('No questions found for this quiz attempt')
+
         alert(t('No questions found for this quiz.'))
         navigate('/admin/quizzes')
         return
@@ -111,7 +111,7 @@ function OnlineQuizScreen() {
         .single()
 
       if (attemptError) {
-        console.error('Error loading quiz attempt:', attemptError)
+
       } else {
         setQuizAttempt(attemptData)
 
@@ -119,14 +119,14 @@ function OnlineQuizScreen() {
         const { data: quizData, error: quizError } = await supabaseService.fetchQuizById(attemptData.quiz_id)
 
         if (quizError) {
-          console.error('Error loading quiz:', quizError)
+
         } else if (quizData && quizData.length > 0) {
           setQuiz(quizData[0])
         }
       }
 
     } catch (error) {
-      console.error('Error loading quiz attempt data:', error)
+
       alert(t('An error occurred while loading the quiz.'))
       navigate('/admin/quizzes')
     } finally {
@@ -139,14 +139,14 @@ function OnlineQuizScreen() {
     try {
       const { data, error } = await trophyService.getTrophiesForAttempt(attemptId)
       if (error) {
-        console.error('Error loading trophies:', error)
+
         return
       }
       if (data) {
         setUnlockedTrophies(data.map(t => t.trophy_type))
       }
     } catch (error) {
-      console.error('Error loading existing trophies:', error)
+
     }
   }
 
@@ -184,7 +184,7 @@ function OnlineQuizScreen() {
         )
 
         if (error) {
-          console.error('Error saving trophy:', error)
+
           return
         }
 
@@ -194,7 +194,7 @@ function OnlineQuizScreen() {
         setShowTrophyModal(true)
       }
     } catch (error) {
-      console.error('Error checking trophies:', error)
+
     }
   }
 
@@ -252,7 +252,7 @@ function OnlineQuizScreen() {
       })
       return processedOptions
     } catch (error) {
-      console.error('getOriginalQuestionOptions: Error parsing options', error, question.options)
+
       return []
     }
   }
@@ -318,7 +318,7 @@ function OnlineQuizScreen() {
       const correctIndex = options.findIndex(option => String(option).includes('[correct]'))
       return correctIndex
     } catch (error) {
-      console.error('getCorrectAnswerIndexFromQuestion: Error parsing options', error, question.options)
+
       return -1
     }
   }
@@ -385,7 +385,7 @@ function OnlineQuizScreen() {
         )
 
         if (error) {
-          console.error('Error recording answer:', error)
+
           alert(t('Failed to save answer. Please try again.'))
           return
         }
@@ -409,7 +409,7 @@ function OnlineQuizScreen() {
           checkAndAwardTrophies(updatedAttemptQuestions)
         }, 100)
       } catch (error) {
-        console.error('Error submitting answer:', error)
+
         alert(t('An error occurred. Please try again.'))
       }
     }

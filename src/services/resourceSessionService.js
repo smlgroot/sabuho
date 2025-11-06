@@ -141,7 +141,6 @@ export async function uploadFileToS3(file) {
 
     return { key, jobId, error: null }
   } catch (error) {
-    console.error('Error uploading file to S3:', error)
     return { key: null, jobId: null, error }
   }
 }
@@ -278,7 +277,6 @@ export async function pollResourceSessionStatus(identifier, options = {}) {
         if (!session && !error) {
           const elapsedTime = Date.now() - startTime
           if (!recordFound && elapsedTime < maxWaitForRecord) {
-            console.log(`Waiting for backend to create resource_session record... (${Math.round(elapsedTime / 1000)}s)`)
             return
           } else if (!recordFound) {
             clearInterval(pollInterval)
