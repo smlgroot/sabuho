@@ -35,7 +35,7 @@ const STATE_SEQUENCE: Array<'processing' | 'decoding' | 'ocr_completed' | 'ai_pr
   'completed'
 ];
 
-const STATE_DELAY = 2000; // 2 seconds
+const STATE_DELAY = 500; // 2 seconds
 
 // Helper to transition states
 const scheduleStateTransition = (sessionId: string, currentStateIndex: number) => {

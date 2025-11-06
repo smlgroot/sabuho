@@ -1,4 +1,5 @@
 import { FileText, CheckCircle } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
 export default function QuestionsPanel({
   topics,
@@ -9,6 +10,81 @@ export default function QuestionsPanel({
   user,
   onSaveQuiz
 }) {
+  const [editingField, setEditingField] = useState(null);
+  const [editValues, setEditValues] = useState({});
+  const textareaRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (editingField) {
+      if (editingField.type === 'body' && textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.select();
+      } else if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select();
+      }
+    }
+  }, [editingField]);
+
+  const handleEditStart = (questionId, type, value, optionIndex = null) => {
+    setEditingField({ questionId, type, optionIndex });
+    setEditValues({ [questionId]: value });
+  };
+
+  const handleEditSave = () => {
+    if (!editingField) return;
+
+    const { questionId, type, optionIndex } = editingField;
+    const newValue = editValues[questionId];
+    const questionIndex = questions.findIndex(q => q.id === questionId);
+
+    if (questionIndex !== -1) {
+      if (type === 'body') {
+        questions[questionIndex].body = newValue;
+      } else if (type === 'option') {
+        const isCorrect = questions[questionIndex].options[optionIndex].includes('[correct]');
+        questions[questionIndex].options[optionIndex] = isCorrect ? `${newValue} [correct]` : newValue;
+      }
+    }
+
+    setEditingField(null);
+    setEditValues({});
+  };
+
+  const handleCorrectAnswerChange = (questionId, optionIndex) => {
+    const questionIndex = questions.findIndex(q => q.id === questionId);
+    if (questionIndex !== -1 && questions[questionIndex].options) {
+      // Remove [correct] from all options
+      questions[questionIndex].options = questions[questionIndex].options.map(opt =>
+        opt.replace(' [correct]', '').replace('[correct]', '').trim()
+      );
+      // Add [correct] to the selected option
+      questions[questionIndex].options[optionIndex] = `${questions[questionIndex].options[optionIndex]} [correct]`;
+      // Force re-render
+      setEditingField({ ...editingField });
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditingField(null);
+    setEditValues({});
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && editingField?.type === 'option') {
+      e.preventDefault();
+      handleEditSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleEditCancel();
+    }
+  };
+
+  const handleValueChange = (questionId, value) => {
+    setEditValues({ [questionId]: value });
+  };
+
   // Filter questions based on selected topic
   let filteredQuestions = questions;
   if (selectedTopicIndex !== null) {
@@ -46,32 +122,91 @@ export default function QuestionsPanel({
           </div>
         ) : (
           <>
-            {filteredQuestions.map((q, index) => (
-              <div key={q.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <p className="font-medium text-gray-900 mb-3">
-                  <span className="font-bold text-purple-600">{index + 1}.</span> {q.body}
-                </p>
-                {q.options && q.options.length > 0 && (
-                  <div className="space-y-2 pl-5">
-                    {q.options.map((option, optIdx) => {
-                      const isCorrect = option.includes('[correct]');
-                      const displayText = option.replace('[correct]', '').trim();
-                      return (
-                        <div
-                          key={optIdx}
-                          className={`text-sm py-1.5 px-2 rounded ${
-                            isCorrect ? 'font-semibold text-green-700 bg-green-50' : 'text-gray-700'
-                          }`}
-                        >
-                          {String.fromCharCode(65 + optIdx)}. {displayText}
-                          {isCorrect && ' ✓'}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
+            {filteredQuestions.map((q, index) => {
+              const isEditingBody = editingField?.questionId === q.id && editingField?.type === 'body';
+
+              return (
+                <div key={q.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p
+                    className={`font-medium text-gray-900 mb-3 cursor-pointer rounded px-2 py-1 transition-colors ${
+                      isEditingBody ? 'bg-blue-100' : 'hover:bg-gray-100'
+                    }`}
+                    onClick={() => !isEditingBody && handleEditStart(q.id, 'body', q.body)}
+                    title="Click to edit question"
+                  >
+                    <span className="font-bold text-purple-600">{index + 1}.</span>{' '}
+                    {isEditingBody ? (
+                      <textarea
+                        ref={textareaRef}
+                        value={editValues[q.id]}
+                        onChange={(e) => handleValueChange(q.id, e.target.value)}
+                        onBlur={handleEditSave}
+                        onKeyDown={handleKeyDown}
+                        className="font-medium text-gray-900 bg-transparent border-none outline-none resize-none align-top p-0 m-0"
+                        rows="1"
+                        style={{ minHeight: '1.5em', width: 'calc(100% - 2rem)' }}
+                      />
+                    ) : (
+                      q.body
+                    )}
+                  </p>
+
+                  {q.options && q.options.length > 0 && (
+                    <div className="space-y-1 pl-5">
+                      {q.options.map((option, optIdx) => {
+                        const isCorrect = option.includes('[correct]');
+                        const displayText = option.replace('[correct]', '').trim();
+                        const isEditingOption = editingField?.questionId === q.id &&
+                                               editingField?.type === 'option' &&
+                                               editingField?.optionIndex === optIdx;
+
+                        return (
+                          <div
+                            key={optIdx}
+                            className={`text-sm py-1.5 px-2 rounded flex items-center gap-2 ${
+                              isEditingOption
+                                ? (isCorrect ? 'font-semibold text-green-700 bg-green-100' : 'text-gray-700 bg-blue-100')
+                                : (isCorrect ? 'font-semibold text-green-700 bg-green-50' : 'text-gray-700')
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isCorrect}
+                              onChange={() => handleCorrectAnswerChange(q.id, optIdx)}
+                              className="checkbox checkbox-success checkbox-sm flex-shrink-0"
+                              title="Mark as correct answer"
+                            />
+                            <span className="flex-shrink-0">{String.fromCharCode(65 + optIdx)}.</span>
+                            {isEditingOption ? (
+                              <input
+                                ref={inputRef}
+                                type="text"
+                                value={editValues[q.id]}
+                                onChange={(e) => handleValueChange(q.id, e.target.value)}
+                                onBlur={handleEditSave}
+                                onKeyDown={handleKeyDown}
+                                className={`bg-transparent border-none outline-none flex-1 px-1 rounded text-sm ${
+                                  isCorrect ? 'font-semibold text-green-700' : 'text-gray-700'
+                                }`}
+                                style={{ margin: 0 }}
+                              />
+                            ) : (
+                              <span
+                                className="cursor-pointer hover:bg-white/50 rounded px-1 transition-colors flex-1"
+                                onClick={() => handleEditStart(q.id, 'option', displayText, optIdx)}
+                                title="Click to edit option"
+                              >
+                                {displayText}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </>
         )}
       </div>
