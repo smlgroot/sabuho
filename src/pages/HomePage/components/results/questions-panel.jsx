@@ -16,6 +16,7 @@ export default function QuestionsPanel({
   const [selectMode, setSelectMode] = useState(false);
   const [selectedQuestions, setSelectedQuestions] = useState(new Set());
   const [hoveredQuestionId, setHoveredQuestionId] = useState(null);
+  const [localQuestions, setLocalQuestions] = useState([]);
   const textareaRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -41,14 +42,28 @@ export default function QuestionsPanel({
 
     const { questionId, type, optionIndex } = editingField;
     const newValue = editValues[questionId];
-    const questionIndex = questions.findIndex(q => q.id === questionId);
 
-    if (questionIndex !== -1) {
+    // Check if it's a new question (local)
+    const localIndex = localQuestions.findIndex(q => q.id === questionId);
+    if (localIndex !== -1) {
+      const updatedLocalQuestions = [...localQuestions];
       if (type === 'body') {
-        questions[questionIndex].body = newValue;
+        updatedLocalQuestions[localIndex].body = newValue;
       } else if (type === 'option') {
-        const isCorrect = questions[questionIndex].options[optionIndex].includes('[correct]');
-        questions[questionIndex].options[optionIndex] = isCorrect ? `${newValue} [correct]` : newValue;
+        const isCorrect = updatedLocalQuestions[localIndex].options[optionIndex].includes('[correct]');
+        updatedLocalQuestions[localIndex].options[optionIndex] = isCorrect ? `${newValue} [correct]` : newValue;
+      }
+      setLocalQuestions(updatedLocalQuestions);
+    } else {
+      // It's an existing question
+      const questionIndex = questions.findIndex(q => q.id === questionId);
+      if (questionIndex !== -1) {
+        if (type === 'body') {
+          questions[questionIndex].body = newValue;
+        } else if (type === 'option') {
+          const isCorrect = questions[questionIndex].options[optionIndex].includes('[correct]');
+          questions[questionIndex].options[optionIndex] = isCorrect ? `${newValue} [correct]` : newValue;
+        }
       }
     }
 
@@ -57,16 +72,32 @@ export default function QuestionsPanel({
   };
 
   const handleCorrectAnswerChange = (questionId, optionIndex) => {
-    const questionIndex = questions.findIndex(q => q.id === questionId);
-    if (questionIndex !== -1 && questions[questionIndex].options) {
-      // Remove [correct] from all options
-      questions[questionIndex].options = questions[questionIndex].options.map(opt =>
-        opt.replace(' [correct]', '').replace('[correct]', '').trim()
-      );
-      // Add [correct] to the selected option
-      questions[questionIndex].options[optionIndex] = `${questions[questionIndex].options[optionIndex]} [correct]`;
-      // Force re-render
-      setEditingField({ ...editingField });
+    // Check if it's a new question (local)
+    const localIndex = localQuestions.findIndex(q => q.id === questionId);
+    if (localIndex !== -1) {
+      const updatedLocalQuestions = [...localQuestions];
+      if (updatedLocalQuestions[localIndex].options) {
+        // Remove [correct] from all options
+        updatedLocalQuestions[localIndex].options = updatedLocalQuestions[localIndex].options.map(opt =>
+          opt.replace(' [correct]', '').replace('[correct]', '').trim()
+        );
+        // Add [correct] to the selected option
+        updatedLocalQuestions[localIndex].options[optionIndex] = `${updatedLocalQuestions[localIndex].options[optionIndex]} [correct]`;
+        setLocalQuestions(updatedLocalQuestions);
+      }
+    } else {
+      // It's an existing question
+      const questionIndex = questions.findIndex(q => q.id === questionId);
+      if (questionIndex !== -1 && questions[questionIndex].options) {
+        // Remove [correct] from all options
+        questions[questionIndex].options = questions[questionIndex].options.map(opt =>
+          opt.replace(' [correct]', '').replace('[correct]', '').trim()
+        );
+        // Add [correct] to the selected option
+        questions[questionIndex].options[optionIndex] = `${questions[questionIndex].options[optionIndex]} [correct]`;
+        // Force re-render
+        setEditingField({ ...editingField });
+      }
     }
   };
 
@@ -89,12 +120,15 @@ export default function QuestionsPanel({
     setEditValues({ [questionId]: value });
   };
 
+  // Merge local questions with prop questions
+  const allQuestions = [...localQuestions, ...questions];
+
   // Filter questions based on selected topic
-  let filteredQuestions = questions;
+  let filteredQuestions = allQuestions;
   if (selectedTopicIndex !== null) {
     const selectedTopic = topics[selectedTopicIndex];
 
-    filteredQuestions = questions.filter(q => {
+    filteredQuestions = allQuestions.filter(q => {
       // Match by resource_session_domain_id (from resource_session_domains table)
       if (q.resource_session_domain_id && selectedTopic.id) {
         return q.resource_session_domain_id === selectedTopic.id;
@@ -142,6 +176,45 @@ export default function QuestionsPanel({
     });
   };
 
+  const selectAll = () => {
+    const allIds = new Set(filteredQuestions.map(q => q.id));
+    setSelectedQuestions(allIds);
+  };
+
+  const unselectAll = () => {
+    setSelectedQuestions(new Set());
+  };
+
+  const handleAddQuestion = () => {
+    const newQuestion = {
+      id: `new-${Date.now()}`,
+      body: "New question - click to edit",
+      options: [
+        "Option A",
+        "Option B",
+        "Option C",
+        "Option D [correct]"
+      ],
+      resource_session_domain_id: selectedTopicIndex !== null ? topics[selectedTopicIndex]?.id : null,
+      page_number: selectedTopicIndex !== null ? topics[selectedTopicIndex]?.start : null,
+      isNew: true
+    };
+
+    // Add to the beginning of local questions
+    setLocalQuestions(prev => [newQuestion, ...prev]);
+
+    // Expand the new question by default
+    setExpandedQuestions(prev => ({
+      ...prev,
+      [newQuestion.id]: true
+    }));
+
+    // Optionally start editing immediately
+    setTimeout(() => {
+      handleEditStart(newQuestion.id, 'body', newQuestion.body);
+    }, 100);
+  };
+
   return (
     <div className="flex-1 bg-blue-50 border-2 border-blue-500 rounded-lg p-6">
       <div className="mb-4 pb-3 border-b border-blue-400">
@@ -158,8 +231,9 @@ export default function QuestionsPanel({
         <div className="flex items-center gap-2">
           <button
             className="btn btn-sm btn-ghost gap-2"
-            onClick={() => {/* TODO: Implement add question */}}
+            onClick={handleAddQuestion}
             title="Add a new question"
+            disabled={selectMode}
           >
             <Plus className="w-4 h-4" />
             Add Question
@@ -178,6 +252,7 @@ export default function QuestionsPanel({
             className="btn btn-sm btn-ghost gap-2"
             onClick={handleCollapseExpandAll}
             title="Collapse or expand all questions"
+            disabled={selectMode}
           >
             {filteredQuestions.every(q => expandedQuestions[q.id]) ? (
               <>
@@ -192,6 +267,32 @@ export default function QuestionsPanel({
             )}
           </button>
         </div>
+
+        {/* Select Mode Toolbar */}
+        {selectMode && (
+          <div className="mt-3 pt-3 border-t border-blue-300 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button
+                className="btn btn-sm btn-ghost gap-2"
+                onClick={selectAll}
+                title="Select all questions"
+              >
+                <CheckSquare className="w-4 h-4" />
+                Select All
+              </button>
+              <button
+                className="btn btn-sm btn-ghost gap-2"
+                onClick={unselectAll}
+                title="Unselect all questions"
+              >
+                Unselect All
+              </button>
+            </div>
+            <span className="text-sm text-blue-700">
+              {selectedQuestions.size} of {filteredQuestions.length} selected
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -225,6 +326,7 @@ export default function QuestionsPanel({
                         isHovered ? 'opacity-100' : 'opacity-0'
                       }`}
                       title={isExpanded ? "Collapse answers" : "Expand answers"}
+                      disabled={selectMode}
                     >
                       {isExpanded ? (
                         <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -245,11 +347,11 @@ export default function QuestionsPanel({
 
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`font-medium text-gray-900 mb-3 cursor-pointer rounded px-2 py-1 transition-colors ${
-                          isEditingBody ? 'bg-blue-100' : 'hover:bg-gray-100'
+                        className={`font-medium text-gray-900 mb-3 rounded px-2 py-1 transition-colors ${
+                          selectMode ? '' : 'cursor-pointer ' + (isEditingBody ? 'bg-blue-100' : 'hover:bg-gray-100')
                         }`}
-                        onClick={() => !isEditingBody && handleEditStart(q.id, 'body', q.body)}
-                        title="Click to edit question"
+                        onClick={() => !selectMode && !isEditingBody && handleEditStart(q.id, 'body', q.body)}
+                        title={selectMode ? '' : 'Click to edit question'}
                       >
                         <span className="font-bold text-purple-600">{index + 1}.</span>{' '}
                         {isEditingBody ? (
@@ -290,9 +392,10 @@ export default function QuestionsPanel({
                             <input
                               type="checkbox"
                               checked={isCorrect}
-                              onChange={() => handleCorrectAnswerChange(q.id, optIdx)}
+                              onChange={() => !selectMode && handleCorrectAnswerChange(q.id, optIdx)}
                               className="checkbox checkbox-success checkbox-sm flex-shrink-0"
-                              title="Mark as correct answer"
+                              title={selectMode ? '' : 'Mark as correct answer'}
+                              disabled={selectMode}
                             />
                             <span className="flex-shrink-0">{String.fromCharCode(65 + optIdx)}.</span>
                             {isEditingOption ? (
@@ -310,9 +413,11 @@ export default function QuestionsPanel({
                               />
                             ) : (
                               <span
-                                className="cursor-pointer hover:bg-white/50 rounded px-1 transition-colors flex-1"
-                                onClick={() => handleEditStart(q.id, 'option', displayText, optIdx)}
-                                title="Click to edit option"
+                                className={`rounded px-1 transition-colors flex-1 ${
+                                  selectMode ? '' : 'cursor-pointer hover:bg-white/50'
+                                }`}
+                                onClick={() => !selectMode && handleEditStart(q.id, 'option', displayText, optIdx)}
+                                title={selectMode ? '' : 'Click to edit option'}
                               >
                                 {displayText}
                               </span>
