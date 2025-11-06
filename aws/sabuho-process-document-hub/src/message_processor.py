@@ -111,7 +111,13 @@ class OCRProcessor:
             # Read the PDF file as bytes
             with open(local_pdf_path, 'rb') as pdf_file:
                 pdf_buffer = pdf_file.read()
-            extracted_text = extract_text_with_pymupdf_and_ocr(pdf_buffer)
+
+            # Define progress callback to update status in database
+            def update_progress(stage: str, current: int, total: int):
+                status = f"{stage}_{current}_of_{total}"
+                update_resource_session_status(self.supabase, session_id, status)
+
+            extracted_text = extract_text_with_pymupdf_and_ocr(pdf_buffer, update_progress)
             print(f"[OCRProcessor] Extracted {len(extracted_text)} characters of text")
 
             # Upload OCR result to the OCR bucket (different from source bucket)
@@ -213,9 +219,14 @@ class AIProcessor:
             except Exception as s3_error:
                 raise Exception(f"Failed to download OCR text from OCR bucket: {s3_error}")
 
+            # Define progress callback to update status in database
+            def update_progress(stage: str, current: int, total: int):
+                status = f"{stage}_{current}_of_{total}"
+                update_resource_session_status(self.supabase, session_id, status)
+
             # Step 1: Identify topics
             print("[AIProcessor] Step 1: Identifying document topics...")
-            topics_result = identify_document_topics(full_text)
+            topics_result = identify_document_topics(full_text, update_progress)
             print(f"[AIProcessor] Identified {len(topics_result.get('topics', []))} topics")
 
             # Save topics to resource_session
@@ -233,7 +244,7 @@ class AIProcessor:
             print(f"[AIProcessor] Extracted text for {len(topic_texts)} topics")
 
             # Generate questions for all topics
-            questions = generate_questions_for_topics(topic_texts, domain_mapping)
+            questions = generate_questions_for_topics(topic_texts, domain_mapping, update_progress)
             print(f"[AIProcessor] Generated {len(questions)} total questions")
 
             # Save questions to database

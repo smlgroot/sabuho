@@ -16,6 +16,9 @@ RUN apt-get update && \
         libglib2.0-0 \
         libgomp1 \
         curl \
+        tesseract-ocr \
+        tesseract-ocr-eng \
+        tesseract-ocr-spa \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

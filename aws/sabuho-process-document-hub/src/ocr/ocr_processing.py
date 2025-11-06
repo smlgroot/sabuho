@@ -1,155 +1,108 @@
-"""OCR processing module for extracting text from images using PaddleOCR"""
-import io
-import numpy as np
+"""OCR processing module - Factory for OCR engines"""
+import os
+from typing import Optional
+from ocr_engines.base import OCREngine
+from ocr_engines.paddleocr import PaddleOCREngine
+from ocr_engines.tesseract import TesseractEngine
 
-# Try to import PaddleOCR dependencies
-try:
-    from paddleocr import PaddleOCR
-    from PIL import Image
-    OCR_AVAILABLE = True
-except ImportError:
-    OCR_AVAILABLE = False
-    print("[WARNING] PaddleOCR or PIL not available. OCR will be skipped.")
+# Determine which OCR engine to use from environment variable
+OCR_ENGINE_TYPE = os.environ.get('OCR_ENGINE', 'paddleocr').lower()
 
-
-# Initialize PaddleOCR once (singleton pattern for better performance)
-_ocr_instance = None
+# Global engine instance (singleton)
+_ocr_engine: Optional[OCREngine] = None
 
 
-def get_ocr_instance():
-    """Get or create PaddleOCR instance (singleton)"""
-    global _ocr_instance
-    if _ocr_instance is None and OCR_AVAILABLE:
-        try:
-            # Initialize PaddleOCR 3.x with Spanish language
-            # use_doc_orientation_classify: Document angle detection
-            # use_textline_orientation: Text line orientation classification
-            _ocr_instance = PaddleOCR(
-                lang='es',
-                use_doc_orientation_classify=True,
-                use_doc_unwarping=False,
-                use_textline_orientation=True
-            )
-            print("[INFO] PaddleOCR initialized successfully with Spanish language")
-        except Exception as e:
-            print(f"[ERROR] Failed to initialize PaddleOCR: {str(e)}")
-            return None
-    return _ocr_instance
+def get_ocr_engine() -> Optional[OCREngine]:
+    """Get or create the OCR engine instance based on OCR_ENGINE environment variable
+
+    Returns:
+        OCREngine: The configured OCR engine instance, or None if unavailable
+    """
+    global _ocr_engine
+
+    if _ocr_engine is None:
+        # Instantiate the appropriate engine based on configuration
+        if OCR_ENGINE_TYPE == 'paddleocr':
+            engine = PaddleOCREngine()
+            if engine.is_available():
+                _ocr_engine = engine
+                print(f"[INFO] OCR Engine: PaddleOCR initialized successfully")
+            else:
+                print(f"[ERROR] PaddleOCR selected but not available. Check dependencies.")
+        elif OCR_ENGINE_TYPE == 'tesseract':
+            engine = TesseractEngine()
+            if engine.is_available():
+                _ocr_engine = engine
+                print(f"[INFO] OCR Engine: Tesseract initialized successfully")
+            else:
+                print(f"[ERROR] Tesseract selected but not available. Check dependencies.")
+        else:
+            print(f"[ERROR] Unknown OCR_ENGINE value: {OCR_ENGINE_TYPE}. Supported: 'paddleocr', 'tesseract'")
+
+    return _ocr_engine
+
+
+# Backward compatibility: Check if any OCR is available
+def is_ocr_available() -> bool:
+    """Check if OCR functionality is available
+
+    Returns:
+        bool: True if an OCR engine is available and working
+    """
+    engine = get_ocr_engine()
+    return engine is not None and engine.is_available()
+
+
+# Export OCR_AVAILABLE for backward compatibility with existing code
+OCR_AVAILABLE = is_ocr_available()
 
 
 def extract_text_from_image_with_ocr(page, img_info, page_num: int, img_num: int) -> str:
-    """Extract text from a specific image in a PDF page using PaddleOCR
+    """Extract text from a specific image in a PDF page using configured OCR engine
+
+    This is a convenience function that routes to the selected OCR engine.
 
     Args:
         page: PyMuPDF page object
         img_info: Image information tuple from get_images()
-        page_num: Page number for logging
-        img_num: Image number for logging
+        page_num: Page number for logging (1-indexed)
+        img_num: Image number for logging (1-indexed)
 
     Returns:
         str: Extracted text from the image
     """
-    if not OCR_AVAILABLE:
+    engine = get_ocr_engine()
+    if engine is None:
         return ""
 
-    ocr = get_ocr_instance()
-    if ocr is None:
-        return ""
-
-    try:
-        # Get the image object reference
-        xref = img_info[0]  # The image reference number
-
-        # Extract the image from the PDF
-        base_image = page.parent.extract_image(xref)
-        image_bytes = base_image["image"]
-
-        # Convert to PIL Image
-        pil_image = Image.open(io.BytesIO(image_bytes))
-
-        # Convert PIL Image to numpy array for PaddleOCR
-        img_array = np.array(pil_image)
-
-        # Run PaddleOCR 3.x on the image using predict() method
-        result = ocr.predict(img_array)
-
-        # Extract text from PaddleOCR 3.x result
-        # Result is a list of result objects with detected text
-        if result and len(result) > 0:
-            text_lines = []
-            for res in result:
-                # Each result object has text content
-                if hasattr(res, 'text'):
-                    text_lines.append(res.text)
-                elif hasattr(res, 'dt_polys'):
-                    # Fallback: extract from structured result
-                    for item in res.rec_text:
-                        text_lines.append(item)
-
-            ocr_text = "\n".join(text_lines)
-            return ocr_text
-
-        return ""
-
-    except Exception as error:
-        print(f"[WARNING] OCR failed for page {page_num}, image {img_num}: {str(error)}")
-        return ""
+    return engine.extract_text_from_image_with_ocr(page, img_info, page_num, img_num)
 
 
 def extract_text_from_page_image(page, page_num: int) -> str:
-    """Extract text from an entire PDF page rendered as an image using PaddleOCR
+    """Extract text from an entire PDF page rendered as an image
 
-    This is useful for pages that are scanned images or have complex layouts.
+    Note: This function is for backward compatibility with PaddleOCR's full-page OCR.
+    Tesseract engine does not support efficient full-page OCR and will return empty string.
 
     Args:
         page: PyMuPDF page object
-        page_num: Page number for logging
+        page_num: Page number for logging (1-indexed)
 
     Returns:
-        str: Extracted text from the page
+        str: Extracted text from the page (empty for Tesseract)
     """
-    if not OCR_AVAILABLE:
+    engine = get_ocr_engine()
+    if engine is None:
         return ""
 
-    ocr = get_ocr_instance()
-    if ocr is None:
+    # Only PaddleOCR supports full-page OCR efficiently
+    # For Tesseract, this would be inefficient, so we skip it
+    if engine.get_engine_name() == 'tesseract':
+        print(f"[WARNING] Full-page OCR not supported with Tesseract engine. Use embedded image OCR instead.")
         return ""
 
-    try:
-        # Render page to image (pixmap) at 2x resolution for better OCR accuracy
-        # matrix = fitz.Matrix(2, 2) creates a 2x zoom
-        import fitz
-        mat = fitz.Matrix(2, 2)
-        pix = page.get_pixmap(matrix=mat)
+    # For PaddleOCR, use the internal method
+    if hasattr(engine, '_extract_text_from_page_image'):
+        return engine._extract_text_from_page_image(page, page_num)
 
-        # Convert pixmap to PIL Image
-        img_data = pix.tobytes("png")
-        pil_image = Image.open(io.BytesIO(img_data))
-
-        # Convert PIL Image to numpy array for PaddleOCR
-        img_array = np.array(pil_image)
-
-        # Run PaddleOCR 3.x on the page image using predict() method
-        result = ocr.predict(img_array)
-
-        # Extract text from PaddleOCR 3.x result
-        # Result is a list of result objects with detected text
-        if result and len(result) > 0:
-            text_lines = []
-            for res in result:
-                # Each result object has text content
-                if hasattr(res, 'text'):
-                    text_lines.append(res.text)
-                elif hasattr(res, 'dt_polys'):
-                    # Fallback: extract from structured result
-                    for item in res.rec_text:
-                        text_lines.append(item)
-
-            ocr_text = "\n".join(text_lines)
-            return ocr_text
-
-        return ""
-
-    except Exception as error:
-        print(f"[WARNING] Page OCR failed for page {page_num}: {str(error)}")
-        return ""
+    return ""
