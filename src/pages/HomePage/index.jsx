@@ -435,8 +435,8 @@ export default function HomePage() {
                   </div>
 
                   {/* Document Header Tab */}
-                  <div className="flex items-center gap-1 border-b-2 border-gray-300">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border-2 border-gray-300 border-b-0 rounded-t-lg max-w-xs relative" style={{ marginBottom: '-2px' }}>
+                  <div className="flex items-center gap-1">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-blue-200 border-b-0 rounded-t-lg max-w-xs relative" style={{ marginBottom: '-8px', zIndex: 100 }}>
                       <BookOpen className="w-4 h-4 text-blue-600 flex-shrink-0" />
                       <p className="text-xs font-semibold text-blue-900 truncate">
                         {uploadedFile ? uploadedFile.name : 'Processed Document'}
@@ -444,15 +444,35 @@ export default function HomePage() {
                     </div>
                     <button
                       onClick={handleResetClick}
-                      className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors mb-2"
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-primary hover:bg-primary-focus text-white transition-colors mb-2 shadow-md hover:shadow-lg"
                       title="Start new document"
                     >
-                      <Plus className="w-4 h-4 text-gray-600" />
+                      <Plus className="w-5 h-5" />
                     </button>
                   </div>
 
                   {/* Vertical Tab Layout */}
-                  <div className="flex border-2 border-t-0 border-gray-300 rounded-b-lg p-4">
+                  <div className="flex flex-col border-2 border-blue-200 rounded-lg">
+                    {/* Document Header inside content */}
+                    <div className="flex items-center justify-between px-6 pt-5 pb-4 bg-base-100">
+                      <div className="flex items-center gap-3">
+                        <BookOpen className="w-5 h-5 text-primary" />
+                        <h4 className="text-lg font-bold text-gray-900">
+                          {uploadedFile ? uploadedFile.name : 'Processed Document'}
+                        </h4>
+                        <div className="badge badge-primary badge-sm">1 doc</div>
+                      </div>
+                      <button
+                        onClick={handleResetClick}
+                        className="btn btn-sm btn-primary gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Document
+                      </button>
+                    </div>
+
+                    {/* Topics and Questions Layout */}
+                    <div className="flex p-4">
                     <TopicsSidebar
                       topics={topics}
                       questions={questions}
@@ -470,6 +490,7 @@ export default function HomePage() {
                       user={user}
                       onSaveQuiz={handleSaveQuiz}
                     />
+                    </div>
                   </div>
                 </div>
               )}
