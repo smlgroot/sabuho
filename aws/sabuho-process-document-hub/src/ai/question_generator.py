@@ -13,7 +13,7 @@ RATE_LIMIT_TOKENS_PER_MIN = 200000
 DELAY_BETWEEN_BATCHES_SECONDS = 2  # Conservative delay to avoid rate limits
 
 
-def generate_questions_for_topics(topic_texts: list, domain_mapping: dict) -> list:
+def generate_questions_for_topics(topic_texts: list, domain_mapping: dict, progress_callback) -> list:
     """
     Generate quiz questions for a list of topics.
 
@@ -24,6 +24,7 @@ def generate_questions_for_topics(topic_texts: list, domain_mapping: dict) -> li
         topic_texts: List of topic dicts with 'name', 'text', 'start', 'end' keys
         domain_mapping: Dict mapping topic names to domain IDs
                        Example: {"Introduction": "uuid-1234", "Chapter 1": "uuid-5678"}
+        progress_callback: Callback function(stage, current, total) to report progress
 
     Returns:
         List of question dicts with domain_id included:
@@ -45,7 +46,7 @@ def generate_questions_for_topics(topic_texts: list, domain_mapping: dict) -> li
     Example:
         >>> topics = [{"name": "Intro", "text": "...", "start": 1, "end": 2}]
         >>> domains = {"Intro": "uuid-1234"}
-        >>> questions = generate_questions_for_topics(topics, domains)
+        >>> questions = generate_questions_for_topics(topics, domains, callback)
     """
     print(f"Starting question generation for {len(topic_texts)} topics...")
 
@@ -82,6 +83,9 @@ def generate_questions_for_topics(topic_texts: list, domain_mapping: dict) -> li
             all_questions.extend(questions_with_domains)
 
             print(f"Batch {batch_index + 1} generated {len(batch_questions)} questions")
+
+            # Report progress after each batch
+            progress_callback('ai_batch', batch_index + 1, len(batches))
 
         except Exception as e:
             print(f"Error processing batch {batch_index + 1}: {e}")

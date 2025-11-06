@@ -14,7 +14,7 @@ MAX_CHARS_PER_CHUNK = 40000  # ~10k tokens for gpt-3.5-turbo (safe limit)
 OVERLAP_PAGES = 3  # Pages to overlap between chunks for continuity
 
 
-def identify_document_topics(text: str) -> dict:
+def identify_document_topics(text: str, progress_callback) -> dict:
     """
     Identify topics and their page ranges in a document.
 
@@ -23,6 +23,7 @@ def identify_document_topics(text: str) -> dict:
 
     Args:
         text: Full document text with page markers (e.g., "--- Page 1 ---")
+        progress_callback: Callback function(stage, current, total) to report progress
 
     Returns:
         Dict with format: {"topics": [{"name": "...", "start": 1, "end": 5}, ...]}
@@ -32,7 +33,7 @@ def identify_document_topics(text: str) -> dict:
 
     Example:
         >>> text = "--- Page 1 ---\\nIntroduction...\\n--- Page 2 ---\\nChapter 1..."
-        >>> result = identify_document_topics(text)
+        >>> result = identify_document_topics(text, callback)
         >>> print(result)
         {"topics": [{"name": "Introduction", "start": 1, "end": 1}, ...]}
     """
@@ -65,12 +66,18 @@ def identify_document_topics(text: str) -> dict:
 
             all_topics.extend(chunk_result.get('topics', []))
 
+            # Report progress after each chunk
+            progress_callback('ai_chunking', i + 1, len(chunks))
+
         # Merge overlapping topics
         merged_topics = _merge_overlapping_topics(all_topics)
         print(f"Merged {len(all_topics)} chunk topics into {len(merged_topics)} final topics")
         topics_map = {"topics": merged_topics}
 
     print(f"Identified {len(topics_map.get('topics', []))} topics")
+
+    # Report completion of topic identification
+    progress_callback('ai_topics_identified', 1, 1)
 
     return topics_map
 

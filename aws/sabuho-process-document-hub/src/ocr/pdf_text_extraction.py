@@ -63,13 +63,17 @@ def process_single_page(doc, page_num: int, total_pages: int) -> tuple:
     return page_num, text_content, image_text_content, has_images
 
 
-def extract_text_with_pymupdf_and_ocr(pdf_buffer: bytes) -> str:
+def extract_text_with_pymupdf_and_ocr(pdf_buffer: bytes, progress_callback) -> str:
     """Extract text from PDF using PyMuPDF and PaddleOCR for images
 
     Strategy:
     - Fast text extraction with PyMuPDF for native PDFs
     - Full-page OCR with PaddleOCR for scanned documents
     - Individual image OCR for embedded images in PDFs
+
+    Args:
+        pdf_buffer: PDF file content as bytes
+        progress_callback: Callback function(stage, current, total) to report progress
 
     Returns:
         str: Combined text extracted from PDF (both direct text and OCR from images)
@@ -112,6 +116,10 @@ def extract_text_with_pymupdf_and_ocr(pdf_buffer: bytes) -> str:
                     ocr_pages.append(page_num + 1)
 
                 completed += 1
+
+                # Report progress after each page
+                progress_callback('ocr_page', completed, total_pages)
+
                 if completed % 10 == 0:  # Progress update every 10 pages
                     print(f"[extract_text_with_pymupdf_and_ocr] Processed {completed}/{total_pages} pages")
 
