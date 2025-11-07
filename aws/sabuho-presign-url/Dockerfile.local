@@ -1,0 +1,18 @@
+# Dockerfile for local development (non-Lambda)
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt requirements-local.txt ./
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-local.txt
+
+# Copy source code
+COPY src/ ./src/
+
+# Expose port
+EXPOSE 8080
+
+# Run Flask server
+CMD ["python", "-m", "flask", "--app", "src.server", "run", "--host=0.0.0.0", "--port=8080"]

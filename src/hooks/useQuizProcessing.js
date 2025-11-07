@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { usePostHog } from "@/components/PostHogProvider";
+import { supabase } from "@/lib/supabase";
 import {
   uploadFileToS3,
   pollResourceSessionStatus,
@@ -16,7 +17,23 @@ export function useQuizProcessing() {
   const [totalQuestionsGenerated, setTotalQuestionsGenerated] = useState(0);
   const [s3Key, setS3Key] = useState(null);
   const [processingError, setProcessingError] = useState(null);
+  const [resourceRepositoryId, setResourceRepositoryId] = useState(null);
   const { trackEvent } = usePostHog();
+
+  // Create a new resource repository
+  const createResourceRepository = async () => {
+    const { data, error } = await supabase
+      .from('resource_repositories')
+      .insert({})
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create resource repository: ${error.message}`);
+    }
+
+    return data.id;
+  };
 
   // Separate function for polling and fetching results
   const pollAndFetchResults = async (s3Key, uploadedFile) => {
@@ -96,9 +113,19 @@ export function useQuizProcessing() {
         }
       });
 
-      // Upload file to S3 using presigned URL
+      // Create resource repository first (Step 1: on file upload)
+      const repositoryId = await createResourceRepository();
+      setResourceRepositoryId(repositoryId);
+
+      trackEvent('repository_created', {
+        props: {
+          repositoryId: repositoryId
+        }
+      });
+
+      // Upload file to S3 using presigned URL, passing repository ID
       // S3 key is unique per upload (includes UUID)
-      const { key, jobId, error: uploadError } = await uploadFileToS3(uploadedFile);
+      const { key, jobId, error: uploadError } = await uploadFileToS3(uploadedFile, repositoryId);
 
       if (uploadError) {
         throw new Error(`File upload failed: ${uploadError.message}`);
@@ -111,12 +138,13 @@ export function useQuizProcessing() {
           fileType: uploadedFile.type,
           fileName: uploadedFile.name,
           s3Key: key,
-          jobId: jobId
+          jobId: jobId,
+          repositoryId: repositoryId
         }
       });
 
       // S3 upload triggers event -> SQS -> ECS backend processing
-      // Backend will create resource_session record automatically
+      // Backend will create resource_session record with repository_id
       // We poll by S3 key (which is unique per upload)
       await pollAndFetchResults(key, uploadedFile);
 
@@ -162,6 +190,7 @@ export function useQuizProcessing() {
     setTotalQuestionsGenerated(0);
     setS3Key(null);
     setProcessingError(null);
+    setResourceRepositoryId(null);
   };
 
   return {
@@ -173,6 +202,7 @@ export function useQuizProcessing() {
     totalQuestionsGenerated,
     s3Key,
     processingError,
+    resourceRepositoryId,
     handleProcessClick,
     handleRetry,
     resetProcessing

@@ -72,7 +72,13 @@ class SQSProcessor:
             retries={'max_attempts': 3, 'mode': 'adaptive'}
         )
 
-        self.sqs = boto3.client('sqs', config=config)
+        # Support LocalStack endpoint for local development
+        sqs_config = {'config': config}
+        aws_endpoint_url = os.environ.get('AWS_ENDPOINT_URL')
+        if aws_endpoint_url:
+            sqs_config['endpoint_url'] = aws_endpoint_url
+
+        self.sqs = boto3.client('sqs', **sqs_config)
 
         # Initialize the document processors
         self.ocr_processor = OCRProcessor()

@@ -95,7 +95,7 @@ const scheduleStateTransition = (sessionId: string, stateSequence: string[], cur
 // Mock presigned URL endpoint
 app.post('/presign', async (c) => {
   const body = await c.req.json();
-  const { filename, contentType } = body;
+  const { filename, contentType, resource_repository_id } = body;
 
   const jobId = uuidv4();
   const timestamp = new Date().toISOString().split('T')[0];
@@ -105,11 +105,15 @@ app.post('/presign', async (c) => {
   const uploadUrl = `http://localhost:3001/uploads/${timestamp}/${jobId}/${filename}`;
 
   console.log(`🔑 Generated presigned URL for: ${filename}`);
+  if (resource_repository_id) {
+    console.log(`📦 Repository ID: ${resource_repository_id}`);
+  }
 
   return c.json({
     uploadUrl,
     key,
-    jobId
+    jobId,
+    resource_repository_id
   });
 });
 
@@ -119,6 +123,10 @@ app.put('/uploads/*', async (c) => {
   const filename = filePath.split('/').pop() || 'document.pdf';
   const contentType = c.req.header('content-type') || 'application/pdf';
 
+  // Extract resource_repository_id from query params
+  const url = new URL(c.req.url);
+  const resourceRepositoryId = url.searchParams.get('resource_repository_id') || null;
+
   // Extract jobId from path: uploads/YYYY-MM-DD/jobId/filename
   const pathParts = filePath.split('/');
   const jobId = pathParts[2] || uuidv4();
@@ -126,9 +134,18 @@ app.put('/uploads/*', async (c) => {
   console.log(`📤 File uploaded: ${filename} (${contentType})`);
   console.log(`📁 S3 Key: ${filePath}`);
   console.log(`🆔 Job ID: ${jobId}`);
+  if (resourceRepositoryId) {
+    console.log(`📦 Repository ID: ${resourceRepositoryId}`);
+  }
 
-  // Generate mock session, domains, and questions
-  const { session, domains, questions } = generateMockSession(filename, filePath, contentType, jobId);
+  // Generate mock session, domains, and questions with repository ID
+  const { session, domains, questions } = generateMockSession(
+    filename,
+    filePath,
+    contentType,
+    jobId,
+    resourceRepositoryId
+  );
 
   // Store in memory
   sessionStore.addSession(session, domains, questions);
@@ -287,6 +304,24 @@ app.get('/rest/v1/resource_session_questions', (c) => {
   return c.json([]);
 });
 
+// POST /rest/v1/resource_repositories - Create a new resource repository
+app.post('/rest/v1/resource_repositories', async (c) => {
+  const url = new URL(c.req.url);
+  const selectParam = url.searchParams.get('select') || '*';
+
+  // Generate a new repository record
+  const repository = {
+    id: uuidv4(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  console.log(`📦 Created resource_repository with id: ${repository.id}`);
+
+  // Return as array (Supabase returns arrays for inserts)
+  return c.json([repository]);
+});
+
 // Health check endpoint
 app.get('/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -305,6 +340,7 @@ console.log(`
 ║   📝 Endpoints:                                               ║
 ║   • POST /presign - Generate presigned URL                   ║
 ║   • PUT  /uploads/* - Upload file (triggers state machine)   ║
+║   • POST /rest/v1/resource_repositories - Create repository  ║
 ║   • GET  /rest/v1/resource_sessions - Fetch sessions         ║
 ║   • GET  /rest/v1/resource_session_questions - Get questions ║
 ║   • GET  /health - Health check                              ║

@@ -47,7 +47,7 @@ def get_supabase_client() -> Client:
 # OCR Processing Functions
 # ============================================================================
 
-def _create_resource_session(supabase: Client, file_path: str, name: str, status: str) -> dict:
+def _create_resource_session(supabase: Client, file_path: str, name: str, status: str, resource_repository_id: str = None) -> dict:
     """
     Create a new resource session record in Supabase.
     Always inserts a new record - never updates.
@@ -57,6 +57,7 @@ def _create_resource_session(supabase: Client, file_path: str, name: str, status
         file_path: S3 file path
         name: Display name for the resource
         status: Initial status (e.g., 'processing')
+        resource_repository_id: Optional resource repository ID
 
     Returns:
         Created resource session dict or None on error
@@ -68,6 +69,10 @@ def _create_resource_session(supabase: Client, file_path: str, name: str, status
             'mime_type': 'application/pdf',
             'status': status
         }
+
+        # Add resource_repository_id if provided
+        if resource_repository_id:
+            data['resource_repository_id'] = resource_repository_id
 
         result = supabase.table('resource_sessions').insert(data).execute()
         print(f"[_create_resource_session] Successfully created new session for: {file_path} with status: {status}")
@@ -111,7 +116,7 @@ def _update_resource_session(supabase: Client, session_id: str, status: str, unp
         return None
 
 
-def save_resource_session_processing_ocr(supabase: Client, file_path: str, name: str) -> dict:
+def save_resource_session_processing_ocr(supabase: Client, file_path: str, name: str, resource_repository_id: str = None) -> dict:
     """
     Create a new resource session record with 'processing' status for OCR.
     Always creates a new session - returns the session record with ID.
@@ -120,11 +125,12 @@ def save_resource_session_processing_ocr(supabase: Client, file_path: str, name:
         supabase: Supabase client
         file_path: S3 file path
         name: Display name for the resource
+        resource_repository_id: Optional resource repository ID
 
     Returns:
         Created resource session dict
     """
-    return _create_resource_session(supabase, file_path, name, 'processing')
+    return _create_resource_session(supabase, file_path, name, 'processing', resource_repository_id)
 
 
 def save_resource_session_ocr_completed(supabase: Client, session_id: str) -> dict:
@@ -203,7 +209,7 @@ def save_topics_to_resource_session(supabase: Client, session_id: str, topics_ma
     }).eq('id', session_id).execute()
 
 
-def create_resource_session_domains(supabase: Client, session_id: str, topics_map: dict) -> dict:
+def create_resource_session_domains(supabase: Client, session_id: str, topics_map: dict, resource_repository_id: str = None) -> dict:
     """
     Create resource_session_domains records for each topic.
 
@@ -211,6 +217,7 @@ def create_resource_session_domains(supabase: Client, session_id: str, topics_ma
         supabase: Supabase client
         session_id: UUID of the resource session
         topics_map: Topics dict with format {"topics": [{"name": "...", "start": 1, "end": 5}, ...]}
+        resource_repository_id: Optional resource repository ID
 
     Returns:
         Dict mapping topic names to domain IDs: {"Topic Name": "uuid-1234", ...}
@@ -228,6 +235,10 @@ def create_resource_session_domains(supabase: Client, session_id: str, topics_ma
             'page_range_end': topic['end']
         }
 
+        # Add resource_repository_id if provided
+        if resource_repository_id:
+            domain_data['resource_repository_id'] = resource_repository_id
+
         result = supabase.table('resource_session_domains').insert(domain_data).execute()
 
         if result.data and len(result.data) > 0:
@@ -240,7 +251,7 @@ def create_resource_session_domains(supabase: Client, session_id: str, topics_ma
     return domain_mapping
 
 
-def save_questions_to_db(supabase: Client, questions: list, session_id: str):
+def save_questions_to_db(supabase: Client, questions: list, session_id: str, resource_repository_id: str = None):
     """
     Save questions to resource_session_questions table.
 
@@ -248,6 +259,7 @@ def save_questions_to_db(supabase: Client, questions: list, session_id: str):
         supabase: Supabase client
         questions: List of question dicts with 'domain_id' included
         session_id: UUID of the resource session
+        resource_repository_id: Optional resource repository ID
 
     Note:
         Each question should have:
@@ -284,6 +296,10 @@ def save_questions_to_db(supabase: Client, questions: list, session_id: str):
             'options': options_with_correct,  # JSONB array of strings
             'explanation': q.get('source_text', '')
         }
+
+        # Add resource_repository_id if provided
+        if resource_repository_id:
+            question_data['resource_repository_id'] = resource_repository_id
 
         questions_data.append(question_data)
 

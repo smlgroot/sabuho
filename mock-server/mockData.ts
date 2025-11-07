@@ -9,6 +9,7 @@ export interface MockTopic {
 export interface MockDomain {
   id: string;
   resource_session_id: string;
+  resource_repository_id: string | null;
   name: string;
   page_range_start: number;
   page_range_end: number;
@@ -23,6 +24,7 @@ export interface MockQuestion {
   created_at: string;
   resource_session_id: string;
   resource_session_domain_id: string;
+  resource_repository_id: string | null;
   is_sample: boolean;
 }
 
@@ -37,6 +39,7 @@ export interface MockResourceSession {
   topic_page_range: {
     topics: MockTopic[];
   };
+  resource_repository_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -69,10 +72,11 @@ export const generateMockTopics = (): MockTopic[] => {
 };
 
 // Generate domains from topics (matching resource_session_domains table schema)
-export const generateMockDomains = (sessionId: string, topics: MockTopic[]): MockDomain[] => {
+export const generateMockDomains = (sessionId: string, topics: MockTopic[], resourceRepositoryId: string | null = null): MockDomain[] => {
   return topics.map(topic => ({
     id: uuidv4(),
     resource_session_id: sessionId,
+    resource_repository_id: resourceRepositoryId,
     name: topic.name,
     page_range_start: topic.start,
     page_range_end: topic.end,
@@ -125,6 +129,7 @@ export const generateMockQuestions = (sessionId: string, domains: MockDomain[]):
         created_at: new Date().toISOString(),
         resource_session_id: sessionId,
         resource_session_domain_id: domain.id,
+        resource_repository_id: domain.resource_repository_id,
         is_sample: true // Default all to sample (true)
       });
     }
@@ -151,7 +156,8 @@ export const generateMockSession = (
   filename: string,
   filePath: string,
   mimeType: string,
-  jobId: string
+  jobId: string,
+  resourceRepositoryId: string | null = null
 ): {
   session: MockResourceSession;
   domains: MockDomain[];
@@ -170,11 +176,12 @@ export const generateMockSession = (
     topic_page_range: {
       topics
     },
+    resource_repository_id: resourceRepositoryId,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
 
-  const domains = generateMockDomains(sessionId, topics);
+  const domains = generateMockDomains(sessionId, topics, resourceRepositoryId);
   const questions = generateMockQuestions(sessionId, domains);
 
   return { session, domains, questions };

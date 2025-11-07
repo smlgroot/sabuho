@@ -6,9 +6,7 @@ export default function QuestionsPanel({
   questions,
   selectedTopicIndex,
   totalQuestionsGenerated,
-  questionsCount,
-  user,
-  onSaveQuiz
+  questionsCount
 }) {
   const [editingField, setEditingField] = useState(null);
   const [editValues, setEditValues] = useState({});
@@ -491,16 +489,6 @@ export default function QuestionsPanel({
           </>
         )}
       </div>
-
-      {/* Action Buttons - Show when all questions are displayed */}
-      {totalQuestionsGenerated <= questionsCount && filteredQuestions.length > 0 && (
-        <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
-          <button onClick={onSaveQuiz} className="btn btn-primary">
-            <CheckCircle className="w-5 h-5 mr-2" />
-            {user ? "Save Quiz" : "Sign Up to Save"}
-          </button>
-        </div>
-      )}
 
       {/* Delete Confirmation Dialog */}
       <dialog className={`modal ${showDeleteDialog ? 'modal-open' : ''}`}>

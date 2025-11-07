@@ -49,14 +49,16 @@ def lambda_handler(event, context):
         Body (optional):
             {
                 "filename": "document.pdf",  // Optional: original filename
-                "contentType": "application/pdf"  // Optional: MIME type
+                "contentType": "application/pdf",  // Optional: MIME type
+                "resource_repository_id": "uuid"  // Optional: repository ID
             }
 
     Response:
         {
             "uploadUrl": "https://s3.amazonaws.com/...",  // Presigned URL for PUT
             "key": "uploads/2024-01-15/uuid/filename.pdf",  // Unique S3 key
-            "jobId": "uuid"  // Unique job identifier
+            "jobId": "uuid",  // Unique job identifier
+            "resource_repository_id": "uuid"  // Repository ID (if provided)
         }
     """
     try:
@@ -84,26 +86,53 @@ def lambda_handler(event, context):
 
         filename = body.get('filename', 'document.pdf')
         content_type = body.get('contentType', 'application/pdf')
+        resource_repository_id = body.get('resource_repository_id')
 
         # Generate unique S3 key
         s3_key, job_id = generate_unique_key(filename)
 
         # Initialize S3 client
-        s3_client = boto3.client('s3')
+        # Support LocalStack endpoint for local development
+        s3_config = {}
+        aws_endpoint_url = os.environ.get('AWS_ENDPOINT_URL')
+        if aws_endpoint_url:
+            s3_config['endpoint_url'] = aws_endpoint_url
+
+        s3_client = boto3.client('s3', **s3_config)
+
+        # Prepare parameters for presigned URL
+        presign_params = {
+            'Bucket': bucket_name,
+            'Key': s3_key,
+            'ContentType': content_type
+        }
+
+        # Add resource_repository_id as S3 object metadata if provided
+        # This will be available in S3 events and can be read by the backend
+        if resource_repository_id:
+            presign_params['Metadata'] = {
+                'resource-repository-id': resource_repository_id
+            }
 
         # Generate presigned URL for PUT operation
         # Valid for 15 minutes
         presigned_url = s3_client.generate_presigned_url(
             'put_object',
-            Params={
-                'Bucket': bucket_name,
-                'Key': s3_key,
-                'ContentType': content_type
-            },
+            Params=presign_params,
             ExpiresIn=900  # 15 minutes
         )
 
         # Return response
+        response_body = {
+            'uploadUrl': presigned_url,
+            'key': s3_key,
+            'jobId': job_id
+        }
+
+        # Include resource_repository_id in response if provided
+        if resource_repository_id:
+            response_body['resource_repository_id'] = resource_repository_id
+
         return {
             'statusCode': 200,
             'headers': {
@@ -112,11 +141,7 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type'
             },
-            'body': json.dumps({
-                'uploadUrl': presigned_url,
-                'key': s3_key,
-                'jobId': job_id
-            })
+            'body': json.dumps(response_body)
         }
 
     except ClientError as e:

@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # LocalStack - Local AWS cloud stack
+  localstack:
+    image: localstack/localstack:latest
+    container_name: sabuho-localstack
+    ports:
+      - "4566:4566"            # LocalStack gateway
+      - "4510-4559:4510-4559"  # External services port range
+    environment:
+      - SERVICES=s3,sqs,lambda
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - PERSISTENCE=1
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - "./localstack-data:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./init-localstack.sh:/etc/localstack/init/ready.d/init-localstack.sh"
+    networks:
+      - sabuho-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Presign URL Service
+  presign-url:
+    build:
+      context: ./sabuho-presign-url
+      dockerfile: Dockerfile.local
+    container_name: sabuho-presign-url
+    ports:
+      - "3002:8080"
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - S3_BUCKET_NAME=sabuho-files
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - sabuho-network
+
+  # Document Processing Service
+  processor:
+    build:
+      context: ./sabuho-process-document-hub
+      dockerfile: Dockerfile
+    container_name: sabuho-processor
+    volumes:
+      - ./sabuho-process-document-hub/src:/app:ro
+      - /tmp/.paddlex:/root/.paddlex
+    environment:
+      - APP_ENV_TYPE=${APP_ENV_TYPE:-development}
+      - PYTHONUNBUFFERED=1
+      - OCR_ENGINE=${OCR_ENGINE:-tesseract}
+      - SUPABASE_URL=${SUPABASE_URL:-http://localhost:3001}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-mock-key}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_S3_BUCKET=sabuho-files
+      - AWS_S3_OCR_BUCKET=sabuho-files-ocr
+      - TEST_FILE_PATH=${TEST_FILE_PATH:-uploads/test-compendio.pdf}
+      - TEST_MESSAGE_TYPE=${TEST_MESSAGE_TYPE:-ai_process}
+      - TEST_SESSION_ID=${TEST_SESSION_ID:-a01c29d9-e52c-49ab-9bcd-5c20f95c7d2b}
+      - S3_EVENTS_QUEUE_URL=http://localstack:4566/000000000000/sabuho-s3-events
+      - PROCESSING_QUEUE_URL=http://localstack:4566/000000000000/sabuho-processing
+      - PROCESSING_DLQ_URL=http://localstack:4566/000000000000/sabuho-processing-dlq
+      - MAX_WORKERS=${MAX_WORKERS:-4}
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - sabuho-network
+
+networks:
+  sabuho-network:
+    driver: bridge

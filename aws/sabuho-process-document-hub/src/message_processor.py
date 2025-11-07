@@ -58,7 +58,14 @@ class OCRProcessor:
 
         # Get AWS configuration from environment
         self.aws_region = os.environ['AWS_REGION']  # Required - will raise KeyError if not set
-        self.s3_client = boto3.client('s3', region_name=self.aws_region)
+
+        # Support LocalStack endpoint for local development
+        s3_config = {'region_name': self.aws_region}
+        aws_endpoint_url = os.environ.get('AWS_ENDPOINT_URL')
+        if aws_endpoint_url:
+            s3_config['endpoint_url'] = aws_endpoint_url
+
+        self.s3_client = boto3.client('s3', **s3_config)
 
         # Get bucket configuration
         self.source_bucket = os.environ['AWS_S3_BUCKET']  # Source bucket for original files
@@ -88,11 +95,27 @@ class OCRProcessor:
 
             print(f"[OCRProcessor] Processing OCR for: s3://{self.source_bucket}/{key}")
 
+            # Get S3 object metadata to extract resource_repository_id
+            resource_repository_id = None
+            try:
+                s3_object = self.s3_client.head_object(Bucket=self.source_bucket, Key=key)
+                metadata = s3_object.get('Metadata', {})
+                resource_repository_id = metadata.get('resource-repository-id')
+                if resource_repository_id:
+                    print(f"[OCRProcessor] Found resource_repository_id in S3 metadata: {resource_repository_id}")
+            except Exception as metadata_error:
+                print(f"[OCRProcessor] Warning: Failed to read S3 metadata: {metadata_error}")
+
             # Create resource session with 'processing' status
             resource_name = os.path.basename(key)
 
             print(f"[OCRProcessor] Creating resource session with name: {resource_name}")
-            resource_session = save_resource_session_processing_ocr(self.supabase, key, resource_name)
+            resource_session = save_resource_session_processing_ocr(
+                self.supabase,
+                key,
+                resource_name,
+                resource_repository_id
+            )
 
             if not resource_session:
                 return ProcessingResult(False, "Failed to create resource session in database")
@@ -173,7 +196,14 @@ class AIProcessor:
         self.aws_region = os.environ['AWS_REGION']  # Required - will raise KeyError if not set
         # AI processor now reads OCR files from the OCR bucket
         self.ocr_bucket = os.environ.get('AWS_S3_OCR_BUCKET', 'sabuho-files-ocr')  # OCR bucket
-        self.s3_client = boto3.client('s3', region_name=self.aws_region)
+
+        # Support LocalStack endpoint for local development
+        s3_config = {'region_name': self.aws_region}
+        aws_endpoint_url = os.environ.get('AWS_ENDPOINT_URL')
+        if aws_endpoint_url:
+            s3_config['endpoint_url'] = aws_endpoint_url
+
+        self.s3_client = boto3.client('s3', **s3_config)
 
         print(f"[AIProcessor] Initialized - AWS Region: {self.aws_region}, OCR Bucket: {self.ocr_bucket}")
 
@@ -201,7 +231,10 @@ class AIProcessor:
             # Get resource session
             resource_session = get_resource_session(self.supabase, session_id)
             file_path = resource_session['file_path']
+            resource_repository_id = resource_session.get('resource_repository_id')
             print(f"[AIProcessor] File path: {file_path}")
+            if resource_repository_id:
+                print(f"[AIProcessor] Resource repository ID: {resource_repository_id}")
 
             # Determine OCR file path
             if file_path.endswith('.pdf'):
@@ -232,8 +265,13 @@ class AIProcessor:
             # Save topics to resource_session
             save_topics_to_resource_session(self.supabase, session_id, topics_result)
 
-            # Create resource_session_domains
-            domain_mapping = create_resource_session_domains(self.supabase, session_id, topics_result)
+            # Create resource_session_domains with repository_id
+            domain_mapping = create_resource_session_domains(
+                self.supabase,
+                session_id,
+                topics_result,
+                resource_repository_id
+            )
             print(f"[AIProcessor] Created {len(domain_mapping)} domains")
 
             # Step 2: Generate questions for each topic
@@ -247,8 +285,8 @@ class AIProcessor:
             questions = generate_questions_for_topics(topic_texts, domain_mapping, update_progress)
             print(f"[AIProcessor] Generated {len(questions)} total questions")
 
-            # Save questions to database
-            save_questions_to_db(self.supabase, questions, session_id)
+            # Save questions to database with repository_id
+            save_questions_to_db(self.supabase, questions, session_id, resource_repository_id)
 
             # Update status to 'completed'
             update_resource_session_status(self.supabase, session_id, 'completed')

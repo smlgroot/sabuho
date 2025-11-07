@@ -10,15 +10,22 @@ import { supabase } from '../lib/supabase'
 // ============================================================================
 
 export async function createResourceSession(sessionData) {
+  const insertData = {
+    name: sessionData.name,
+    file_path: sessionData.file_path || null,
+    url: sessionData.url || null,
+    mime_type: sessionData.mime_type || null,
+    status: sessionData.status || 'pending'
+  };
+
+  // Add resource_repository_id if provided
+  if (sessionData.resource_repository_id) {
+    insertData.resource_repository_id = sessionData.resource_repository_id;
+  }
+
   const { data, error } = await supabase
     .from('resource_sessions')
-    .insert({
-      name: sessionData.name,
-      file_path: sessionData.file_path || null,
-      url: sessionData.url || null,
-      mime_type: sessionData.mime_type || null,
-      status: sessionData.status || 'pending'
-    })
+    .insert(insertData)
     .select()
     .single()
 
@@ -69,13 +76,24 @@ export async function updateResourceSession(sessionId, updates) {
  * Get presigned URL from AWS Lambda for S3 upload
  * @param {string} filename - Original filename
  * @param {string} contentType - MIME type (default: 'application/pdf')
- * @returns {Promise<object>} - { uploadUrl, key, jobId }
+ * @param {string} resourceRepositoryId - Resource repository ID (optional)
+ * @returns {Promise<object>} - { uploadUrl, key, jobId, resource_repository_id }
  */
-export async function getS3PresignedUrl(filename = 'document.pdf', contentType = 'application/pdf') {
+export async function getS3PresignedUrl(filename = 'document.pdf', contentType = 'application/pdf', resourceRepositoryId = null) {
   const lambdaUrl = import.meta.env.VITE_PRESIGN_URL_API
 
   if (!lambdaUrl) {
     throw new Error('VITE_PRESIGN_URL_API environment variable is not set')
+  }
+
+  const requestBody = {
+    filename,
+    contentType
+  };
+
+  // Include resource_repository_id if provided
+  if (resourceRepositoryId) {
+    requestBody.resource_repository_id = resourceRepositoryId;
   }
 
   const response = await fetch(lambdaUrl, {
@@ -83,10 +101,7 @@ export async function getS3PresignedUrl(filename = 'document.pdf', contentType =
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      filename,
-      contentType
-    })
+    body: JSON.stringify(requestBody)
   })
 
   if (!response.ok) {
@@ -114,18 +129,27 @@ async function calculateSHA256(file) {
 /**
  * Upload file to S3 using presigned URL
  * @param {File} file - File to upload
+ * @param {string} resourceRepositoryId - Resource repository ID (optional)
  * @returns {Promise<object>} - { key, jobId, error }
  */
-export async function uploadFileToS3(file) {
+export async function uploadFileToS3(file, resourceRepositoryId = null) {
   try {
-    // Get presigned URL from Lambda with filename and content type
-    const { uploadUrl, key, jobId } = await getS3PresignedUrl(file.name, file.type)
+    // Get presigned URL from Lambda with filename, content type, and repository ID
+    const { uploadUrl, key, jobId } = await getS3PresignedUrl(file.name, file.type, resourceRepositoryId)
 
     // Calculate SHA256 checksum (currently disabled)
     // const checksum = await calculateSHA256(file)
 
+    // Add repository ID as query param if provided
+    let finalUploadUrl = uploadUrl;
+    if (resourceRepositoryId) {
+      const url = new URL(uploadUrl);
+      url.searchParams.set('resource_repository_id', resourceRepositoryId);
+      finalUploadUrl = url.toString();
+    }
+
     // Upload to S3 using presigned URL
-    const uploadResponse = await fetch(uploadUrl, {
+    const uploadResponse = await fetch(finalUploadUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': file.type,
