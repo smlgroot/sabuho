@@ -56,6 +56,11 @@ def identify_document_topics(text: str, progress_callback) -> dict:
         # Process each chunk
         all_topics = []
         for i, chunk_info in enumerate(chunks):
+            # Report progress BEFORE starting chunk (so users see real-time feedback)
+            # Include page range in metadata so UI can display it
+            page_metadata = f"pages_{chunk_info['start_page']}_to_{chunk_info['end_page']}"
+            progress_callback('ai_chunking', i + 1, len(chunks), page_metadata)
+
             print(f"Processing chunk {i+1}/{len(chunks)} (pages {chunk_info['start_page']}-{chunk_info['end_page']})")
             chunk_result = call_openai_for_topics(client, chunk_info['text'])
 
@@ -65,9 +70,6 @@ def identify_document_topics(text: str, progress_callback) -> dict:
                 topic['end'] += chunk_info['start_page'] - 1
 
             all_topics.extend(chunk_result.get('topics', []))
-
-            # Report progress after each chunk
-            progress_callback('ai_chunking', i + 1, len(chunks))
 
         # Merge overlapping topics
         merged_topics = _merge_overlapping_topics(all_topics)

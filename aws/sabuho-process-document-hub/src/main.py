@@ -123,15 +123,15 @@ class SQSProcessor:
                     }
 
                     # Send to FIFO processing queue
-                    # Use the S3 key as MessageGroupId to ensure ordering per file
-                    message_group_id = key.replace('/', '_')  # FIFO requires valid MessageGroupId
+                    # Sanitize key for FIFO queue (replace spaces and special chars for both MessageGroupId and MessageDeduplicationId)
+                    sanitized_key = key.replace('/', '_').replace(' ', '_').replace('-', '_')
 
                     logger.info(f"Enqueueing OCR message for key: {key}")
                     self.sqs.send_message(
                         QueueUrl=self.processing_queue_url,
                         MessageBody=json.dumps(simplified_message),
-                        MessageGroupId=message_group_id,
-                        MessageDeduplicationId=f"{key}_{int(time.time() * 1000)}"  # Unique dedup ID
+                        MessageGroupId=sanitized_key,  # Use sanitized key to ensure ordering per file
+                        MessageDeduplicationId=f"{sanitized_key}_{int(time.time() * 1000)}"  # Unique dedup ID
                     )
                     logger.debug(f"Enqueued message to processing queue for key: {key}")
 
@@ -403,6 +403,11 @@ def get_execution_mode() -> str:
     return os.environ['APP_ENV_TYPE']  # Required - will raise KeyError if not set
 
 
+def print_startup_banner(mode: str):
+    """Print helpful startup information based on execution mode."""
+    print(f"\n📄 Sabuho Document Processing Hub - {mode.upper()} mode\n")
+
+
 def run_health_check_server():
     """Run a simple HTTP server for health checks (Production mode)."""
     from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -510,41 +515,41 @@ def run_local_test():
 def main():
     """Main entry point for the application."""
     mode = get_execution_mode()
+
+    # Print startup banner with helpful information
+    print_startup_banner(mode)
+
     logger.info(f"Starting application in {mode.upper()} mode")
 
-    if mode == 'production':
-        # SQS mode - long-running SQS processor for ECS deployment
-        try:
-            s3_events_queue_url = os.environ['S3_EVENTS_QUEUE_URL']
-            processing_queue_url = os.environ['PROCESSING_QUEUE_URL']
-            processing_dlq_url = os.environ['PROCESSING_DLQ_URL']
-            max_workers = int(os.environ['MAX_WORKERS'])
-        except KeyError as e:
-            logger.error(f"Required environment variable not set: {e}")
-            sys.exit(1)
+    # Both development (LocalStack) and production (real AWS) run the SQS processor
+    # The only difference is the AWS endpoint URL (set via AWS_ENDPOINT_URL env var)
+    try:
+        s3_events_queue_url = os.environ['S3_EVENTS_QUEUE_URL']
+        processing_queue_url = os.environ['PROCESSING_QUEUE_URL']
+        processing_dlq_url = os.environ['PROCESSING_DLQ_URL']
+        max_workers = int(os.environ['MAX_WORKERS'])
+    except KeyError as e:
+        logger.error(f"Required environment variable not set: {e}")
+        sys.exit(1)
 
-        logger.info(f"Starting SQS processor")
-        logger.info(f"S3 Events Queue: {s3_events_queue_url}")
-        logger.info(f"Processing Queue: {processing_queue_url}")
-        logger.info(f"Processing DLQ: {processing_dlq_url}")
+    logger.info(f"Starting SQS processor")
+    logger.info(f"S3 Events Queue: {s3_events_queue_url}")
+    logger.info(f"Processing Queue: {processing_queue_url}")
+    logger.info(f"Processing DLQ: {processing_dlq_url}")
 
-        # Start health check server in background for Production health checks
-        import threading
-        health_thread = threading.Thread(target=run_health_check_server, daemon=True)
-        health_thread.start()
+    # Start health check server in background
+    import threading
+    health_thread = threading.Thread(target=run_health_check_server, daemon=True)
+    health_thread.start()
 
-        # Start SQS processor
-        processor = SQSProcessor(
-            s3_events_queue_url=s3_events_queue_url,
-            processing_queue_url=processing_queue_url,
-            processing_dlq_url=processing_dlq_url,
-            max_workers=max_workers
-        )
-        processor.poll_messages()
-
-    else:
-        # Local test mode - run a single test and exit
-        run_local_test()
+    # Start SQS processor (works with both LocalStack and real AWS)
+    processor = SQSProcessor(
+        s3_events_queue_url=s3_events_queue_url,
+        processing_queue_url=processing_queue_url,
+        processing_dlq_url=processing_dlq_url,
+        max_workers=max_workers
+    )
+    processor.poll_messages()
 
     logger.info("Application shutdown complete")
 

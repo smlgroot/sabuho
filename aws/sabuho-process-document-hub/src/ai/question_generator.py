@@ -61,10 +61,23 @@ def generate_questions_for_topics(topic_texts: list, domain_mapping: dict, progr
     batches = create_batches(topic_texts)
     print(f"Created {len(batches)} batches for processing")
 
+    # Calculate total topics for progress tracking
+    total_topics = len(topic_texts)
+    topics_processed = 0
+
     # Process each batch
     all_questions = []
     for batch_index, batch in enumerate(batches):
-        print(f"Processing batch {batch_index + 1}/{len(batches)} with {len(batch)} topics...")
+        # Calculate topic range for this batch
+        topic_start = topics_processed + 1
+        topic_end = topics_processed + len(batch)
+
+        # Report progress BEFORE starting batch (show topic count, not batch count)
+        # Use metadata to include topic range information
+        topics_metadata = f"topics_{topic_start}_to_{topic_end}"
+        progress_callback('ai_batch', topic_start, total_topics, topics_metadata)
+
+        print(f"Processing batch {batch_index + 1}/{len(batches)} with {len(batch)} topics (topics {topic_start}-{topic_end}/{total_topics})...")
 
         # Format batch content
         batch_content = format_batch_content(batch)
@@ -84,13 +97,13 @@ def generate_questions_for_topics(topic_texts: list, domain_mapping: dict, progr
 
             print(f"Batch {batch_index + 1} generated {len(batch_questions)} questions")
 
-            # Report progress after each batch
-            progress_callback('ai_batch', batch_index + 1, len(batches))
-
         except Exception as e:
             print(f"Error processing batch {batch_index + 1}: {e}")
             # Continue with other batches even if one fails
             continue
+
+        # Update topics processed counter
+        topics_processed = topic_end
 
         # Rate limiting: wait between batches
         if batch_index < len(batches) - 1:  # Don't wait after last batch

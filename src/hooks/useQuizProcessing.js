@@ -40,9 +40,9 @@ export function useQuizProcessing() {
     // Use shorter intervals in dev mode for faster testing
     const isDev = import.meta.env.DEV;
     const pollingConfig = isDev ? {
-      intervalMs: 500,        // 0.5 seconds in dev (vs 2 seconds in prod)
-      timeoutMs: 60000,       // 1 minute in dev (vs 5 minutes in prod)
-      maxWaitForRecord: 10000 // 10 seconds in dev (vs 1 minute in prod)
+      intervalMs: 1000,        // 1 seconds in dev for more granular updates (vs 2 seconds in prod)
+      timeoutMs: 300000,       // 1 minute in dev (vs 5 minutes in prod)
+      maxWaitForRecord: 60000 // 30 seconds in dev (gives time to run AWS CLI command manually)
     } : {
       intervalMs: 2000,
       timeoutMs: 300000,
@@ -55,6 +55,7 @@ export function useQuizProcessing() {
       {
         ...pollingConfig,
         onStatusChange: (status, sessionData) => {
+          console.log(`📊 Status Update: ${status}`, { sessionId: sessionData?.id, fullData: sessionData });
           setCurrentProcessingState(status);
         }
       }
@@ -132,6 +133,21 @@ export function useQuizProcessing() {
       }
 
       setS3Key(key);
+
+      // DEV MODE: Print AWS CLI command for LocalStack testing
+      if (import.meta.env.DEV) {
+        console.log('%c📦 LocalStack Dev Mode - Manual SQS Required', 'background: #667eea; color: white; padding: 8px; font-weight: bold; font-size: 14px;');
+        console.log('%cℹ️  LocalStack free tier doesn\'t support S3 event notifications.', 'color: #4b5563; font-size: 12px;');
+        console.log('%c   You need to manually send an SQS message to trigger processing:', 'color: #4b5563; font-size: 12px;');
+        console.log('');
+        console.log('%c📋 Copy and run this in your terminal:', 'color: #059669; font-weight: bold;');
+        console.log('');
+        const awsCommand = `aws --endpoint-url=http://localhost:5566 sqs send-message --queue-url http://localhost:5566/000000000000/sabuho-s3-events --region us-east-1 --message-body '{"Records":[{"s3":{"bucket":{"name":"sabuho-files"},"object":{"key":"${key}"}}}]}'`;
+        console.log('%c' + awsCommand, 'color: #1f2937; background: #f3f4f6; padding: 8px; font-family: monospace;');
+        console.log('');
+        console.log('%c✅ File uploaded to S3:', 'color: #059669; font-weight: bold;', key);
+        console.log('');
+      }
 
       trackEvent('file_uploaded', {
         props: {

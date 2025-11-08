@@ -1,14 +1,61 @@
 import { Brain, Cog, AlertCircle, Upload, FileText, Scan, Sparkles, CheckCircle, Clock, RotateCcw } from "lucide-react";
 
 /**
- * Parse dynamic progress states like "ocr_processing_1_of_10" or "ai_identifying_topics_2_of_5"
- * Returns { stage: string, current: number, total: number } or null if not a progress state
+ * Parse dynamic progress states and extract the most meaningful progress information
+ *
+ * Examples:
+ * - "text_extract_page_27_of_91" -> { stage: "text_extract_page", current: 27, total: 91 }
+ * - "ocr_image_1_of_2_on_page_27_of_91" -> { stage: "ocr_image", current: 27, total: 91 }
+ *   (Shows PAGE progress, not image count)
+ * - "ai_chunking_3_of_6_pages_38_to_55" -> { stage: "ai_chunking", current: 3, total: 6, pageStart: 38, pageEnd: 55 }
+ * - "ai_batch_4_of_15_topics_4_to_7" -> { stage: "ai_batch", current: 4, total: 15, topicStart: 4, topicEnd: 7 }
+ *   (Shows TOPIC range being processed, not batch count)
+ * - "ai_topics_identified_1_of_1" -> { stage: "ai_topics_identified", current: 1, total: 1 }
+ *
+ * Returns { stage, current, total, pageStart?, pageEnd?, topicStart?, topicEnd? } or null if not a progress state
  */
 function parseProgressState(state) {
   if (!state) return null;
 
-  // Match pattern: stage_current_of_total
-  const match = state.match(/^(.+)_(\d+)_of_(\d+)$/);
+  // Special case: ai_chunking_X_of_Y_pages_A_to_B (topic identification with page ranges)
+  const chunkMatch = state.match(/^(ai_chunking)_(\d+)_of_(\d+)_pages_(\d+)_to_(\d+)$/);
+  if (chunkMatch) {
+    return {
+      stage: chunkMatch[1],              // "ai_chunking"
+      current: parseInt(chunkMatch[2], 10),  // chunk number
+      total: parseInt(chunkMatch[3], 10),    // total chunks
+      pageStart: parseInt(chunkMatch[4], 10), // start page
+      pageEnd: parseInt(chunkMatch[5], 10)    // end page
+    };
+  }
+
+  // Special case: ai_batch_X_of_Y_topics_A_to_B (question generation with topic ranges)
+  // Display TOPIC range (A-B of Y), not batch count
+  const batchMatch = state.match(/^(ai_batch)_(\d+)_of_(\d+)_topics_(\d+)_to_(\d+)$/);
+  if (batchMatch) {
+    return {
+      stage: batchMatch[1],              // "ai_batch"
+      current: parseInt(batchMatch[2], 10),  // starting topic number
+      total: parseInt(batchMatch[3], 10),    // total topics
+      topicStart: parseInt(batchMatch[4], 10), // start topic in this batch
+      topicEnd: parseInt(batchMatch[5], 10)    // end topic in this batch
+    };
+  }
+
+  // Special case: ocr_image_X_of_Y_on_page_Z_of_W
+  // Display PAGE progress (Z/W), not image count (X/Y) - users care about page progress
+  const pageMatch = state.match(/^(ocr_image)_\d+_of_\d+_on_page_(\d+)_of_(\d+)$/);
+  if (pageMatch) {
+    return {
+      stage: pageMatch[1],           // "ocr_image"
+      current: parseInt(pageMatch[2], 10), // Z (page number)
+      total: parseInt(pageMatch[3], 10)    // W (total pages)
+    };
+  }
+
+  // Regular pattern: stage_X_of_Y
+  // Examples: "text_extract_page_27_of_91"
+  const match = state.match(/^(.+?)_(\d+)_of_(\d+)$/);
   if (match) {
     return {
       stage: match[1],
@@ -43,6 +90,16 @@ export default function ProcessingStep({
   // Parse current processing state for progress tracking
   const progressInfo = parseProgressState(currentProcessingState);
   const baseStage = getBaseStage(currentProcessingState);
+
+  // Log processing state changes for debugging
+  if (currentProcessingState) {
+    console.log('🎨 UI ProcessingStep:', {
+      currentProcessingState,
+      baseStage,
+      progressInfo,
+      isProcessing
+    });
+  }
 
   return (
     <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
@@ -97,19 +154,19 @@ export default function ProcessingStep({
             {/* Upload Stage */}
             <div className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
               isProcessing && baseStage === "uploading" ? 'bg-purple-100 animate-pulse' :
-              isProcessing && ["processing", "ocr_page", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'bg-green-50' :
+              isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'bg-green-50' :
               isCompleted ? 'bg-green-50' :
               'bg-gray-50'
             }`}>
               <div className={`flex-shrink-0 ${
                 isProcessing && baseStage === "uploading" ? 'text-purple-600' :
-                isProcessing && ["processing", "ocr_page", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'text-green-600' :
+                isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'text-green-600' :
                 isCompleted ? 'text-green-600' :
                 'text-gray-400'
               }`}>
                 {isProcessing && baseStage === "uploading" ? (
                   <Upload className="w-4 h-4 animate-spin" style={{ animationDuration: '1.5s' }} />
-                ) : (isProcessing && ["processing", "ocr_page", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage)) || isCompleted ? (
+                ) : (isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage)) || isCompleted ? (
                   <CheckCircle className="w-4 h-4" />
                 ) : (
                   <Clock className="w-4 h-4" />
@@ -117,7 +174,7 @@ export default function ProcessingStep({
               </div>
               <span className={`text-xs font-medium ${
                 isProcessing && baseStage === "uploading" ? 'text-purple-700 font-bold' :
-                (isProcessing && ["processing", "ocr_page", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage)) || isCompleted ? 'text-green-700' :
+                (isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage)) || isCompleted ? 'text-green-700' :
                 'text-gray-500'
               }`}>
                 Uploading
@@ -135,18 +192,18 @@ export default function ProcessingStep({
 
             {/* OCR Stage - Show progress if available */}
             <div className={`flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
-              isProcessing && ["processing", "ocr_page"].includes(baseStage) ? 'bg-purple-100 animate-pulse' :
+              isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image"].includes(baseStage) ? 'bg-purple-100 animate-pulse' :
               isProcessing && ["ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'bg-green-50' :
               isCompleted ? 'bg-green-50' :
               'bg-gray-50'
             }`}>
               <div className={`flex-shrink-0 ${
-                isProcessing && ["processing", "ocr_page"].includes(baseStage) ? 'text-purple-600' :
+                isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image"].includes(baseStage) ? 'text-purple-600' :
                 isProcessing && ["ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'text-green-600' :
                 isCompleted ? 'text-green-600' :
                 'text-gray-400'
               }`}>
-                {isProcessing && ["processing", "ocr_page"].includes(baseStage) ? (
+                {isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image"].includes(baseStage) ? (
                   <Scan className="w-4 h-4 animate-spin" style={{ animationDuration: '1.5s' }} />
                 ) : (isProcessing && ["ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage)) || isCompleted ? (
                   <CheckCircle className="w-4 h-4" />
@@ -156,19 +213,19 @@ export default function ProcessingStep({
               </div>
               <div className="flex-1 flex items-center justify-between gap-2">
                 <span className={`text-xs font-medium ${
-                  isProcessing && ["processing", "ocr_page"].includes(baseStage) ? 'text-purple-700 font-bold' :
+                  isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image"].includes(baseStage) ? 'text-purple-700 font-bold' :
                   (isProcessing && ["ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage)) || isCompleted ? 'text-green-700' :
                   'text-gray-500'
                 }`}>
                   Extracting Text
                 </span>
-                {isProcessing && baseStage === "ocr_page" && progressInfo && (
+                {isProcessing && ["ocr_page", "text_extract_page", "ocr_image"].includes(baseStage) && progressInfo && (
                   <span className="text-xs text-purple-600 font-medium">
                     {progressInfo.current}/{progressInfo.total}
                   </span>
                 )}
               </div>
-              {isProcessing && ["processing", "ocr_page"].includes(baseStage) && !progressInfo && (
+              {isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image"].includes(baseStage) && !progressInfo && (
                 <div className="ml-auto">
                   <div className="flex gap-0.5">
                     <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.6s' }}></div>
@@ -204,14 +261,20 @@ export default function ProcessingStep({
                   isCompleted ? 'text-green-700' :
                   'text-gray-500'
                 }`}>
-                  {baseStage === "ai_chunking" ? "Analyzing Document" :
-                   baseStage === "ai_topics_identified" ? "Identifying Topics" :
+                  {baseStage === "ai_chunking" ? "Identifying Topics" :
+                   baseStage === "ai_topics_identified" ? "Topics Identified" :
                    baseStage === "ai_batch" ? "Generating Questions" :
                    "AI Processing"}
                 </span>
-                {isProcessing && ["ai_chunking", "ai_batch"].includes(baseStage) && progressInfo && (
+                {/* Show page range for chunking, topic range for question generation */}
+                {isProcessing && baseStage === "ai_chunking" && progressInfo && progressInfo.pageStart && progressInfo.pageEnd && (
                   <span className="text-xs text-purple-600 font-medium">
-                    {progressInfo.current}/{progressInfo.total}
+                    Pages {progressInfo.pageStart}-{progressInfo.pageEnd}
+                  </span>
+                )}
+                {isProcessing && baseStage === "ai_batch" && progressInfo && progressInfo.topicStart && progressInfo.topicEnd && (
+                  <span className="text-xs text-purple-600 font-medium">
+                    Topics {progressInfo.topicStart}-{progressInfo.topicEnd} of {progressInfo.total}
                   </span>
                 )}
               </div>

@@ -122,6 +122,10 @@ def lambda_handler(event, context):
             ExpiresIn=900  # 15 minutes
         )
 
+        # For LocalStack: Replace internal Docker hostname with localhost for browser access
+        if aws_endpoint_url and 'localstack' in aws_endpoint_url:
+            presigned_url = presigned_url.replace('localstack:4566', 'localhost:5566')
+
         # Return response
         response_body = {
             'uploadUrl': presigned_url,

@@ -165,11 +165,60 @@ app.put('/uploads/*', async (c) => {
 
 // ==================== Supabase REST API Mock Endpoints ====================
 
+// POST /rest/v1/resource_sessions - Create a new session
+app.post('/rest/v1/resource_sessions', async (c) => {
+  const url = new URL(c.req.url);
+  const selectParam = url.searchParams.get('select') || '*';
+  const body = await c.req.json();
+
+  // Create session with provided data or generate defaults
+  const session = {
+    id: body.id || uuidv4(),
+    file_path: body.file_path,
+    status: body.status || 'processing',
+    resource_repository_id: body.resource_repository_id || null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...body
+  };
+
+  // Store in session store
+  sessionStore.addSession(session, [], []);
+
+  console.log(`✅ Session created via POST: ${session.id} - file_path: ${session.file_path}`);
+
+  // Return as array (Supabase returns arrays for inserts)
+  return c.json([session]);
+});
+
 // GET /rest/v1/resource_sessions - Fetch sessions with query params
 app.get('/rest/v1/resource_sessions', (c) => {
   const url = new URL(c.req.url);
   const filePathParam = url.searchParams.get('file_path');
+  const idParam = url.searchParams.get('id');
   const selectParam = url.searchParams.get('select') || '*';
+
+  // Parse id query: id=eq.uuid
+  let sessionId: string | null = null;
+  if (idParam) {
+    const match = idParam.match(/^eq\.(.+)$/);
+    if (match) {
+      sessionId = match[1];
+    }
+  }
+
+  // Query by ID takes precedence
+  if (sessionId) {
+    const sessionData = sessionStore.getSessionById(sessionId);
+
+    if (sessionData) {
+      console.log(`🔍 Session found for id: ${sessionId} - Status: ${sessionData.session.status}`);
+      return c.json([sessionData.session]);
+    } else {
+      console.log(`❌ No session found for id: ${sessionId}`);
+      return c.json([]);
+    }
+  }
 
   // Parse file_path query: file_path=eq.uploads/...
   let filePath: string | null = null;
@@ -218,11 +267,41 @@ app.patch('/rest/v1/resource_sessions', async (c) => {
       sessionData.session.updated_at = new Date().toISOString();
 
       console.log(`✏️ Session updated: ${sessionId}`);
-      return c.json(sessionData.session);
+      return c.json([sessionData.session]);
     }
   }
 
   return c.json({ error: 'Session not found' }, 404);
+});
+
+// POST /rest/v1/resource_session_domains - Create domains for a session
+app.post('/rest/v1/resource_session_domains', async (c) => {
+  const body = await c.req.json();
+
+  // Body can be a single object or an array
+  const domains = Array.isArray(body) ? body : [body];
+
+  // For each domain, ensure it has required fields
+  const createdDomains = domains.map(domain => ({
+    id: domain.id || uuidv4(),
+    resource_session_id: domain.resource_session_id,
+    name: domain.name,
+    created_at: new Date().toISOString(),
+    ...domain
+  }));
+
+  // Add domains to the session in the store
+  if (createdDomains.length > 0) {
+    const sessionId = createdDomains[0].resource_session_id;
+    const sessionData = sessionStore.getSessionById(sessionId);
+    if (sessionData) {
+      sessionData.domains.push(...createdDomains);
+      console.log(`📚 Added ${createdDomains.length} domains to session ${sessionId}`);
+    }
+  }
+
+  // Return as array
+  return c.json(createdDomains);
 });
 
 // GET /rest/v1/resource_session_domains - Get domains for a session
@@ -246,6 +325,42 @@ app.get('/rest/v1/resource_session_domains', (c) => {
   }
 
   return c.json([]);
+});
+
+// POST /rest/v1/resource_session_questions - Create questions for a session
+app.post('/rest/v1/resource_session_questions', async (c) => {
+  const body = await c.req.json();
+
+  // Body can be a single object or an array
+  const questions = Array.isArray(body) ? body : [body];
+
+  // For each question, ensure it has required fields
+  const createdQuestions = questions.map(question => ({
+    id: question.id || uuidv4(),
+    resource_session_id: question.resource_session_id,
+    resource_session_domain_id: question.resource_session_domain_id || null,
+    question: question.question,
+    correct_answer: question.correct_answer,
+    incorrect_answers: question.incorrect_answers || [],
+    explanation: question.explanation || null,
+    difficulty: question.difficulty || 'medium',
+    is_sample: question.is_sample !== undefined ? question.is_sample : false,
+    created_at: new Date().toISOString(),
+    ...question
+  }));
+
+  // Add questions to the session in the store
+  if (createdQuestions.length > 0) {
+    const sessionId = createdQuestions[0].resource_session_id;
+    const sessionData = sessionStore.getSessionById(sessionId);
+    if (sessionData) {
+      sessionData.questions.push(...createdQuestions);
+      console.log(`❓ Added ${createdQuestions.length} questions to session ${sessionId}`);
+    }
+  }
+
+  // Return as array
+  return c.json(createdQuestions);
 });
 
 // GET /rest/v1/resource_session_questions - Get questions for a session

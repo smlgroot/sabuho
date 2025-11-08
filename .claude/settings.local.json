@@ -37,7 +37,16 @@
       "Bash(rm:*)",
       "Bash(git log:*)",
       "Bash(find:*)",
-      "Bash(perl -i -pe:*)"
+      "Bash(perl -i -pe:*)",
+      "Bash(docker-compose restart:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose exec processor grep:*)",
+      "Bash(aws --endpoint-url=http://localhost:5566 sqs get-queue-attributes:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(aws:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(docker ps:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []

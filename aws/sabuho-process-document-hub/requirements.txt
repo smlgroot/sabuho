@@ -19,6 +19,7 @@ tiktoken==0.8.0
 
 # Database
 supabase==2.22.2
+supabase-auth==2.11.1
 postgrest==2.22.2
 
 # Testing

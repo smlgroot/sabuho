@@ -253,8 +253,12 @@ class AIProcessor:
                 raise Exception(f"Failed to download OCR text from OCR bucket: {s3_error}")
 
             # Define progress callback to update status in database
-            def update_progress(stage: str, current: int, total: int):
-                status = f"{stage}_{current}_of_{total}"
+            # Supports optional metadata (e.g., "pages_38_to_55" for chunking)
+            def update_progress(stage: str, current: int, total: int, metadata: str = None):
+                if metadata:
+                    status = f"{stage}_{current}_of_{total}_{metadata}"
+                else:
+                    status = f"{stage}_{current}_of_{total}"
                 update_resource_session_status(self.supabase, session_id, status)
 
             # Step 1: Identify topics

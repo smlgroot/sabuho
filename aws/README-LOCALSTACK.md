@@ -79,10 +79,10 @@ Check service health:
 
 ```bash
 # Check LocalStack
-curl http://localhost:4566/_localstack/health
+curl http://localhost:5566/_localstack/health
 
 # Check Presign service
-curl http://localhost:3002/health
+curl http://localhost:4002/health
 
 # Check Docker containers
 docker-compose ps
@@ -110,15 +110,15 @@ Edit `.env.local` in the project root:
 
 ```bash
 # Comment out mock-server config
-# VITE_PRESIGN_URL_API=http://localhost:3001/presign
+# VITE_PRESIGN_URL_API=http://localhost:4001/presign
 
 # Uncomment LocalStack config
-VITE_PRESIGN_URL_API=http://localhost:3002/presign
+VITE_PRESIGN_URL_API=http://localhost:4002/presign
 ```
 
 Keep the Supabase URL pointing to mock-server:
 ```bash
-VITE_SUPABASE_URL=http://localhost:3001
+VITE_SUPABASE_URL=http://localhost:4001
 ```
 
 ## LocalStack Resources
@@ -150,27 +150,63 @@ docker-compose up
 yarn dev
 ```
 
+When services start, you'll see helpful banners with instructions:
+
+```
+🚀 Presign URL Service Started
+Mode: 🔧 Development (LocalStack)
+📝 DEV MODE - LocalStack Integration
+ℹ️  LocalStack free tier doesn't support S3 event notifications.
+   After uploading a file, you need to manually trigger processing.
+```
+
 ### 2. Upload a document
 
 1. Open http://localhost:5173
 2. Click "Add Document"
 3. Upload a PDF file
 4. Click "Start Processing"
+5. **Copy the S3 key** from the browser's DevTools Network tab (presign response)
 
-### 3. Monitor the process
+### 3. Trigger Processing (Required for LocalStack)
+
+⚠️ **Important**: LocalStack free tier doesn't automatically send S3 events to SQS. You must manually trigger processing after uploading.
+
+After uploading a file, the browser console will display an AWS CLI command. Simply copy and run it in your terminal.
+
+#### Example:
+
+```bash
+aws --endpoint-url=http://localhost:5566 sqs send-message \
+  --queue-url http://localhost:5566/000000000000/sabuho-s3-events \
+  --region us-east-1 \
+  --message-body '{"Records":[{"s3":{"bucket":{"name":"sabuho-files"},"object":{"key":"uploads/2025-11-07/abc-123/document.pdf"}}}]}'
+```
+
+The frontend will automatically generate this command with the correct S3 key after each upload. Just copy-paste from the browser console!
+
+### 4. Monitor the process
 
 Watch the logs to see the flow:
 
 ```bash
-# LocalStack logs (S3 uploads)
-docker-compose logs -f localstack
+# All logs
+docker-compose logs -f
 
-# Presign service logs
-docker-compose logs -f presign-url
-
-# Processor logs (OCR + AI)
-docker-compose logs -f processor
+# Specific services
+docker-compose logs -f localstack    # S3 uploads
+docker-compose logs -f presign-url   # Presign and trigger
+docker-compose logs -f processor     # OCR + AI processing
 ```
+
+You'll see processing progress through these stages:
+1. `processing` - Initial state
+2. `ocr_page_1_of_10` ... `ocr_page_10_of_10` - OCR progress
+3. `ocr_completed` - OCR finished
+4. `ai_processing` - AI analysis starting
+5. `ai_topics_identified` - Topics extracted
+6. `ai_batch_1_of_5` ... `ai_batch_5_of_5` - Question generation
+7. `completed` - All done!
 
 ## Manual Testing with AWS CLI
 
@@ -178,7 +214,7 @@ You can manually interact with LocalStack using the AWS CLI:
 
 ```bash
 # Set endpoint
-export AWS_ENDPOINT_URL=http://localhost:4566
+export AWS_ENDPOINT_URL=http://localhost:5566
 export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
 export AWS_DEFAULT_REGION=us-east-1
@@ -195,10 +231,10 @@ aws s3 ls s3://sabuho-files/uploads/ --endpoint-url=$AWS_ENDPOINT_URL
 # List SQS queues
 aws sqs list-queues --endpoint-url=$AWS_ENDPOINT_URL
 
-# Send a message to queue
+# Send a message to queue (simulates S3 event)
 aws sqs send-message \
-  --queue-url http://localhost:4566/000000000000/sabuho-s3-events \
-  --message-body '{"key": "uploads/test.pdf"}' \
+  --queue-url http://localhost:5566/000000000000/sabuho-s3-events \
+  --message-body '{"Records":[{"s3":{"bucket":{"name":"sabuho-files"},"object":{"key":"uploads/test.pdf"}}}]}' \
   --endpoint-url=$AWS_ENDPOINT_URL
 ```
 
@@ -216,6 +252,32 @@ Then use `awslocal` instead of `aws` (endpoint is pre-configured):
 awslocal s3 ls
 awslocal sqs list-queues
 ```
+
+## Development Tools
+
+This setup includes helpful tools for testing in LocalStack:
+
+### 1. Browser Console Helper
+
+After uploading a file in dev mode, the frontend automatically prints an AWS CLI command to your browser console. The command is customized with:
+- The exact S3 key of your uploaded file
+- Correct queue URL
+- Proper message format
+
+Just copy-paste the command into your terminal to trigger processing!
+
+### 2. Startup Banners
+
+Both services print helpful information when starting:
+
+**Presign Service** shows:
+- Dev mode status
+- LocalStack endpoint configuration
+
+**Processor Service** shows:
+- Execution mode
+- Queue URLs being polled
+- AWS endpoint configuration
 
 ## Troubleshooting
 
@@ -246,16 +308,26 @@ docker-compose logs presign-url
 
 Verify LocalStack S3 is working:
 ```bash
-curl http://localhost:4566/_localstack/health | jq .services.s3
+curl http://localhost:5566/_localstack/health | jq .services.s3
 ```
 
 ### Processing doesn't start
 
-The processor service requires manual triggering in the free tier of LocalStack. To process a document:
+LocalStack free tier doesn't automatically send S3 events to SQS. After uploading a file:
 
-1. Upload via frontend (creates session in mock-server)
-2. File gets uploaded to LocalStack S3
-3. Manually trigger processing (see manual testing section)
+1. File gets uploaded to LocalStack S3 ✅
+2. Browser console shows AWS CLI command
+3. Copy and run the command in your terminal to send the SQS message
+4. Processor picks up the message and starts processing
+
+Check the logs to verify:
+```bash
+docker-compose logs -f processor
+```
+
+You should see messages like:
+- "Processing S3 event"
+- "Starting OCR processing"
 
 ### Clean slate
 

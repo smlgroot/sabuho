@@ -2,8 +2,10 @@
 Flask server wrapper for presign Lambda function.
 Allows running the Lambda function as a regular HTTP service for local development.
 """
+import os
+import json
 from flask import Flask, request, jsonify
-from lambda_function import lambda_handler
+from src.lambda_function import lambda_handler
 
 app = Flask(__name__)
 
@@ -40,7 +42,6 @@ def presign():
 
     # Parse JSON body from Lambda response if it's a string
     if isinstance(lambda_response.get('body'), str):
-        import json
         try:
             response = jsonify(json.loads(lambda_response['body']))
             response.status_code = lambda_response.get('statusCode', 200)
@@ -58,4 +59,5 @@ def health():
 
 
 if __name__ == '__main__':
+    print("\n🚀 Presign URL Service - Running on port 8080\n")
     app.run(host='0.0.0.0', port=8080, debug=True)

@@ -249,6 +249,51 @@ export async function fetchResourceSessionQuestions(sessionId) {
 // ============================================================================
 
 /**
+ * Get the highest progress status from status_history for display
+ * Handles out-of-order updates by finding the max page number per stage
+ * @param {array} statusHistory - Array of {status, timestamp} objects
+ * @returns {string} - The most advanced status to display
+ */
+function getDisplayStatus(statusHistory) {
+  if (!statusHistory || statusHistory.length === 0) {
+    return null;
+  }
+
+  // Track highest page number seen for each stage
+  const stageProgress = {};
+
+  statusHistory.forEach(entry => {
+    const status = entry.status;
+    const match = status.match(/^(.+?)_(\d+)_of_(\d+)$/);
+
+    if (match) {
+      const stage = match[1];
+      const current = parseInt(match[2], 10);
+      const total = parseInt(match[3], 10);
+
+      if (!stageProgress[stage] || current > stageProgress[stage].current) {
+        stageProgress[stage] = { stage, current, total };
+      }
+    }
+  });
+
+  // Get the latest entry to determine current stage
+  const latestEntry = statusHistory[statusHistory.length - 1];
+  const latestStatus = latestEntry.status;
+
+  // If latest status has progress, return the highest for that stage
+  const match = latestStatus.match(/^(.+?)_(\d+)_of_(\d+)$/);
+  if (match) {
+    const stage = match[1];
+    const progress = stageProgress[stage];
+    return `${progress.stage}_${progress.current}_of_${progress.total}`;
+  }
+
+  // Otherwise return the latest status as-is
+  return latestStatus;
+}
+
+/**
  * Poll resource session status until completion or timeout
  * Can poll by either session ID or S3 file path
  * @param {object} identifier - Either { sessionId: "uuid" } or { filePath: "uploads/..." }
@@ -268,7 +313,7 @@ export async function pollResourceSessionStatus(identifier, options = {}) {
   } = options
 
   const startTime = Date.now()
-  let lastStatus = null
+  let lastDisplayStatus = null
   let recordFound = false
 
   return new Promise((resolve, reject) => {
@@ -319,10 +364,15 @@ export async function pollResourceSessionStatus(identifier, options = {}) {
           recordFound = true
         }
 
-        // Call status change callback if status changed
-        if (session && session.status !== lastStatus && onStatusChange) {
-          onStatusChange(session.status, session)
-          lastStatus = session.status
+        // Get display status from status_history (handles out-of-order updates)
+        const displayStatus = session.status_history && session.status_history.length > 0
+          ? getDisplayStatus(session.status_history)
+          : session.status;
+
+        // Call status change callback if display status changed
+        if (session && displayStatus !== lastDisplayStatus && onStatusChange) {
+          onStatusChange(displayStatus, session)
+          lastDisplayStatus = displayStatus
         }
 
         // Check if processing is complete

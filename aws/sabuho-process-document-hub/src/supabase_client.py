@@ -51,6 +51,7 @@ def _create_resource_session(supabase: Client, file_path: str, name: str, status
     """
     Create a new resource session record in Supabase.
     Always inserts a new record - never updates.
+    Initializes status_history with the initial status.
 
     Args:
         supabase: Supabase client
@@ -63,11 +64,18 @@ def _create_resource_session(supabase: Client, file_path: str, name: str, status
         Created resource session dict or None on error
     """
     try:
+        # Initialize status_history with first entry
+        initial_status_history = [{
+            'status': status,
+            'timestamp': datetime.utcnow().isoformat()
+        }]
+
         data = {
             'file_path': file_path,
             'name': name,
             'mime_type': 'application/pdf',
-            'status': status
+            'status': status,
+            'status_history': initial_status_history
         }
 
         # Add resource_repository_id if provided
@@ -87,6 +95,7 @@ def _create_resource_session(supabase: Client, file_path: str, name: str, status
 def _update_resource_session(supabase: Client, session_id: str, status: str, unparsable: str = None) -> dict:
     """
     Update an existing resource session record in Supabase.
+    Appends status updates to status_history array for proper ordering.
 
     Args:
         supabase: Supabase client
@@ -98,8 +107,25 @@ def _update_resource_session(supabase: Client, session_id: str, status: str, unp
         Updated resource session dict or None on error
     """
     try:
+        # First, get current session to read existing status_history
+        session_result = supabase.table('resource_sessions').select('status_history').eq('id', session_id).execute()
+
+        # Get existing status_history or initialize empty array
+        status_history = []
+        if session_result.data and len(session_result.data) > 0:
+            status_history = session_result.data[0].get('status_history', []) or []
+
+        # Append new status entry with timestamp
+        status_entry = {
+            'status': status,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+        status_history.append(status_entry)
+
+        # Update with new status and appended history
         data = {
             'status': status,
+            'status_history': status_history,
             'updated_at': datetime.utcnow().isoformat()
         }
 
@@ -107,7 +133,7 @@ def _update_resource_session(supabase: Client, session_id: str, status: str, unp
             data['unparsable'] = unparsable
 
         result = supabase.table('resource_sessions').update(data).eq('id', session_id).execute()
-        print(f"[_update_resource_session] Successfully updated session {session_id} with status: {status}")
+        print(f"[_update_resource_session] Successfully updated session {session_id} with status: {status} (history entries: {len(status_history)})")
         return result.data[0] if result.data else None
     except Exception as e:
         print(f"[_update_resource_session] Error updating session: {e}")
@@ -178,6 +204,7 @@ def get_resource_session(supabase: Client, session_id: str) -> dict:
 def update_resource_session_status(supabase: Client, session_id: str, status: str):
     """
     Update the status of a resource session.
+    Uses _update_resource_session to ensure status_history is maintained.
 
     Args:
         supabase: Supabase client
@@ -185,11 +212,7 @@ def update_resource_session_status(supabase: Client, session_id: str, status: st
         status: New status value (e.g., 'ai_processing', 'completed', 'failed')
     """
     print(f"Updating resource_session {session_id} status to: {status}")
-
-    supabase.table('resource_sessions').update({
-        'status': status,
-        'updated_at': datetime.utcnow().isoformat()
-    }).eq('id', session_id).execute()
+    _update_resource_session(supabase, session_id, status)
 
 
 def save_topics_to_resource_session(supabase: Client, session_id: str, topics_map: dict):
@@ -351,6 +374,7 @@ def save_resource_session_error(supabase: Client, session_id: str, error_message
     """
     Update resource session with error/failed status and message.
     Works for both OCR and AI processing errors.
+    Uses _update_resource_session to ensure status_history is maintained.
 
     Args:
         supabase: Supabase client
@@ -358,9 +382,4 @@ def save_resource_session_error(supabase: Client, session_id: str, error_message
         error_message: Error message to save
     """
     print(f"Saving error for resource_session {session_id}: {error_message[:100]}...")
-
-    supabase.table('resource_sessions').update({
-        'status': 'failed',
-        'unparsable': error_message,  # Store error in unparsable field
-        'updated_at': datetime.utcnow().isoformat()
-    }).eq('id', session_id).execute()
+    _update_resource_session(supabase, session_id, 'failed', error_message)
