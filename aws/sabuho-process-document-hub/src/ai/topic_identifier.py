@@ -1,8 +1,8 @@
 """
 Topic identification module - identifies document topics and their page ranges.
-This module uses heuristic-based identification by analyzing header markers.
+This module uses ML-based semantic clustering for topic identification.
 """
-from ai.heuristic_topic_identifier import identify_topics_from_headers
+from ai.semantic_topic_identifier import identify_topics_semantic
 
 
 def identify_document_topics(text: str, progress_callback) -> dict:
@@ -12,12 +12,15 @@ def identify_document_topics(text: str, progress_callback) -> dict:
     This is the main entry point for topic identification.
     It can be tested independently without the full Lambda context.
 
-    Uses fast heuristic-based identification that analyzes header markers
-    from the OCR output to identify topics.
+    Uses ML-based semantic clustering that:
+    - Segments text intelligently
+    - Generates semantic embeddings (sentence-transformers)
+    - Clusters similar content (KMeans)
+    - Labels topics with TF-IDF
 
     Args:
         text: Full document text with page markers (e.g., "--- Page 1 ---")
-              and header markers (e.g., "### [HEADER, SIZE=14pt] Title")
+              and optional header markers (e.g., "### [HEADER, SIZE=14pt] Title")
         progress_callback: Callback function(stage, current, total, metadata) to report progress
 
     Returns:
@@ -29,10 +32,10 @@ def identify_document_topics(text: str, progress_callback) -> dict:
         >>> print(result)
         {"topics": [{"name": "Introduction", "start": 1, "end": 1}, ...]}
     """
-    print("Starting heuristic-based topic identification...")
+    print("Starting ML-based semantic topic identification...")
 
-    # Use heuristic approach (fast, free, reliable)
-    topics_map = identify_topics_from_headers(text)
+    # Use semantic clustering approach (offline, robust, semantic understanding)
+    topics_map = identify_topics_semantic(text)
 
     print(f"Identified {len(topics_map.get('topics', []))} topics")
 
