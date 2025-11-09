@@ -201,6 +201,16 @@ CREATE TABLE IF NOT EXISTS "public"."quizzes" (
 ALTER TABLE "public"."quizzes" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."resource_repositories" (
+    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."resource_repositories" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."resource_session_domains" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "resource_session_id" "uuid" NOT NULL,
@@ -208,7 +218,8 @@ CREATE TABLE IF NOT EXISTS "public"."resource_session_domains" (
     "page_range_start" smallint NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "page_range_end" smallint NOT NULL
+    "page_range_end" smallint NOT NULL,
+    "resource_repository_id" "uuid"
 );
 
 
@@ -224,7 +235,9 @@ CREATE TABLE IF NOT EXISTS "public"."resource_session_questions" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "resource_session_id" "uuid",
-    "options" "jsonb"
+    "options" "jsonb",
+    "is_sample" boolean DEFAULT true,
+    "resource_repository_id" "uuid"
 );
 
 
@@ -241,7 +254,10 @@ CREATE TABLE IF NOT EXISTS "public"."resource_sessions" (
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "status" "text",
     "topic_page_range" "jsonb",
-    "unparsable" "text"
+    "unparsable" "text",
+    "is_migrated" boolean DEFAULT false,
+    "resource_repository_id" "uuid",
+    "status_history" "jsonb" DEFAULT '[]'::"jsonb"
 );
 
 
@@ -353,6 +369,11 @@ ALTER TABLE ONLY "public"."domain_codes"
 
 ALTER TABLE ONLY "public"."quizzes"
     ADD CONSTRAINT "quizzes_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."resource_repositories"
+    ADD CONSTRAINT "resource_repositories_pkey" PRIMARY KEY ("id");
 
 
 
@@ -469,7 +490,17 @@ ALTER TABLE ONLY "public"."quizzes"
 
 
 ALTER TABLE ONLY "public"."resource_session_domains"
+    ADD CONSTRAINT "resource_session_domains_resource_repositories_id_fkey" FOREIGN KEY ("resource_repository_id") REFERENCES "public"."resource_repositories"("id");
+
+
+
+ALTER TABLE ONLY "public"."resource_session_domains"
     ADD CONSTRAINT "resource_session_domains_resource_session_id_fkey" FOREIGN KEY ("resource_session_id") REFERENCES "public"."resource_sessions"("id");
+
+
+
+ALTER TABLE ONLY "public"."resource_session_questions"
+    ADD CONSTRAINT "resource_session_questions_resource_repositories_id_fkey" FOREIGN KEY ("resource_repository_id") REFERENCES "public"."resource_repositories"("id");
 
 
 
@@ -480,6 +511,11 @@ ALTER TABLE ONLY "public"."resource_session_questions"
 
 ALTER TABLE ONLY "public"."resource_session_questions"
     ADD CONSTRAINT "resource_session_questions_resource_session_id_fkey" FOREIGN KEY ("resource_session_id") REFERENCES "public"."resource_sessions"("id");
+
+
+
+ALTER TABLE ONLY "public"."resource_sessions"
+    ADD CONSTRAINT "resource_sessions_resource_repositories_id_fkey" FOREIGN KEY ("resource_repository_id") REFERENCES "public"."resource_repositories"("id");
 
 
 
@@ -856,6 +892,12 @@ GRANT ALL ON TABLE "public"."quiz_attempts" TO "service_role";
 GRANT ALL ON TABLE "public"."quizzes" TO "anon";
 GRANT ALL ON TABLE "public"."quizzes" TO "authenticated";
 GRANT ALL ON TABLE "public"."quizzes" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."resource_repositories" TO "anon";
+GRANT ALL ON TABLE "public"."resource_repositories" TO "authenticated";
+GRANT ALL ON TABLE "public"."resource_repositories" TO "service_role";
 
 
 
