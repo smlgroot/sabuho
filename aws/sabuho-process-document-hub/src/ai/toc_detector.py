@@ -119,20 +119,28 @@ def _score_toc_likelihood(section: str) -> float:
 
     Returns score between 0.0 (definitely not TOC) and 1.0 (very likely TOC).
 
-    Features:
+    Features (with adaptive weights):
     - Number density: TOCs have many page numbers
     - Sequential numbers: Page refs should increase
     - Line length consistency: TOC entries are similar length
     - Uppercase density: TOC entries often all-caps
     - Pattern repetition: Similar structure repeated
+    - TOC keyword presence: Boost if contains ÍNDICE/CONTENIDO
+    - Header markers: Use font size/position metadata
     """
     lines = [l.strip() for l in section.split('\n') if l.strip()]
     if len(lines) < 5:  # Too short to be a TOC
         return 0.0
 
-    # Clean lines (remove header markers)
+    # Check for TOC keywords and header markers
+    has_toc_keyword = _has_toc_keyword(section)
+    has_large_header = _has_large_header_marker(section)
+
+    # Clean lines (remove header markers but keep for analysis)
     clean_lines = []
+    raw_lines = []
     for line in lines:
+        raw_lines.append(line)
         clean = re.sub(r'### \[HEADER[^\]]*\]\s*', '', line)
         clean = re.sub(r'\[BOLD\]', '', clean).strip()
         if clean:
@@ -141,14 +149,10 @@ def _score_toc_likelihood(section: str) -> float:
     if len(clean_lines) < 5:
         return 0.0
 
+    # Adaptive weights based on document characteristics
+    weights = _calculate_adaptive_weights(section, has_toc_keyword, has_large_header)
+
     score = 0.0
-    weights = {
-        'number_density': 0.3,
-        'sequential_numbers': 0.25,
-        'line_consistency': 0.15,
-        'uppercase_density': 0.15,
-        'pattern_repetition': 0.15
-    }
 
     # Feature 1: Number density (what % of lines have numbers)
     lines_with_numbers = sum(1 for line in clean_lines if re.search(r'\d+', line))
@@ -202,7 +206,93 @@ def _score_toc_likelihood(section: str) -> float:
     pattern_score = pattern_matches / len(clean_lines)
     score += pattern_score * weights['pattern_repetition']
 
+    # Bonus for strong TOC indicators
+    if has_toc_keyword:
+        score += 0.15  # Big boost if section starts with ÍNDICE/CONTENIDO
+        print(f"[toc_detector]   + TOC keyword bonus: +0.15")
+
+    if has_large_header:
+        score += 0.05  # Small boost for prominent header
+        print(f"[toc_detector]   + Large header bonus: +0.05")
+
     return min(score, 1.0)  # Cap at 1.0
+
+
+def _has_toc_keyword(section: str) -> bool:
+    """Check if section contains TOC keywords like ÍNDICE or CONTENIDO."""
+    toc_keywords = [
+        'ÍNDICE', 'INDICE', 'TABLA DE CONTENIDO', 'CONTENIDO', 'CONTENTS',
+        'TABLE OF CONTENTS', 'INDEX'
+    ]
+
+    first_lines = section.split('\n')[:5]  # Check first 5 lines
+    for line in first_lines:
+        clean = re.sub(r'### \[HEADER[^\]]*\]\s*', '', line)
+        clean = re.sub(r'\[BOLD\]', '', clean).strip().upper()
+
+        for keyword in toc_keywords:
+            if keyword in clean:
+                return True
+
+    return False
+
+
+def _has_large_header_marker(section: str) -> bool:
+    """Check if section starts with a large header (18pt+)."""
+    first_lines = section.split('\n')[:3]
+
+    for line in first_lines:
+        # Look for header markers with large font size
+        match = re.search(r'SIZE=(\d+\.?\d*)pt', line)
+        if match:
+            size = float(match.group(1))
+            if size >= 18.0:
+                return True
+
+    return False
+
+
+def _calculate_adaptive_weights(section: str, has_toc_keyword: bool,
+                                has_large_header: bool) -> Dict[str, float]:
+    """
+    Calculate adaptive weights based on document characteristics.
+
+    Different documents have different TOC patterns:
+    - Some use all-caps (high uppercase weight)
+    - Some use consistent formatting (high consistency weight)
+    - Some have keywords (boost number density importance)
+
+    Args:
+        section: The section text being analyzed
+        has_toc_keyword: Whether ÍNDICE/CONTENIDO found
+        has_large_header: Whether large header marker found
+
+    Returns:
+        Dict of feature weights that sum to ~1.0
+    """
+    # Base weights (work for most documents)
+    weights = {
+        'number_density': 0.30,
+        'sequential_numbers': 0.25,
+        'line_consistency': 0.15,
+        'uppercase_density': 0.15,
+        'pattern_repetition': 0.15
+    }
+
+    # If TOC keyword found, prioritize number density and pattern
+    if has_toc_keyword:
+        weights['number_density'] = 0.35  # More important
+        weights['sequential_numbers'] = 0.30
+        weights['uppercase_density'] = 0.10  # Less important (format varies)
+        weights['line_consistency'] = 0.10
+        weights['pattern_repetition'] = 0.15
+
+    # If large header, slightly boost pattern recognition
+    if has_large_header:
+        weights['pattern_repetition'] = 0.20
+        weights['line_consistency'] = 0.10
+
+    return weights
 
 
 def _extract_topic_page_pairs(section: str) -> List[Dict]:
