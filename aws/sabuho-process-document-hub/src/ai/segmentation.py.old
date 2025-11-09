@@ -16,7 +16,7 @@ def segment_text(text: str, min_segment_length: int = 100) -> List[Dict[str, any
 
     Args:
         text: Full OCR text with page markers and possible header markers
-        min_segment_length: Minimum character length for a segment (shorter ones get merged)
+        min_segment_length: Minimum character length for a segment (default: 100, shorter ones get merged)
 
     Returns:
         List of segment dicts: [{"text": "...", "page": 1, "type": "header|content"}, ...]

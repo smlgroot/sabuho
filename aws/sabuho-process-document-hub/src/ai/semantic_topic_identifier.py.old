@@ -6,7 +6,7 @@ This module identifies topics from OCR text using:
 2. BERTopic pipeline:
    - Semantic embeddings (sentence-transformers multilingual model)
    - UMAP dimensionality reduction
-   - HDBSCAN clustering (automatically finds optimal number of clusters)
+   - KMeans clustering (predictable number of clusters)
    - c-TF-IDF topic labeling
 
 This approach:
@@ -16,13 +16,15 @@ This approach:
 - Runs offline (no API calls)
 - Fast and cost-free
 - Robust to poor formatting
-- Automatically determines number of topics
+- Automatically determines optimal number of topics based on document length
 """
 from typing import Dict, List
 import re
 from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.cluster import KMeans
+from umap import UMAP
 from .segmentation import segment_text
 
 # Spanish stop words (common articles, prepositions, pronouns, verbs)
@@ -61,7 +63,7 @@ _embedding_model = None
 def identify_topics_semantic(
     text: str,
     n_clusters: int = None,
-    max_clusters: int = 10,
+    max_clusters: int = 20,
     min_segment_length: int = 100
 ) -> Dict:
     """
@@ -70,8 +72,8 @@ def identify_topics_semantic(
     Args:
         text: Full OCR text with page markers
               Format: "--- Page X ---" with optional "### [HEADER, SIZE=Xpt]" markers
-        n_clusters: Ignored (BERTopic auto-determines optimal number)
-        max_clusters: Maximum number of clusters (default: 10)
+        n_clusters: Ignored (auto-calculated based on document length)
+        max_clusters: Maximum number of clusters (default: 20)
         min_segment_length: Minimum character length for segments (default: 100)
 
     Returns:
@@ -106,11 +108,13 @@ def identify_topics_semantic(
 
     # Step 4: Fit BERTopic and get topic assignments
     try:
-        topics_per_segment, probabilities = topic_model.fit_transform(segment_texts)
+        topics_per_segment, _ = topic_model.fit_transform(segment_texts)
 
         # Get topic info
         topic_info = topic_model.get_topic_info()
-        print(f"[semantic_topic_identifier] BERTopic found {len(topic_info) - 1} topics (excluding outliers)")
+        # With KMeans, all topics are real (no outliers with topic -1)
+        n_topics = len([t for t in topic_info['Topic'] if t != -1])
+        print(f"[semantic_topic_identifier] BERTopic with KMeans found {n_topics} topics")
 
     except Exception as e:
         print(f"[semantic_topic_identifier] BERTopic failed: {e}")
@@ -160,25 +164,40 @@ def _get_bertopic_model(n_segments: int, max_clusters: int):
         token_pattern=r'(?u)\b[a-záéíóúñüA-ZÁÉÍÓÚÑÜ]{4,}\b'  # Min 4 chars, Spanish chars
     )
 
-    # Determine min_topic_size based on document length
-    # Smaller docs need smaller min sizes
+    # Determine optimal number of topics based on document length
+    # Aim for roughly 1 topic per 10-15 segments
     if n_segments < 10:
-        min_topic_size = 2
+        n_topics = 2
     elif n_segments < 30:
-        min_topic_size = 3
+        n_topics = max(3, n_segments // 5)  # 1 topic per 5 segments
     else:
-        min_topic_size = max(3, n_segments // 15)  # Roughly 15 segments per topic
+        n_topics = min(max_clusters, max(5, n_segments // 10))  # 1 topic per 10 segments
 
-    print(f"[bertopic] Configuring BERTopic with min_topic_size={min_topic_size}")
+    print(f"[bertopic] Configuring BERTopic with KMeans clustering, n_topics={n_topics} (n_segments={n_segments})")
 
-    # Create BERTopic model
+    # Use UMAP for dimensionality reduction (required for KMeans)
+    # Reduce to fewer dimensions for better clustering
+    n_components = min(5, n_segments - 1) if n_segments > 5 else n_segments - 1
+    umap_model = UMAP(
+        n_neighbors=min(15, n_segments - 1),
+        n_components=n_components,
+        min_dist=0.0,
+        metric='cosine',
+        random_state=42
+    )
+
+    # Use KMeans instead of HDBSCAN for predictable number of clusters
+    # KMeans will always create exactly n_topics clusters (no outliers)
+    kmeans_model = KMeans(n_clusters=n_topics, random_state=42)
+
+    # Create BERTopic model with KMeans
     # We don't cache this globally because different documents may need different configs
     topic_model = BERTopic(
         embedding_model=_embedding_model,
+        umap_model=umap_model,
+        hdbscan_model=kmeans_model,  # Despite the name, this accepts any clustering model
         vectorizer_model=vectorizer_model,
-        min_topic_size=min_topic_size,
-        nr_topics=max_clusters,  # Maximum number of topics (will reduce to this if needed)
-        calculate_probabilities=True,
+        calculate_probabilities=False,  # KMeans doesn't support probabilities
         verbose=False
     )
 
