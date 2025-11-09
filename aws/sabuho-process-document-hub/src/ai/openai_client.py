@@ -21,80 +21,6 @@ def create_openai_client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
-def call_openai_for_topics(client: OpenAI, text: str) -> dict:
-    """
-    Call OpenAI to identify document topics and their page ranges.
-
-    Args:
-        client: OpenAI client instance
-        text: Full document text with page markers
-
-    Returns:
-        Dict with format: {"topics": [{"name": "...", "start": 1, "end": 5}, ...]}
-
-    Raises:
-        Exception: If OpenAI API call fails or returns invalid JSON
-    """
-    system_prompt = """You are a helpful assistant that analyzes educational documents and identifies main topics or chapters along with their page ranges.
-
-Your task:
-1. Identify distinct topics, chapters, or major sections in the document
-2. Determine the page range for each topic based on page markers like "--- Page X ---"
-3. Use clear, descriptive names for each topic
-4. Ensure page ranges are logical and don't overlap unnecessarily
-
-Return a JSON object with this exact structure:
-{
-  "topics": [
-    {"name": "Topic or Chapter Name", "start": 1, "end": 5},
-    {"name": "Another Topic", "start": 6, "end": 10}
-  ]
-}
-
-Guidelines:
-- Topics should be meaningful sections (chapters, major themes, etc.)
-- Page ranges should be consecutive and cover the document
-- Use Spanish names if the document is in Spanish
-- If no clear topics are found, create logical groupings based on content
-"""
-
-    user_prompt = f"""Identify the main topics and their page ranges in this document:
-
-{text}
-
-Return the result as JSON."""
-
-    try:
-        response = client.chat.completions.create(
-            model='gpt-3.5-turbo',  # Faster/cheaper for topic identification
-            messages=[
-                {'role': 'system', 'content': system_prompt},
-                {'role': 'user', 'content': user_prompt}
-            ],
-            max_tokens=4000,
-            temperature=0.1,
-            response_format={"type": "json_object"}
-        )
-
-        result = json.loads(response.choices[0].message.content)
-
-        # Validate structure
-        if 'topics' not in result:
-            raise ValueError("OpenAI response missing 'topics' key")
-
-        for topic in result['topics']:
-            if 'name' not in topic or 'start' not in topic or 'end' not in topic:
-                raise ValueError(f"Invalid topic structure: {topic}")
-
-        print(f"Successfully identified {len(result['topics'])} topics")
-        return result
-
-    except json.JSONDecodeError as e:
-        raise Exception(f"Failed to parse OpenAI response as JSON: {e}")
-    except Exception as e:
-        raise Exception(f"OpenAI API call failed: {e}")
-
-
 def call_openai_for_questions(client: OpenAI, batch_content: str, batch_topics: list) -> list:
     """
     Call OpenAI to generate quiz questions for a batch of topics.
@@ -158,6 +84,39 @@ Content:
 
 Return the result as JSON."""
 
+    # Define JSON schema for structured output
+    question_schema = {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "question_generation",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "questions": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "question": {"type": "string"},
+                                "options": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                },
+                                "correct_answer_index": {"type": "integer"},
+                                "source_text": {"type": "string"}
+                            },
+                            "required": ["question", "options", "correct_answer_index", "source_text"],
+                            "additionalProperties": False
+                        }
+                    }
+                },
+                "required": ["questions"],
+                "additionalProperties": False
+            }
+        }
+    }
+
     try:
         response = client.chat.completions.create(
             model='gpt-4o-mini',  # Better quality for question generation
@@ -167,7 +126,7 @@ Return the result as JSON."""
             ],
             max_tokens=12000,
             temperature=0.1,
-            response_format={"type": "json_object"}
+            response_format=question_schema
         )
 
         result = json.loads(response.choices[0].message.content)

@@ -3,6 +3,7 @@ import io
 import numpy as np
 from typing import Tuple, Optional, Callable
 from ocr_engines.base import OCREngine
+from ocr.font_header_detection import extract_page_text_with_headers
 
 # Try to import PaddleOCR dependencies
 try:
@@ -206,20 +207,24 @@ class PaddleOCREngine(OCREngine):
                 - image_text_content: Text extracted from embedded images
                 - has_images: Whether the page contained embedded images
         """
-        # Extract text with PyMuPDF (optimized with "text" mode for speed)
-        text = page.get_text("text")
+        # Extract text with PyMuPDF using font-based header detection
+        text_with_headers = extract_page_text_with_headers(page, page_num + 1)
         text_content = None
         page_is_scanned = False
 
         # Check if page has minimal extractable text (likely a scanned image)
-        if text.strip() and len(text.strip()) > 50:
+        # Count actual content beyond the page marker
+        page_marker = f"--- Page {page_num + 1} ---"
+        actual_content = text_with_headers.replace(page_marker, "").strip() if text_with_headers else ""
+
+        if actual_content and len(actual_content) > 50:
             # Page has sufficient text content
-            text_content = f"--- Page {page_num + 1} ---\n{text}"
-            print(f"[PaddleOCR] Page {page_num + 1}: Extracted {len(text)} characters of text")
+            text_content = text_with_headers
+            print(f"[PaddleOCR] Page {page_num + 1}: Extracted {len(actual_content)} characters of text with header detection")
         elif PADDLEOCR_AVAILABLE:
             # Page has little/no text - likely scanned or image-based
             # Use PaddleOCR on the entire page
-            print(f"[PaddleOCR] Page {page_num + 1}: Minimal text detected ({len(text.strip())} chars), using full-page OCR")
+            print(f"[PaddleOCR] Page {page_num + 1}: Minimal text detected ({len(actual_content)} chars), using full-page OCR")
             page_is_scanned = True
             ocr_text = self._extract_text_from_page_image(page, page_num + 1)
             if ocr_text.strip():

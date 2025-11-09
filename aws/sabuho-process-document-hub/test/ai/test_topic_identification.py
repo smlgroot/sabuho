@@ -91,16 +91,14 @@ def test_topic_identification(supabase_client, test_resource_session_id):
     print(f"  Preview: {ocr_text[:200]}...\n")
 
     # Identify topics
-    print("Step 3: Identifying topics with OpenAI...")
-    topics_map = identify_document_topics(ocr_text)
+    print("Step 3: Identifying topics using heuristic header analysis...")
+    topics_map = identify_document_topics(
+        ocr_text,
+        lambda stage, current, total, metadata=None: print(f"Progress [{stage}]: {current}/{total} {metadata or ''}", flush=True)
+    )
     assert topics_map is not None, "Failed to identify topics"
     assert 'topics' in topics_map, "Topics map missing 'topics' key"
     assert len(topics_map.get('topics', [])) > 0, "No topics identified"
-
-    print(f"Identified {len(topics_map.get('topics', []))} topics")
-    print(f"\nTopics identified:")
-    print(json.dumps(topics_map, indent=2, ensure_ascii=False))
-    print()
 
     # Save topics to database
     print("Step 4: Saving topics to resource_sessions.topic_page_range...")
@@ -126,6 +124,5 @@ def test_topic_identification(supabase_client, test_resource_session_id):
     print("TEST COMPLETED SUCCESSFULLY")
     print("=" * 70)
     print(f"Total time: {elapsed_time:.2f} seconds")
-    print(f"Topics identified: {len(topics_map.get('topics', []))}")
     print(f"Domains created: {len(domain_mapping)}")
     print("=" * 70 + "\n")

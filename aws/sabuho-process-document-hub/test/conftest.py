@@ -2,6 +2,11 @@
 import sys
 import os
 import pytest
+from dotenv import load_dotenv
+
+# Load environment variables from aws/.env (override terminal exports)
+env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
+load_dotenv(env_path, override=True)
 
 # Add the src directory and subdirectories to the path to import modules
 # This mimics the Lambda environment where all modules are in /var/task/

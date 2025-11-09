@@ -71,7 +71,10 @@ def test_text_extraction(supabase_client, test_pdf_path, capsys):
         tracemalloc.start()
         start_time = time.perf_counter()
 
-        extracted_text = extract_text_with_pymupdf_and_ocr(pdf_buffer)
+        extracted_text = extract_text_with_pymupdf_and_ocr(
+            pdf_buffer,
+            lambda stage, current, total, metadata=None: print(f"Progress [{stage}]: {current}/{total} {metadata or ''}", flush=True)
+        )
 
         # Calculate elapsed time
         end_time = time.perf_counter()

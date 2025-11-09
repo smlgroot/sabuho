@@ -2,6 +2,7 @@
 import io
 from typing import Tuple, Optional, Callable
 from ocr_engines.base import OCREngine
+from ocr.font_header_detection import extract_page_text_with_headers
 
 # Try to import Tesseract dependencies
 try:
@@ -118,18 +119,19 @@ class TesseractEngine(OCREngine):
                 - image_text_content: Text extracted from embedded images
                 - has_images: Whether the page contained embedded images
         """
-        # Step 1: Extract text with PyMuPDF
+        # Step 1: Extract text with PyMuPDF and font-based header detection
         # Report granular progress for text extraction
         if progress_callback:
             progress_callback('text_extract_page', page_num + 1, total_pages)
 
-        text = page.get_text("text")
+        # Use font-based header detection to extract text with header markers
+        text_with_headers = extract_page_text_with_headers(page, page_num + 1)
         text_content = None
 
-        if text.strip():
-            # Page has text content
-            text_content = f"--- Page {page_num + 1} ---\n{text}"
-            print(f"[Tesseract] Page {page_num + 1}: Extracted {len(text)} characters of text with PyMuPDF")
+        # Check if there's actual content beyond the page marker
+        if text_with_headers and len(text_with_headers.strip()) > len(f"--- Page {page_num + 1} ---"):
+            text_content = text_with_headers
+            print(f"[Tesseract] Page {page_num + 1}: Extracted text with header detection ({len(text_with_headers)} characters)")
         else:
             print(f"[Tesseract] Page {page_num + 1}: No text extracted with PyMuPDF")
 

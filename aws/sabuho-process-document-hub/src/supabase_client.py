@@ -23,6 +23,12 @@ def get_supabase_client() -> Client:
     supabase_url = os.environ['SUPABASE_URL']  # Required - will raise KeyError if not set
     supabase_key = os.environ['SUPABASE_SERVICE_ROLE_KEY']  # Required - will raise KeyError if not set
 
+    # print("=== Environment Variables ===")
+    # print(f"SUPABASE_URL->{supabase_url}<- this is the url")
+    # print(f"SUPABASE_SERVICE_ROLE_KEY->{supabase_key}<- this is the key")
+    # print("=============================")
+    # exit(0)
+
     # Create custom httpx client with extended timeouts
     # Using httpx.Timeout for fine-grained control: (connect, read, write, pool)
     timeout = httpx.Timeout(

@@ -129,7 +129,11 @@ def test_question_generation(supabase_client, test_resource_session_id):
     # Generate questions
     print("Step 5: Generating quiz questions with OpenAI...")
     print("(This may take a while depending on document length...)\n")
-    questions = generate_questions_for_topics(topic_texts, domain_mapping)
+    questions = generate_questions_for_topics(
+        topic_texts,
+        domain_mapping,
+        lambda stage, current, total, metadata=None: print(f"Progress [{stage}]: {current}/{total} {metadata or ''}", flush=True)
+    )
     assert questions is not None, "Failed to generate questions"
     assert len(questions) > 0, "No questions generated"
     print(f"\nGenerated {len(questions)} questions")
