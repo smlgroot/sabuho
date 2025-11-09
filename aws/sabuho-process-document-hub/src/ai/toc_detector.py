@@ -51,7 +51,8 @@ def detect_toc_probabilistic(ocr_text: str, total_pages: int) -> Optional[Dict]:
     print(f"[toc_detector] Best section score: {best_score:.2f}")
 
     # Minimum threshold for considering it a TOC
-    if best_score < 0.5:
+    # Lowered to 0.4 to handle edge cases (repeated page numbers, sub-items)
+    if best_score < 0.4:
         print("[toc_detector] No section scored high enough to be TOC")
         return None
 
@@ -154,7 +155,8 @@ def _score_toc_likelihood(section: str) -> float:
     number_density = lines_with_numbers / len(clean_lines)
     score += number_density * weights['number_density']
 
-    # Feature 2: Sequential numbers (are page numbers increasing?)
+    # Feature 2: Sequential numbers (are page numbers increasing or staying same?)
+    # Repeated page numbers are OK (sub-topics on same page)
     numbers = []
     for line in clean_lines:
         match = re.search(r'\b(\d+)\b', line)
@@ -162,9 +164,18 @@ def _score_toc_likelihood(section: str) -> float:
             numbers.append(int(match.group(1)))
 
     if len(numbers) >= 3:
-        # Check if mostly increasing
-        increasing_count = sum(1 for i in range(len(numbers)-1) if numbers[i+1] >= numbers[i])
-        sequential_score = increasing_count / (len(numbers) - 1)
+        # Check if mostly non-decreasing (same or increasing)
+        # This allows repeated page numbers (common with sub-topics)
+        non_decreasing_count = sum(1 for i in range(len(numbers)-1) if numbers[i+1] >= numbers[i])
+        sequential_score = non_decreasing_count / (len(numbers) - 1)
+
+        # Also check that numbers don't jump too wildly (max 20 pages between entries)
+        jumps = [numbers[i+1] - numbers[i] for i in range(len(numbers)-1) if numbers[i+1] > numbers[i]]
+        if jumps:
+            max_jump = max(jumps)
+            if max_jump > 20:
+                sequential_score *= 0.5  # Penalize if jumps are too large
+
         score += sequential_score * weights['sequential_numbers']
 
     # Feature 3: Line length consistency (TOC entries similar length)
@@ -211,9 +222,16 @@ def _extract_topic_page_pairs(section: str) -> List[Dict]:
         clean = re.sub(r'### \[HEADER[^\]]*\]\s*', '', line)
         clean = re.sub(r'\[BOLD\]', '', clean).strip()
 
-        # Skip common header words
-        if clean.upper() in ['ÍNDICE', 'INDICE', 'TABLA DE CONTENIDO', 'CONTENIDO',
-                             'PÁGINA', 'PÁGINAS', 'PAG', 'PAGS', 'PÁG', 'PÁGS']:
+        # Skip common header words and sub-item markers
+        clean_upper = clean.upper()
+        skip_keywords = [
+            'ÍNDICE', 'INDICE', 'TABLA DE CONTENIDO', 'CONTENIDO', 'CONTENTS',
+            'PÁGINA', 'PÁGINAS', 'PAG', 'PAGS', 'PÁG', 'PÁGS',
+            'DESCRIPCIÓN:', 'DESCRIPCION:', 'DESCRIPTION:',
+            'EJEMPLO:', 'EXAMPLE:', 'EJEMPLO DE LA PETICIÓN:',
+            'RESPUESTA:', 'RESPONSE:', 'NOTA:', 'NOTE:'
+        ]
+        if any(clean_upper.startswith(kw) or clean_upper == kw for kw in skip_keywords):
             continue
 
         if clean:
