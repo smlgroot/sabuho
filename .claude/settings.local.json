@@ -46,7 +46,10 @@
       "Bash(aws:*)",
       "Bash(docker-compose exec:*)",
       "Bash(docker ps:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:onlinelibrary.wiley.com)",
+      "WebFetch(domain:www.hindawi.com)"
     ],
     "deny": [],
     "ask": []

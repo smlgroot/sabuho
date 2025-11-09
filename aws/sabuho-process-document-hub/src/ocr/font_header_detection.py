@@ -94,18 +94,19 @@ def extract_text_with_font_info(page) -> List[TextLine]:
     return text_lines
 
 
-def detect_headers(text_lines: List[TextLine], threshold_multiplier: float = 1.2) -> List[TextLine]:
+def detect_headers(text_lines: List[TextLine], threshold_multiplier: float = 1.1) -> List[TextLine]:
     """
     Identify which text lines are likely headers based on font size.
 
     Strategy:
-    1. Calculate median font size across all text lines
+    1. Calculate median font size across all text lines (using lower quartile to avoid title page skew)
     2. Mark lines with font size > (median * threshold_multiplier) as headers
-    3. Also consider bold text that's larger than average
+    3. Also consider bold text that's larger than or equal to median
+    4. Always mark very large text (>= 14pt) as headers
 
     Args:
         text_lines: List of TextLine objects
-        threshold_multiplier: Multiplier for median font size (default 1.2 = 20% larger)
+        threshold_multiplier: Multiplier for median font size (default 1.1 = 10% larger)
 
     Returns:
         List[TextLine]: Same list with is_header flag set appropriately
@@ -119,25 +120,37 @@ def detect_headers(text_lines: List[TextLine], threshold_multiplier: float = 1.2
     if not font_sizes:
         return text_lines
 
-    # Calculate median and mean font sizes
+    # Sort font sizes to get percentiles
+    sorted_sizes = sorted(font_sizes)
+
+    # Use 25th percentile (Q1) as baseline instead of median to avoid title page skew
+    # This helps when title pages have lots of large text
+    q1_index = len(sorted_sizes) // 4
+    q1_size = sorted_sizes[q1_index] if q1_index < len(sorted_sizes) else sorted_sizes[0]
+
     median_size = statistics.median(font_sizes)
     mean_size = statistics.mean(font_sizes)
 
-    # Calculate header threshold (20% larger than median by default)
-    header_threshold = median_size * threshold_multiplier
+    # Calculate header threshold (10% larger than Q1 by default)
+    # This is less strict than previous 20% threshold
+    header_threshold = q1_size * threshold_multiplier
 
-    print(f"[font_header_detection] Median font size: {median_size:.2f}pt, "
+    print(f"[font_header_detection] Font sizes - Q1: {q1_size:.2f}pt, Median: {median_size:.2f}pt, "
           f"Mean: {mean_size:.2f}pt, Header threshold: {header_threshold:.2f}pt")
 
     # Mark headers
     header_count = 0
     for line in text_lines:
-        # Primary criterion: font size significantly larger than median
-        if line.font_size >= header_threshold:
+        # Always mark very large text as headers (common header sizes)
+        if line.font_size >= 14.0:
             line.is_header = True
             header_count += 1
-        # Secondary criterion: bold text that's larger than average
-        elif line.is_bold and line.font_size >= mean_size:
+        # Primary criterion: font size larger than threshold
+        elif line.font_size >= header_threshold:
+            line.is_header = True
+            header_count += 1
+        # Secondary criterion: bold text that's at or above median
+        elif line.is_bold and line.font_size >= median_size * 0.95:  # 95% of median
             line.is_header = True
             header_count += 1
 

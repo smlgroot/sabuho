@@ -1,8 +1,8 @@
 """
 Topic identification module - identifies document topics and their page ranges.
-This module uses ML-based semantic clustering for topic identification.
+This module uses structure-based analysis using font formatting markers.
 """
-from ai.semantic_topic_identifier import identify_topics_semantic
+from ai.structure_topic_identifier import identify_topics_structure
 
 
 def identify_document_topics(text: str, progress_callback) -> dict:
@@ -12,30 +12,32 @@ def identify_document_topics(text: str, progress_callback) -> dict:
     This is the main entry point for topic identification.
     It can be tested independently without the full Lambda context.
 
-    Uses ML-based semantic clustering that:
-    - Segments text intelligently
-    - Generates semantic embeddings (sentence-transformers)
-    - Clusters similar content (KMeans)
-    - Labels topics with TF-IDF
+    Uses structure-based analysis that:
+    - Extracts header markers from OCR text
+    - Analyzes font sizes to determine heading hierarchy
+    - Uses bold markers as secondary signals
+    - Creates topics from top-level headers
+
+    This approach is inspired by pdf.tocgen and TSHD algorithms (96%+ accuracy).
 
     Args:
         text: Full document text with page markers (e.g., "--- Page 1 ---")
-              and optional header markers (e.g., "### [HEADER, SIZE=14pt] Title")
+              and header markers (e.g., "### [HEADER, SIZE=14pt] Title")
         progress_callback: Callback function(stage, current, total, metadata) to report progress
 
     Returns:
         Dict with format: {"topics": [{"name": "...", "start": 1, "end": 5}, ...]}
 
     Example:
-        >>> text = "--- Page 1 ---\\n### [HEADER] Introduction\\n...\\n--- Page 2 ---\\n..."
+        >>> text = "--- Page 1 ---\\n### [HEADER, SIZE=18pt] Introduction\\n...\\n--- Page 2 ---\\n..."
         >>> result = identify_document_topics(text, callback)
         >>> print(result)
-        {"topics": [{"name": "Introduction", "start": 1, "end": 1}, ...]}
+        {"topics": [{"name": "Introduction", "start": 1, "end": 5}, ...]}
     """
-    print("Starting ML-based semantic topic identification...")
+    print("Starting structure-based topic identification...")
 
-    # Use semantic clustering approach (offline, robust, semantic understanding)
-    topics_map = identify_topics_semantic(text)
+    # Use structure-based approach (fast, reliable, based on formatting)
+    topics_map = identify_topics_structure(text)
 
     print(f"Identified {len(topics_map.get('topics', []))} topics")
 
