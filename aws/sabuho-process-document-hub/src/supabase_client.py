@@ -50,6 +50,34 @@ def get_supabase_client() -> Client:
 
 
 # ============================================================================
+# Resource Repository Functions
+# ============================================================================
+
+def create_resource_repository(supabase: Client, resource_repository_id: str) -> dict:
+    """
+    Create a new resource repository record.
+
+    Args:
+        supabase: Supabase client
+        resource_repository_id: UUID of the resource repository
+
+    Returns:
+        Created resource repository dict or None on error
+    """
+    try:
+        result = supabase.table('resource_repositories').insert({
+            'id': resource_repository_id
+        }).execute()
+        print(f"[create_resource_repository] Created repository: {resource_repository_id}")
+        return result.data[0] if result.data else None
+    except Exception as e:
+        print(f"[create_resource_repository] Error creating repository: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+# ============================================================================
 # OCR Processing Functions
 # ============================================================================
 

@@ -8,10 +8,12 @@ Separate processors for OCR and AI operations:
 import os
 import traceback
 import boto3
+from urllib.parse import unquote_plus
 from typing import Dict, Any, Optional
 from ocr.pdf_text_extraction import extract_text_with_pymupdf_and_ocr
 from supabase_client import (
     get_supabase_client,
+    create_resource_repository,
     save_resource_session_processing_ocr,
     save_resource_session_ocr_completed,
     get_resource_session,
@@ -93,6 +95,10 @@ class OCRProcessor:
             if not key:
                 return ProcessingResult(False, f"No 'key' property in message: {message}")
 
+            # URL decode the key to handle spaces and special characters
+            # S3 stores the actual filename, but URLs may have + or %20 for spaces
+            key = unquote_plus(key)
+
             print(f"[OCRProcessor] Processing OCR for: s3://{self.source_bucket}/{key}")
 
             # Get S3 object metadata to extract resource_repository_id
@@ -103,6 +109,8 @@ class OCRProcessor:
                 resource_repository_id = metadata.get('resource-repository-id')
                 if resource_repository_id:
                     print(f"[OCRProcessor] Found resource_repository_id in S3 metadata: {resource_repository_id}")
+                    # Create the resource repository
+                    create_resource_repository(self.supabase, resource_repository_id)
             except Exception as metadata_error:
                 print(f"[OCRProcessor] Warning: Failed to read S3 metadata: {metadata_error}")
 
