@@ -2,11 +2,10 @@
 import os
 from typing import Optional
 from ocr_engines.base import OCREngine
-from ocr_engines.paddleocr import PaddleOCREngine
 from ocr_engines.tesseract import TesseractEngine
 
 # Determine which OCR engine to use from environment variable
-OCR_ENGINE_TYPE = os.environ.get('OCR_ENGINE', 'paddleocr').lower()
+OCR_ENGINE_TYPE = os.environ.get('OCR_ENGINE', 'tesseract').lower()
 
 # Global engine instance (singleton)
 _ocr_engine: Optional[OCREngine] = None
@@ -22,14 +21,7 @@ def get_ocr_engine() -> Optional[OCREngine]:
 
     if _ocr_engine is None:
         # Instantiate the appropriate engine based on configuration
-        if OCR_ENGINE_TYPE == 'paddleocr':
-            engine = PaddleOCREngine()
-            if engine.is_available():
-                _ocr_engine = engine
-                print(f"[INFO] OCR Engine: PaddleOCR initialized successfully")
-            else:
-                print(f"[ERROR] PaddleOCR selected but not available. Check dependencies.")
-        elif OCR_ENGINE_TYPE == 'tesseract':
+        if OCR_ENGINE_TYPE == 'tesseract':
             engine = TesseractEngine()
             if engine.is_available():
                 _ocr_engine = engine
@@ -37,7 +29,7 @@ def get_ocr_engine() -> Optional[OCREngine]:
             else:
                 print(f"[ERROR] Tesseract selected but not available. Check dependencies.")
         else:
-            print(f"[ERROR] Unknown OCR_ENGINE value: {OCR_ENGINE_TYPE}. Supported: 'paddleocr', 'tesseract'")
+            print(f"[ERROR] Unknown OCR_ENGINE value: {OCR_ENGINE_TYPE}. Only 'tesseract' is supported.")
 
     return _ocr_engine
 
@@ -81,28 +73,15 @@ def extract_text_from_image_with_ocr(page, img_info, page_num: int, img_num: int
 def extract_text_from_page_image(page, page_num: int) -> str:
     """Extract text from an entire PDF page rendered as an image
 
-    Note: This function is for backward compatibility with PaddleOCR's full-page OCR.
-    Tesseract engine does not support efficient full-page OCR and will return empty string.
+    Note: Tesseract engine does not support efficient full-page OCR.
+    This function is kept for backward compatibility but returns empty string.
 
     Args:
         page: PyMuPDF page object
         page_num: Page number for logging (1-indexed)
 
     Returns:
-        str: Extracted text from the page (empty for Tesseract)
+        str: Empty string (full-page OCR not supported)
     """
-    engine = get_ocr_engine()
-    if engine is None:
-        return ""
-
-    # Only PaddleOCR supports full-page OCR efficiently
-    # For Tesseract, this would be inefficient, so we skip it
-    if engine.get_engine_name() == 'tesseract':
-        print(f"[WARNING] Full-page OCR not supported with Tesseract engine. Use embedded image OCR instead.")
-        return ""
-
-    # For PaddleOCR, use the internal method
-    if hasattr(engine, '_extract_text_from_page_image'):
-        return engine._extract_text_from_page_image(page, page_num)
-
+    print(f"[WARNING] Full-page OCR not supported. Use embedded image OCR instead.")
     return ""

@@ -26,8 +26,6 @@ class TesseractEngine(OCREngine):
     - 'text_extract_page_X_of_Y' when extracting text with PyMuPDF
     - 'ocr_image_X_of_Y_on_page_Z' when OCR'ing individual images
 
-    Note: Despite the internal granular processing, this engine returns the same
-    format as PaddleOCR to maintain interface consistency.
     """
 
     def __init__(self):
@@ -170,5 +168,4 @@ class TesseractEngine(OCREngine):
                 if page_image_texts:
                     image_text_content = f"--- Page {page_num + 1} Images ---\n" + "\n".join(page_image_texts)
 
-        # Return same format as PaddleOCR for consistency
         return text_content, image_text_content, has_images

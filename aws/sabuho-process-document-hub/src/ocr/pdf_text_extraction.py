@@ -46,12 +46,9 @@ def process_single_page(doc, page_num: int, total_pages: int, progress_callback)
 
 
 def extract_text_with_pymupdf_and_ocr(pdf_buffer: bytes, progress_callback) -> str:
-    """Extract text from PDF using PyMuPDF and configured OCR engine
+    """Extract text from PDF using PyMuPDF and Tesseract OCR engine
 
-    Strategy (depends on selected OCR engine):
-    - PaddleOCR: Fast text extraction with PyMuPDF for native PDFs,
-                 full-page OCR for scanned documents, individual image OCR
-    - Tesseract: PyMuPDF text extraction, then OCR embedded images separately
+    Strategy: PyMuPDF text extraction, then OCR embedded images separately
 
     Args:
         pdf_buffer: PDF file content as bytes
@@ -103,11 +100,7 @@ def extract_text_with_pymupdf_and_ocr(pdf_buffer: bytes, progress_callback) -> s
 
                 completed += 1
 
-                # For PaddleOCR, report progress here (engine handles its own progress internally)
-                # For Tesseract, the engine reports granular progress internally
-                if engine_name == 'paddleocr':
-                    progress_callback('ocr_page', completed, total_pages)
-
+                # Tesseract engine reports granular progress internally
                 if completed % 10 == 0:  # Progress update every 10 pages
                     print(f"[extract_text_with_pymupdf_and_ocr] Processed {completed}/{total_pages} pages")
 
