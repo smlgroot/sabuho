@@ -1,24 +1,24 @@
 """
 Topic identification module - identifies document topics and their page ranges.
-This module uses LLM-based semantic analysis for reliable topic detection.
+This module tries table of contents (TOC) parsing first, then falls back to
+LLM-based semantic analysis if no TOC is found.
 """
 import re
+from ai.toc_detector import detect_toc_probabilistic
 from ai.llm_topic_identifier import identify_topics_with_llm_chunked
 from ai.openai_client import create_openai_client
 
 
 def identify_document_topics(text: str, progress_callback) -> dict:
     """
-    Identify topics and their page ranges in a document using LLM semantic analysis.
+    Identify topics and their page ranges in a document.
 
     This is the main entry point for topic identification.
     It can be tested independently without the full Lambda context.
 
-    Uses LLM-based analysis that:
-    - Understands semantic meaning of headers and content
-    - Detects topics that span multiple pages
-    - Handles inconsistent formatting better than structure-based approaches
-    - Uses enhanced header markers with font size, position, bold, and font family metadata
+    Strategy (in order):
+    1. Try to detect and parse table of contents (ÍNDICE) - FAST, no API cost
+    2. If no TOC found, use LLM-based semantic analysis - slower but reliable
 
     Args:
         text: Full document text with page markers (e.g., "--- Page 1 ---")
@@ -34,11 +34,24 @@ def identify_document_topics(text: str, progress_callback) -> dict:
         >>> print(result)
         {"topics": [{"name": "Introduction", "start": 1, "end": 5}, ...]}
     """
-    print("Starting LLM-based topic identification...")
+    print("Starting topic identification...")
 
     # Count total pages in the document
     total_pages = _count_pages(text)
     print(f"Document has {total_pages} pages")
+
+    # STRATEGY 1: Try probabilistic TOC detection first (fast, free, format-agnostic)
+    print("\n[Strategy 1] Attempting probabilistic table of contents (TOC) detection...")
+    topics_map = detect_toc_probabilistic(text, total_pages)
+
+    if topics_map and len(topics_map.get('topics', [])) >= 3:
+        print(f"✓ Successfully extracted {len(topics_map['topics'])} topics from TOC (0 API calls)")
+        print("  Skipping LLM analysis")
+        progress_callback('ai_topics_identified', 1, 1)
+        return topics_map
+
+    # STRATEGY 2: Fall back to LLM if no TOC found
+    print("\n[Strategy 2] No valid TOC found, using LLM-based semantic analysis...")
 
     # Create OpenAI client
     client = create_openai_client()
@@ -51,7 +64,7 @@ def identify_document_topics(text: str, progress_callback) -> dict:
     # Convert to the expected format
     topics_map = {"topics": topics_list}
 
-    print(f"Identified {len(topics_list)} topics using LLM")
+    print(f"✓ Identified {len(topics_list)} topics using LLM")
 
     # Report completion
     progress_callback('ai_topics_identified', 1, 1)
