@@ -196,9 +196,9 @@ app.get('/rest/v1/resource_sessions', (c) => {
   const url = new URL(c.req.url);
   const filePathParam = url.searchParams.get('file_path');
   const idParam = url.searchParams.get('id');
-  const selectParam = url.searchParams.get('select') || '*';
+  const repositoryIdParam = url.searchParams.get('resource_repository_id');
 
-  // Parse id query: id=eq.uuid
+  // Parse id query: id=eq.uuid (UI uses .single())
   let sessionId: string | null = null;
   if (idParam) {
     const match = idParam.match(/^eq\.(.+)$/);
@@ -207,20 +207,18 @@ app.get('/rest/v1/resource_sessions', (c) => {
     }
   }
 
-  // Query by ID takes precedence
   if (sessionId) {
     const sessionData = sessionStore.getSessionById(sessionId);
-
     if (sessionData) {
       console.log(`🔍 Session found for id: ${sessionId} - Status: ${sessionData.session.status}`);
-      return c.json([sessionData.session]);
+      return c.json(sessionData.session); // UI uses .single() - return object
     } else {
       console.log(`❌ No session found for id: ${sessionId}`);
-      return c.json([]);
+      return c.json(null); // .single() returns null if not found
     }
   }
 
-  // Parse file_path query: file_path=eq.uploads/...
+  // Parse file_path query: file_path=eq.uploads/... (UI uses .maybeSingle())
   let filePath: string | null = null;
   if (filePathParam) {
     const match = filePathParam.match(/^eq\.(.+)$/);
@@ -231,14 +229,28 @@ app.get('/rest/v1/resource_sessions', (c) => {
 
   if (filePath) {
     const sessionData = sessionStore.getSessionByFilePath(filePath);
-
     if (sessionData) {
       console.log(`🔍 Session found for file_path: ${filePath} - Status: ${sessionData.session.status}`);
-      return c.json([sessionData.session]);
+      return c.json(sessionData.session); // UI uses .maybeSingle() - return object
     } else {
       console.log(`❌ No session found for file_path: ${filePath}`);
-      return c.json([]);
+      return c.json(null); // .maybeSingle() returns null if not found
     }
+  }
+
+  // Parse resource_repository_id query (UI does NOT use .single())
+  let repositoryId: string | null = null;
+  if (repositoryIdParam) {
+    const match = repositoryIdParam.match(/^eq\.(.+)$/);
+    if (match) {
+      repositoryId = match[1];
+    }
+  }
+
+  if (repositoryId) {
+    const sessions = sessionStore.getSessionsByRepositoryId(repositoryId);
+    console.log(`📦 Sessions found for repository: ${repositoryId} - Count: ${sessions.length}`);
+    return c.json(sessions); // Return array - no .single() used
   }
 
   return c.json([]);
@@ -304,10 +316,11 @@ app.post('/rest/v1/resource_session_domains', async (c) => {
   return c.json(createdDomains);
 });
 
-// GET /rest/v1/resource_session_domains - Get domains for a session
+// GET /rest/v1/resource_session_domains - Get domains for a session or repository
 app.get('/rest/v1/resource_session_domains', (c) => {
   const url = new URL(c.req.url);
   const sessionIdParam = url.searchParams.get('resource_session_id');
+  const repositoryIdParam = url.searchParams.get('resource_repository_id');
 
   // Parse resource_session_id query: resource_session_id=eq.uuid
   let sessionId: string | null = null;
@@ -318,9 +331,25 @@ app.get('/rest/v1/resource_session_domains', (c) => {
     }
   }
 
+  // Query by session_id takes precedence
   if (sessionId) {
     const domains = sessionStore.getDomainsBySessionId(sessionId);
     console.log(`📚 Domains requested for session: ${sessionId} - Returning ${domains.length} domains`);
+    return c.json(domains);
+  }
+
+  // Parse resource_repository_id query: resource_repository_id=eq.uuid
+  let repositoryId: string | null = null;
+  if (repositoryIdParam) {
+    const match = repositoryIdParam.match(/^eq\.(.+)$/);
+    if (match) {
+      repositoryId = match[1];
+    }
+  }
+
+  if (repositoryId) {
+    const domains = sessionStore.getDomainsByRepositoryId(repositoryId);
+    console.log(`📦 Domains requested for repository: ${repositoryId} - Returning ${domains.length} domains`);
     return c.json(domains);
   }
 
@@ -363,10 +392,11 @@ app.post('/rest/v1/resource_session_questions', async (c) => {
   return c.json(createdQuestions);
 });
 
-// GET /rest/v1/resource_session_questions - Get questions for a session
+// GET /rest/v1/resource_session_questions - Get questions for a session or repository
 app.get('/rest/v1/resource_session_questions', (c) => {
   const url = new URL(c.req.url);
   const sessionIdParam = url.searchParams.get('resource_session_id');
+  const repositoryIdParam = url.searchParams.get('resource_repository_id');
   const isSampleParam = url.searchParams.get('is_sample');
   const preferHeader = c.req.header('Prefer') || '';
 
@@ -382,6 +412,15 @@ app.get('/rest/v1/resource_session_questions', (c) => {
     }
   }
 
+  // Parse resource_repository_id query: resource_repository_id=eq.uuid
+  let repositoryId: string | null = null;
+  if (repositoryIdParam) {
+    const match = repositoryIdParam.match(/^eq\.(.+)$/);
+    if (match) {
+      repositoryId = match[1];
+    }
+  }
+
   // Parse is_sample query: is_sample=eq.false or is_sample=eq.true
   let isSampleFilter: boolean | null = null;
   if (isSampleParam) {
@@ -391,6 +430,7 @@ app.get('/rest/v1/resource_session_questions', (c) => {
     }
   }
 
+  // Query by session_id takes precedence
   if (sessionId) {
     const allQuestions = sessionStore.getQuestionsBySessionId(sessionId);
 
@@ -415,16 +455,32 @@ app.get('/rest/v1/resource_session_questions', (c) => {
     return c.json(filteredQuestions);
   }
 
+  // Query by repository_id
+  if (repositoryId) {
+    const allQuestions = sessionStore.getQuestionsByRepositoryId(repositoryId, isSampleFilter);
+    const count = allQuestions.length;
+
+    console.log(`📦 Questions requested for repository: ${repositoryId} - is_sample=${isSampleFilter}, Returning: ${count}`);
+
+    // Set Content-Range header (Supabase standard for counts)
+    c.header('Content-Range', `0-${count > 0 ? count - 1 : 0}/${count}`);
+
+    // For count-only requests, return empty array (Supabase client reads count from header)
+    if (isCountRequest) {
+      return c.json([]);
+    }
+
+    // Return array directly (like Supabase PostgREST does)
+    return c.json(allQuestions);
+  }
+
   c.header('Content-Range', `0-0/0`);
   return c.json([]);
 });
 
 // POST /rest/v1/resource_repositories - Create a new resource repository
+// UI always uses .insert().select().single() - so always return single object
 app.post('/rest/v1/resource_repositories', async (c) => {
-  const url = new URL(c.req.url);
-  const selectParam = url.searchParams.get('select') || '*';
-
-  // Generate a new repository record
   const repository = {
     id: uuidv4(),
     created_at: new Date().toISOString(),
@@ -433,8 +489,8 @@ app.post('/rest/v1/resource_repositories', async (c) => {
 
   console.log(`📦 Created resource_repository with id: ${repository.id}`);
 
-  // Return as array (Supabase returns arrays for inserts)
-  return c.json([repository]);
+  // Return single object (UI uses .single())
+  return c.json(repository);
 });
 
 // Health check endpoint

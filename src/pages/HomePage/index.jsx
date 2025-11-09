@@ -8,7 +8,6 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useQuizProcessing } from "@/hooks/useQuizProcessing";
 import FileUploadStep from "./components/steps/file-upload-step";
 import ProcessingStep from "./components/steps/processing-step";
-import ResultsStep from "./components/steps/results-step";
 import ShareMonetizeStep from "./components/steps/share-monetize-step";
 import TopicsSidebar from "./components/results/topics-sidebar";
 import QuestionsPanel from "./components/results/questions-panel";
@@ -27,11 +26,15 @@ export default function HomePage() {
     handleFileSelect,
     resetFile
   } = useFileUpload((file) => {
-    // Callback when file is selected - reset processing state
-    setCurrentStep(2);
-    setQuizGenerated(false);
-    setSelectedTopicIndex(null);
-    resetProcessing();
+    // Callback when file is selected - only reset if it's the first document
+    if (sessions.length === 0) {
+      setCurrentStep(2);
+      setQuizGenerated(false);
+      setSelectedTopicIndex(null);
+    } else {
+      // For additional documents, just go to processing step
+      setCurrentStep(2);
+    }
   });
 
   const {
@@ -43,6 +46,8 @@ export default function HomePage() {
     totalQuestionsGenerated,
     s3Key,
     processingError,
+    resourceRepositoryId,
+    sessions,
     handleProcessClick,
     handleRetry,
     resetProcessing
@@ -85,6 +90,13 @@ export default function HomePage() {
   const changeLanguage = (lng) => {
     trackEvent('language_changed', { props: { language: lng, source: 'homepage' } });
     setLanguage(lng);
+  };
+
+  const handleAddDocument = () => {
+    // Trigger file input to add another document
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   const handleResetClick = () => {
@@ -256,9 +268,9 @@ export default function HomePage() {
               Upload your content and watch AI instantly create personalized, interactive quizzes tailored to what you need to learn
             </p>
 
-            {/* 4-Step Process Section */}
+            {/* 3-Step Process Section */}
             <div className="max-w-5xl mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FileUploadStep
                   uploadedFile={uploadedFile}
                   fileInputRef={fileInputRef}
@@ -279,18 +291,11 @@ export default function HomePage() {
                   onRetry={handleRetry}
                 />
 
-                <ResultsStep
-                  currentStep={currentStep}
-                  topics={topics}
-                  totalQuestionsGenerated={totalQuestionsGenerated}
-                  questionsCount={questionsCount}
-                />
-
                 <ShareMonetizeStep quizGenerated={quizGenerated} />
               </div>
 
               {/* Result Section - Topics and Questions */}
-              {currentStep === 3 && (
+              {(isProcessing || topics.length > 0 || sessions.length > 0) && (
                 <div className="mt-6 bg-white rounded-lg shadow-lg border border-gray-200 p-6">
                   {/* Header with Stats */}
                   <div className="mb-6 pb-4 border-b border-gray-200">
@@ -318,13 +323,13 @@ export default function HomePage() {
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-blue-200 border-b-0 rounded-t-lg max-w-xs relative" style={{ marginBottom: '-8px', zIndex: 100 }}>
                       <BookOpen className="w-4 h-4 text-blue-600 flex-shrink-0" />
                       <p className="text-xs font-semibold text-blue-900 truncate">
-                        {uploadedFile ? uploadedFile.name : 'Processed Document'}
+                        {sessions.length > 0 ? `${sessions.length} Document${sessions.length > 1 ? 's' : ''}` : 'Processed Documents'}
                       </p>
                     </div>
                     <button
-                      onClick={handleResetClick}
+                      onClick={handleAddDocument}
                       className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-primary hover:bg-primary-focus text-white transition-colors mb-2 shadow-md hover:shadow-lg"
-                      title="Start new document"
+                      title="Add another document"
                     >
                       <Plus className="w-5 h-5" />
                     </button>
@@ -337,18 +342,40 @@ export default function HomePage() {
                       <div className="flex items-center gap-3">
                         <BookOpen className="w-5 h-5 text-primary" />
                         <h4 className="text-lg font-bold text-gray-900">
-                          {uploadedFile ? uploadedFile.name : 'Processed Document'}
+                          My Documents
                         </h4>
-                        <div className="badge badge-primary badge-sm">1 doc</div>
+                        <div className="badge badge-primary badge-sm">{sessions.length} doc{sessions.length !== 1 ? 's' : ''}</div>
                       </div>
                       <button
-                        onClick={handleResetClick}
+                        onClick={handleAddDocument}
                         className="btn btn-sm btn-primary gap-2"
                       >
                         <Plus className="w-4 h-4" />
                         Add Document
                       </button>
                     </div>
+
+                    {/* Document List */}
+                    {sessions.length > 0 && (
+                      <div className="px-6 pb-4 border-b border-gray-200">
+                        <div className="space-y-2">
+                          {sessions.map((session, index) => (
+                            <div
+                              key={session.id}
+                              className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
+                            >
+                              <BookOpen className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                              <span className="text-sm font-medium text-gray-900 truncate flex-1">
+                                {session.name}
+                              </span>
+                              <div className="badge badge-sm badge-success">
+                                {session.status === 'completed' ? 'Processed' : session.status}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Topics and Questions Layout */}
                     <div className="flex p-4">

@@ -18,6 +18,7 @@ export function useQuizProcessing() {
   const [s3Key, setS3Key] = useState(null);
   const [processingError, setProcessingError] = useState(null);
   const [resourceRepositoryId, setResourceRepositoryId] = useState(null);
+  const [sessions, setSessions] = useState([]);
   const { trackEvent } = usePostHog();
 
   // Create a new resource repository
@@ -35,8 +36,47 @@ export function useQuizProcessing() {
     return data.id;
   };
 
+  // Fetch all data from repository (all sessions, domains, questions)
+  const fetchRepositoryData = async (repositoryId) => {
+    // Fetch all sessions in this repository
+    const { data: sessionsData } = await supabase
+      .from('resource_sessions')
+      .select('*')
+      .eq('resource_repository_id', repositoryId)
+      .order('created_at', { ascending: false });
+
+    // Fetch all domains across all sessions in this repository
+    const { data: domainsData } = await supabase
+      .from('resource_session_domains')
+      .select('*')
+      .eq('resource_repository_id', repositoryId)
+      .order('page_range_start', { ascending: true });
+
+    // Fetch all questions across all sessions in this repository
+    const { data: questionsData } = await supabase
+      .from('resource_session_questions')
+      .select('*')
+      .eq('resource_repository_id', repositoryId)
+      .eq('is_sample', false)
+      .order('created_at', { ascending: true});
+
+    // Get total count of all questions in repository
+    const { count } = await supabase
+      .from('resource_session_questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('resource_repository_id', repositoryId);
+
+    return {
+      sessions: sessionsData || [],
+      domains: domainsData || [],
+      questions: questionsData || [],
+      total: count || 0,
+      sampleCount: questionsData?.length || 0
+    };
+  };
+
   // Separate function for polling and fetching results
-  const pollAndFetchResults = async (s3Key, uploadedFile) => {
+  const pollAndFetchResults = async (s3Key, uploadedFile, repositoryId) => {
     // Use shorter intervals in dev mode for faster testing
     const isDev = import.meta.env.DEV;
     const pollingConfig = isDev ? {
@@ -55,34 +95,24 @@ export function useQuizProcessing() {
       {
         ...pollingConfig,
         onStatusChange: (status, sessionData) => {
-          console.log(`📊 Status Update: ${status}`, { sessionId: sessionData?.id, fullData: sessionData });
           setCurrentProcessingState(status);
         }
       }
     );
 
-    // Fetch domains (topics) from resource_session_domains table
-    const { data: domainsData, error: domainsError } = await fetchResourceSessionDomains(completedSession.id);
+    // Fetch all data from the repository (all sessions, domains, questions)
+    const repositoryData = await fetchRepositoryData(repositoryId);
 
-    // Use domains from the table, or fallback to JSONB topics for backward compatibility
-    const topicsData = domainsData && domainsData.length > 0
-      ? domainsData.map(d => ({
-          id: d.id,
-          name: d.name,
-          start: d.page_range_start,
-          end: d.page_range_end
-        }))
-      : (completedSession.topic_page_range?.topics || []);
-
-    setTopics(topicsData);
-
-    // Fetch questions for this resource session
-    const { data: questionsData, error: questionsError, total, sampleCount } = await fetchResourceSessionQuestions(completedSession.id);
-
-    const questions = questionsData || [];
-    setQuestions(questions);
-    setQuestionsCount(sampleCount || questions.length);
-    setTotalQuestionsGenerated(total || 0);
+    setSessions(repositoryData.sessions);
+    setTopics(repositoryData.domains.map(d => ({
+      id: d.id,
+      name: d.name,
+      start: d.page_range_start,
+      end: d.page_range_end
+    })));
+    setQuestions(repositoryData.questions);
+    setQuestionsCount(repositoryData.sampleCount);
+    setTotalQuestionsGenerated(repositoryData.total);
 
     setIsProcessing(false);
     setCurrentProcessingState("");
@@ -90,9 +120,11 @@ export function useQuizProcessing() {
     trackEvent('quiz_generated', {
       props: {
         fileType: uploadedFile?.type,
-        topicsCount: topicsData.length,
-        questionsCount: questions.length,
-        sessionId: completedSession.id
+        topicsCount: repositoryData.domains.length,
+        questionsCount: repositoryData.questions.length,
+        sessionsCount: repositoryData.sessions.length,
+        sessionId: completedSession.id,
+        repositoryId: repositoryId
       }
     });
 
@@ -114,15 +146,18 @@ export function useQuizProcessing() {
         }
       });
 
-      // Create resource repository first (Step 1: on file upload)
-      const repositoryId = await createResourceRepository();
-      setResourceRepositoryId(repositoryId);
+      // Create resource repository if not exists, otherwise reuse existing
+      let repositoryId = resourceRepositoryId;
+      if (!repositoryId) {
+        repositoryId = await createResourceRepository();
+        setResourceRepositoryId(repositoryId);
 
-      trackEvent('repository_created', {
-        props: {
-          repositoryId: repositoryId
-        }
-      });
+        trackEvent('repository_created', {
+          props: {
+            repositoryId: repositoryId
+          }
+        });
+      }
 
       // Upload file to S3 using presigned URL, passing repository ID
       // S3 key is unique per upload (includes UUID)
@@ -159,10 +194,10 @@ export function useQuizProcessing() {
         }
       });
 
-      // S3 upload triggers event -> SQS -> ECS backend processing
+      // S3 upload triggers event -> SQS -> ECS backend processing (or mock-server)
       // Backend will create resource_session record with repository_id
       // We poll by S3 key (which is unique per upload)
-      await pollAndFetchResults(key, uploadedFile);
+      await pollAndFetchResults(key, uploadedFile, repositoryId);
 
     } catch (error) {
       setProcessingError(error.message);
@@ -207,6 +242,7 @@ export function useQuizProcessing() {
     setS3Key(null);
     setProcessingError(null);
     setResourceRepositoryId(null);
+    setSessions([]);
   };
 
   return {
@@ -219,6 +255,7 @@ export function useQuizProcessing() {
     s3Key,
     processingError,
     resourceRepositoryId,
+    sessions,
     handleProcessClick,
     handleRetry,
     resetProcessing

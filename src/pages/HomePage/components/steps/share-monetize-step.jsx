@@ -13,7 +13,7 @@ export default function ShareMonetizeStep({ quizGenerated }) {
             <DollarSign className={`w-5 h-5 ${quizGenerated ? 'text-yellow-600' : 'text-gray-400'}`} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className={`font-bold text-sm mb-1 ${quizGenerated ? 'text-gray-900' : 'text-gray-400'}`}>Step 4</h3>
+            <h3 className={`font-bold text-sm mb-1 ${quizGenerated ? 'text-gray-900' : 'text-gray-400'}`}>Step 3</h3>
             <p className={`text-xs ${quizGenerated ? 'text-gray-600' : 'text-gray-400'}`}>
               {quizGenerated ? 'Coming Soon!' : 'Share & Earn'}
             </p>

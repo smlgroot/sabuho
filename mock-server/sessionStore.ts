@@ -74,6 +74,42 @@ class SessionStore {
     return sessionData?.domains || [];
   }
 
+  // Get all sessions by repository ID
+  getSessionsByRepositoryId(repositoryId: string): MockResourceSession[] {
+    const sessions: MockResourceSession[] = [];
+    this.sessions.forEach((data) => {
+      if (data.session.resource_repository_id === repositoryId) {
+        sessions.push(data.session);
+      }
+    });
+    return sessions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  // Get all domains by repository ID (across all sessions)
+  getDomainsByRepositoryId(repositoryId: string): MockDomain[] {
+    const domains: MockDomain[] = [];
+    this.sessions.forEach((data) => {
+      if (data.session.resource_repository_id === repositoryId) {
+        domains.push(...data.domains);
+      }
+    });
+    return domains.sort((a, b) => a.page_range_start - b.page_range_start);
+  }
+
+  // Get all questions by repository ID (across all sessions)
+  getQuestionsByRepositoryId(repositoryId: string, isSampleFilter: boolean | null = null): MockQuestion[] {
+    const questions: MockQuestion[] = [];
+    this.sessions.forEach((data) => {
+      if (data.session.resource_repository_id === repositoryId) {
+        const sessionQuestions = isSampleFilter !== null
+          ? data.questions.filter(q => q.is_sample === isSampleFilter)
+          : data.questions;
+        questions.push(...sessionQuestions);
+      }
+    });
+    return questions.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  }
+
   // Clear all sessions (useful for testing)
   clear(): void {
     // Clear all timers
