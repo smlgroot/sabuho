@@ -12,12 +12,15 @@ import statistics
 class TextLine:
     """Represents a line of text with its font metadata"""
 
-    def __init__(self, text: str, font_size: float, font_name: str = "", is_bold: bool = False):
+    def __init__(self, text: str, font_size: float, font_name: str = "", is_bold: bool = False,
+                 y_position: float = 0, line_length: int = 0):
         self.text = text.strip()
         self.font_size = font_size
         self.font_name = font_name
         self.is_bold = is_bold
         self.is_header = False
+        self.y_position = y_position  # Vertical position on page (for determining top/middle/bottom)
+        self.line_length = len(text.strip())  # Short lines are often headers
 
 
 def extract_text_with_font_info(page) -> List[TextLine]:
@@ -51,6 +54,7 @@ def extract_text_with_font_info(page) -> List[TextLine]:
                 line_font_sizes = []
                 line_font_names = []
                 line_is_bold = False
+                line_bbox = line.get("bbox", [0, 0, 0, 0])  # [x0, y0, x1, y1]
 
                 # Iterate through spans (text with same formatting)
                 for span in line.get("spans", []):
@@ -73,12 +77,14 @@ def extract_text_with_font_info(page) -> List[TextLine]:
                     # Use the maximum font size in the line (headers usually have consistent larger fonts)
                     avg_font_size = max(line_font_sizes) if line_font_sizes else 0
                     most_common_font = max(set(line_font_names), key=line_font_names.count) if line_font_names else ""
+                    y_position = line_bbox[1] if line_bbox else 0  # y0 coordinate
 
                     text_line = TextLine(
                         text=line_text,
                         font_size=avg_font_size,
                         font_name=most_common_font,
-                        is_bold=line_is_bold
+                        is_bold=line_is_bold,
+                        y_position=y_position
                     )
                     text_lines.append(text_line)
 
@@ -163,8 +169,12 @@ def format_text_with_header_markers(text_lines: List[TextLine], page_num: int) -
     """
     Format text lines into a string with header markers for AI processing.
 
-    Headers are marked with "### [HEADER, SIZE=Xpt]" prefix to help AI
-    identify topic boundaries.
+    Headers are marked with enhanced metadata to help LLM identify topic boundaries:
+    - Font size
+    - Bold flag
+    - Position on page (TOP/MIDDLE/BOTTOM)
+    - Font family
+    - Line length (SHORT lines are often headers)
 
     Args:
         text_lines: List of TextLine objects with is_header flags set
@@ -175,12 +185,43 @@ def format_text_with_header_markers(text_lines: List[TextLine], page_num: int) -
     """
     output_lines = [f"--- Page {page_num} ---"]
 
+    # Calculate page height to determine position (top/middle/bottom)
+    y_positions = [line.y_position for line in text_lines if line.y_position > 0]
+    min_y = min(y_positions) if y_positions else 0
+    max_y = max(y_positions) if y_positions else 0
+    page_height = max_y - min_y if max_y > min_y else 1
+
+    # Calculate median line length to identify short lines
+    line_lengths = [line.line_length for line in text_lines if line.line_length > 0]
+    median_length = statistics.median(line_lengths) if line_lengths else 50
+
     for line in text_lines:
         if line.is_header:
-            # Mark headers with size information
-            header_marker = f"### [HEADER, SIZE={line.font_size:.1f}pt]"
+            # Determine position on page
+            relative_pos = (line.y_position - min_y) / page_height if page_height > 0 else 0.5
+            if relative_pos < 0.33:
+                position = "TOP"
+            elif relative_pos < 0.67:
+                position = "MIDDLE"
+            else:
+                position = "BOTTOM"
+
+            # Determine if line is short (potential header)
+            length_indicator = "SHORT" if line.line_length < median_length * 0.6 else ""
+
+            # Build enhanced header marker
+            header_marker = f"### [HEADER, SIZE={line.font_size:.1f}pt"
             if line.is_bold:
-                header_marker += " [BOLD]"
+                header_marker += ", BOLD"
+            header_marker += f", {position}"
+            if length_indicator:
+                header_marker += f", {length_indicator}"
+            if line.font_name:
+                # Simplify font name (remove technical suffixes)
+                font_family = line.font_name.split('+')[-1].split('-')[0]
+                header_marker += f", FONT={font_family}"
+            header_marker += "]"
+
             output_lines.append(f"{header_marker} {line.text}")
         else:
             output_lines.append(line.text)

@@ -1,50 +1,84 @@
 """
 Topic identification module - identifies document topics and their page ranges.
-This module uses structure-based analysis using font formatting markers.
+This module uses LLM-based semantic analysis for reliable topic detection.
 """
-from ai.structure_topic_identifier import identify_topics_structure
+import re
+from ai.llm_topic_identifier import identify_topics_with_llm_chunked
+from ai.openai_client import create_openai_client
 
 
 def identify_document_topics(text: str, progress_callback) -> dict:
     """
-    Identify topics and their page ranges in a document.
+    Identify topics and their page ranges in a document using LLM semantic analysis.
 
     This is the main entry point for topic identification.
     It can be tested independently without the full Lambda context.
 
-    Uses structure-based analysis that:
-    - Extracts header markers from OCR text
-    - Analyzes font sizes to determine heading hierarchy
-    - Uses bold markers as secondary signals
-    - Creates topics from top-level headers
-
-    This approach is inspired by pdf.tocgen and TSHD algorithms (96%+ accuracy).
+    Uses LLM-based analysis that:
+    - Understands semantic meaning of headers and content
+    - Detects topics that span multiple pages
+    - Handles inconsistent formatting better than structure-based approaches
+    - Uses enhanced header markers with font size, position, bold, and font family metadata
 
     Args:
         text: Full document text with page markers (e.g., "--- Page 1 ---")
-              and header markers (e.g., "### [HEADER, SIZE=14pt] Title")
+              and enhanced header markers (e.g., "### [HEADER, SIZE=14pt, BOLD, TOP] Title")
         progress_callback: Callback function(stage, current, total, metadata) to report progress
 
     Returns:
         Dict with format: {"topics": [{"name": "...", "start": 1, "end": 5}, ...]}
 
     Example:
-        >>> text = "--- Page 1 ---\\n### [HEADER, SIZE=18pt] Introduction\\n...\\n--- Page 2 ---\\n..."
+        >>> text = "--- Page 1 ---\\n### [HEADER, SIZE=18pt, BOLD, TOP] Introduction\\n...\\n--- Page 2 ---\\n..."
         >>> result = identify_document_topics(text, callback)
         >>> print(result)
         {"topics": [{"name": "Introduction", "start": 1, "end": 5}, ...]}
     """
-    print("Starting structure-based topic identification...")
+    print("Starting LLM-based topic identification...")
 
-    # Use structure-based approach (fast, reliable, based on formatting)
-    topics_map = identify_topics_structure(text)
+    # Count total pages in the document
+    total_pages = _count_pages(text)
+    print(f"Document has {total_pages} pages")
 
-    print(f"Identified {len(topics_map.get('topics', []))} topics")
+    # Create OpenAI client
+    client = create_openai_client()
+
+    # Use LLM-based approach with chunked processing for large documents
+    # This intelligently handles multi-page topics and semantic understanding
+    # Using smaller chunk_size=30 for faster processing
+    topics_list = identify_topics_with_llm_chunked(client, text, total_pages, chunk_size=30)
+
+    # Convert to the expected format
+    topics_map = {"topics": topics_list}
+
+    print(f"Identified {len(topics_list)} topics using LLM")
 
     # Report completion
     progress_callback('ai_topics_identified', 1, 1)
 
     return topics_map
+
+
+def _count_pages(text: str) -> int:
+    """
+    Count the number of pages in the document based on page markers.
+
+    Args:
+        text: OCR text with page markers (e.g., "--- Page 1 ---")
+
+    Returns:
+        Total number of pages
+    """
+    # Find all page markers like "--- Page 5 ---"
+    page_matches = re.findall(r'--- Page (\d+) ---', text)
+
+    if not page_matches:
+        # No page markers found, assume single page
+        return 1
+
+    # Return the highest page number found
+    page_numbers = [int(num) for num in page_matches]
+    return max(page_numbers)
 
 
 def validate_topics_map(topics_map: dict) -> bool:
