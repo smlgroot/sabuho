@@ -49,17 +49,20 @@ def call_openai_for_questions(client: OpenAI, batch_content: str, batch_topics: 
     system_prompt = """You are an expert educational content creator that generates high-quality multiple-choice quiz questions from educational materials.
 
 Your task:
-1. Generate as many meaningful practice questions as possible from the provided text
-2. Each question should test understanding of key concepts
-3. Provide at least 3 multiple-choice options per question
-4. Mark the correct answer with its index (0-based)
-5. Include a brief source text excerpt showing where the answer can be found
-6. If the text is in Spanish, generate questions in Spanish
+1. Generate questions for ALL topics provided in the content
+2. Generate the MAXIMUM number of questions possible from each topic
+3. Each question should test understanding of concepts from the content
+4. Provide at least 3 multiple-choice options per question
+5. Mark the correct answer with its index (0-based)
+6. Include a brief source text excerpt showing where the answer can be found
+7. Label each question with the exact topic name it belongs to
+8. If the text is in Spanish, generate questions in Spanish
 
 Return a JSON object with this exact structure:
 {
   "questions": [
     {
+      "topic_name": "Exact topic name from the input",
       "question": "Question text here?",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correct_answer_index": 0,
@@ -69,11 +72,14 @@ Return a JSON object with this exact structure:
 }
 
 Guidelines:
-- Generate diverse questions covering different concepts
+- Maximize the number of questions - more questions = better learning coverage
+- Generate questions from EVERY topic in the batch
+- Extract multiple different concepts from each topic to create diverse questions
+- Questions should test facts, definitions, relationships, and applications from the content
 - Avoid ambiguous or trick questions
 - Options should be plausible but clearly distinguishable
 - Source text should be concise but sufficient to verify the answer
-- Generate 3-8 questions per topic depending on content richness
+- Use the exact topic name provided in the input
 """
 
     topic_names = [t['name'] for t in batch_topics]
@@ -98,6 +104,7 @@ Return the result as JSON."""
                         "items": {
                             "type": "object",
                             "properties": {
+                                "topic_name": {"type": "string"},
                                 "question": {"type": "string"},
                                 "options": {
                                     "type": "array",
@@ -106,7 +113,7 @@ Return the result as JSON."""
                                 "correct_answer_index": {"type": "integer"},
                                 "source_text": {"type": "string"}
                             },
-                            "required": ["question", "options", "correct_answer_index", "source_text"],
+                            "required": ["topic_name", "question", "options", "correct_answer_index", "source_text"],
                             "additionalProperties": False
                         }
                     }
@@ -137,7 +144,7 @@ Return the result as JSON."""
 
         questions = result['questions']
         for q in questions:
-            required_keys = ['question', 'options', 'correct_answer_index', 'source_text']
+            required_keys = ['topic_name', 'question', 'options', 'correct_answer_index', 'source_text']
             for key in required_keys:
                 if key not in q:
                     raise ValueError(f"Question missing required key '{key}': {q}")
