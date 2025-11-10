@@ -112,6 +112,9 @@ def generate_questions_for_topics(topic_texts: list, domain_mapping: dict, progr
 
     print(f"Question generation complete: {len(all_questions)} total questions generated")
 
+    # Log question distribution across topics
+    _validate_topic_coverage(topic_texts, all_questions)
+
     return all_questions
 
 
@@ -119,26 +122,25 @@ def _map_questions_to_domains(questions: list, batch_topics: list, domain_mappin
     """
     Map generated questions to their corresponding domain IDs.
 
-    Strategy: Use heuristics to determine which topic each question belongs to.
-    - Match keywords from topic names in question/options/source_text
-    - Fall back to distributing questions evenly across batch topics
+    Uses the explicit topic_name provided by OpenAI in each question.
 
     Args:
-        questions: List of question dicts from OpenAI
+        questions: List of question dicts from OpenAI (with topic_name field)
         batch_topics: List of topic dicts that were in this batch
         domain_mapping: Dict mapping topic names to domain IDs
 
     Returns:
-        List of questions with 'topic_name' and 'domain_id' added
+        List of questions with 'domain_id' added
     """
-    # Create a topic name -> topic dict mapping for easy lookup
-    topic_lookup = {topic['name']: topic for topic in batch_topics}
-
     questions_with_domains = []
 
     for question in questions:
-        # Try to determine which topic this question belongs to
-        topic_name = _infer_topic_for_question(question, batch_topics)
+        # Get the topic_name directly from OpenAI's response
+        topic_name = question.get('topic_name')
+
+        if not topic_name:
+            print(f"Warning: Question missing 'topic_name' field, skipping: {question.get('question', 'Unknown')[:50]}")
+            continue
 
         # Get domain ID for this topic
         domain_id = domain_mapping.get(topic_name)
@@ -147,10 +149,9 @@ def _map_questions_to_domains(questions: list, batch_topics: list, domain_mappin
             print(f"Warning: No domain_id found for topic '{topic_name}', skipping question")
             continue
 
-        # Add topic name and domain ID to question
+        # Add domain ID to question (topic_name already present)
         question_with_domain = {
             **question,
-            'topic_name': topic_name,
             'domain_id': domain_id
         }
 
@@ -159,45 +160,29 @@ def _map_questions_to_domains(questions: list, batch_topics: list, domain_mappin
     return questions_with_domains
 
 
-def _infer_topic_for_question(question: dict, batch_topics: list) -> str:
+def _validate_topic_coverage(topic_texts: list, questions: list):
     """
-    Infer which topic a question belongs to based on content matching.
+    Log question distribution across topics for informational purposes.
 
     Args:
-        question: Question dict with 'question', 'options', 'source_text' keys
-        batch_topics: List of topic dicts in this batch
-
-    Returns:
-        Topic name (defaults to first topic if no clear match)
+        topic_texts: List of topic dicts with 'name' key
+        questions: List of generated questions with 'topic_name' key
     """
-    # Combine all question content for matching
-    question_content = (
-        question.get('question', '') + ' ' +
-        ' '.join(question.get('options', [])) + ' ' +
-        question.get('source_text', '')
-    ).lower()
+    # Count questions per topic
+    questions_per_topic = {}
+    for topic in topic_texts:
+        questions_per_topic[topic['name']] = 0
 
-    # Try to find best matching topic
-    best_match = None
-    best_match_score = 0
+    for question in questions:
+        topic_name = question.get('topic_name')
+        if topic_name in questions_per_topic:
+            questions_per_topic[topic_name] += 1
 
-    for topic in batch_topics:
-        topic_name = topic['name'].lower()
-        topic_keywords = topic_name.split()
-
-        # Count how many topic keywords appear in question content
-        match_score = sum(1 for keyword in topic_keywords if keyword in question_content)
-
-        if match_score > best_match_score:
-            best_match_score = match_score
-            best_match = topic['name']
-
-    # If we found a match, use it; otherwise use first topic as fallback
-    if best_match:
-        return best_match
-    else:
-        # Fallback: use first topic in batch
-        return batch_topics[0]['name'] if batch_topics else 'Unknown'
+    # Log distribution summary
+    print("\nQuestion distribution per topic:")
+    for topic_name, count in sorted(questions_per_topic.items()):
+        print(f"  {topic_name}: {count} question(s)")
+    print()
 
 
 def validate_question(question: dict) -> bool:
