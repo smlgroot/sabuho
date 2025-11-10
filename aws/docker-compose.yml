@@ -74,26 +74,16 @@ services:
     volumes:
       - ./sabuho-process-document-hub/src:/app:ro
       - /tmp/.paddlex:/root/.paddlex
+    env_file:
+      - .env
     environment:
-      - APP_ENV_TYPE=${APP_ENV_TYPE:-development}
       - PYTHONUNBUFFERED=1
-      - OCR_ENGINE=${OCR_ENGINE:-tesseract}
-      - SUPABASE_URL=${SUPABASE_URL:-http://mock-server:3001}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-mock-key}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
-      - AWS_REGION=us-east-1
       - AWS_ENDPOINT_URL=http://localstack:4566
-      - AWS_S3_BUCKET=sabuho-files
-      - AWS_S3_OCR_BUCKET=sabuho-files-ocr
-      - TEST_FILE_PATH=${TEST_FILE_PATH:-uploads/test-compendio.pdf}
-      - TEST_MESSAGE_TYPE=${TEST_MESSAGE_TYPE:-ai_process}
-      - TEST_SESSION_ID=${TEST_SESSION_ID:-a01c29d9-e52c-49ab-9bcd-5c20f95c7d2b}
       - S3_EVENTS_QUEUE_URL=http://localstack:4566/000000000000/sabuho-s3-events
       - PROCESSING_QUEUE_URL=http://localstack:4566/000000000000/sabuho-processing.fifo
       - PROCESSING_DLQ_URL=http://localstack:4566/000000000000/sabuho-processing-dlq.fifo
-      - MAX_WORKERS=${MAX_WORKERS:-4}
     depends_on:
       localstack:
         condition: service_healthy

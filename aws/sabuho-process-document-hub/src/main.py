@@ -274,9 +274,14 @@ class SQSProcessor:
 
                     # If OCR succeeded, send AI processing message to processing queue
                     if result.success:
-                        session_id = result.data.get('session_id')
-                        self._send_ai_message(session_id)
-                        logger.info(f"Successfully processed OCR and queued AI for session: {session_id}")
+                        # Check if this was skipped (duplicate)
+                        if result.data.get('skipped'):
+                            logger.info(f"Skipped duplicate OCR processing - Message: {message_id}")
+                        else:
+                            # Not skipped, send AI message
+                            session_id = result.data.get('session_id')
+                            self._send_ai_message(session_id)
+                            logger.info(f"Successfully processed OCR and queued AI for session: {session_id}")
                     else:
                         error_reason = f"OCR processing failed: {result.error}"
                         logger.error(f"{error_reason} - Message: {message_id}")
@@ -319,9 +324,10 @@ class SQSProcessor:
                     QueueUrl=queue_url,
                     ReceiptHandle=message['ReceiptHandle']
                 )
-                logger.debug(f"Deleted processing message from queue: {message_id}")
+                logger.info(f"✓ Deleted processing message from queue: {message_id}")
             except Exception as delete_error:
-                logger.error(f"Failed to delete processing message {message_id}: {delete_error}")
+                logger.error(f"✗ CRITICAL: Failed to delete processing message {message_id}: {delete_error}")
+                logger.error(f"Message will be reprocessed after visibility timeout!")
                 return False
 
         return True

@@ -126,7 +126,9 @@ class OCRProcessor:
             )
 
             if not resource_session:
-                return ProcessingResult(False, "Failed to create resource session in database")
+                # None means session already exists (duplicate message) - skip processing
+                print(f"[OCRProcessor] Session already exists for {key}, skipping duplicate processing")
+                return ProcessingResult(True, data={'skipped': True, 'reason': 'duplicate'})
 
             session_id = resource_session['id']
             print(f"[OCRProcessor] Created resource_session with id: {session_id}")

@@ -178,8 +178,9 @@ def _update_resource_session(supabase: Client, session_id: str, status: str, unp
 
 def save_resource_session_processing_ocr(supabase: Client, file_path: str, name: str, resource_repository_id: str = None) -> dict:
     """
-    Create a new resource session record with 'processing' status for OCR.
-    Always creates a new session - returns the session record with ID.
+    Get or create a resource session record with 'processing' status for OCR.
+    Checks if a session with this file_path already exists, and if so, returns it.
+    Otherwise creates a new session.
 
     Args:
         supabase: Supabase client
@@ -188,8 +189,21 @@ def save_resource_session_processing_ocr(supabase: Client, file_path: str, name:
         resource_repository_id: Optional resource repository ID
 
     Returns:
-        Created resource session dict
+        Existing or created resource session dict (or None if session should be skipped)
     """
+    # Check if a session with this file_path already exists
+    try:
+        result = supabase.table('resource_sessions').select('*').eq('file_path', file_path).execute()
+        if result.data and len(result.data) > 0:
+            # Session already exists - return None to signal duplicate (don't reprocess)
+            existing_session = result.data[-1]  # Get the last (most recent) one
+            print(f"[save_resource_session_processing_ocr] Session already exists for: {file_path}, ID: {existing_session['id']}, status: {existing_session['status']} - SKIPPING")
+            return None  # Signal to skip processing
+    except Exception as e:
+        print(f"[save_resource_session_processing_ocr] Error checking for existing session: {e}")
+        # Continue to create new session if check fails
+
+    # No existing session found, create a new one
     return _create_resource_session(supabase, file_path, name, 'processing', resource_repository_id)
 
 
@@ -351,7 +365,8 @@ def save_questions_to_db(supabase: Client, questions: list, session_id: str, res
             'type': 'multiple_options',
             'body': q['question'],
             'options': options_with_correct,  # JSONB array of strings
-            'explanation': q.get('source_text', '')
+            'explanation': q.get('source_text', ''),
+            'is_sample': False  # Mark as real questions (not sample data)
         }
 
         # Add resource_repository_id if provided

@@ -75,7 +75,7 @@ aws --endpoint-url=$ENDPOINT sqs create-queue \
         "ContentBasedDeduplication": "false",
         "VisibilityTimeout": "900",
         "MessageRetentionPeriod": "86400",
-        "RedrivePolicy": "{\"deadLetterTargetArn\":\"'$DLQ_ARN'\",\"maxReceiveCount\":\"3\"}"
+        "RedrivePolicy": "{\"deadLetterTargetArn\":\"'$DLQ_ARN'\",\"maxReceiveCount\":\"1\"}"
     }' || echo "Processing queue already exists"
 
 # Create S3 events queue
