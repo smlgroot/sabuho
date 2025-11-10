@@ -1,7 +1,7 @@
 """
-LLM-based topic identification using OpenAI for semantic understanding.
+LLM-based topic identification using configurable LLM providers.
 
-This module uses GPT models to intelligently identify document topics by analyzing:
+This module uses LLM models to intelligently identify document topics by analyzing:
 - Header text content and semantic meaning
 - Font size, bold, position, and other styling metadata
 - Context and relationships between headers
@@ -15,12 +15,12 @@ Unlike structure-based approaches, this can understand:
 import json
 import re
 from typing import List, Dict
-from openai import OpenAI
+from .base_provider import BaseLLMProvider, ChatMessage, CompletionConfig
 
 
-def identify_topics_with_llm(client: OpenAI, ocr_text: str, total_pages: int) -> List[Dict]:
+def identify_topics_with_llm(provider: BaseLLMProvider, ocr_text: str, total_pages: int) -> List[Dict]:
     """
-    Use OpenAI to identify topics from OCR text with header markers.
+    Use LLM provider to identify topics from OCR text with header markers.
 
     This approach is more reliable than structure-based detection because:
     1. Understands semantic meaning of headers
@@ -29,7 +29,7 @@ def identify_topics_with_llm(client: OpenAI, ocr_text: str, total_pages: int) ->
     4. Understands topic hierarchy and relationships
 
     Args:
-        client: OpenAI client instance
+        provider: LLM provider instance
         ocr_text: OCR text with enhanced header markers
         total_pages: Total number of pages in document
 
@@ -42,7 +42,7 @@ def identify_topics_with_llm(client: OpenAI, ocr_text: str, total_pages: int) ->
         ]
 
     Raises:
-        Exception: If OpenAI API call fails or returns invalid structure
+        Exception: If LLM API call fails or returns invalid structure
     """
 
     # Extract just the headers and page markers for more efficient processing
@@ -99,23 +99,30 @@ Important:
 - Return ONLY the JSON object, no markdown formatting or additional text"""
 
     try:
-        print("[llm_topic_identifier] Calling OpenAI to identify topics...")
-        response = client.chat.completions.create(
-            model='gpt-3.5-turbo',  # Faster and cheaper for topic identification
+        print(f"[llm_topic_identifier] Calling {provider} to identify topics...")
+
+        # Get the appropriate model for topic identification
+        model = provider.get_default_topic_model()
+
+        # Create completion configuration
+        config = CompletionConfig(
+            model=model,
             messages=[
-                {'role': 'system', 'content': system_prompt},
-                {'role': 'user', 'content': user_prompt}
+                ChatMessage(role='system', content=system_prompt),
+                ChatMessage(role='user', content=user_prompt)
             ],
             max_tokens=2000,  # Reduced - topic lists don't need many tokens
             temperature=0.1,  # Low temperature for consistent results
-            response_format={"type": "json_object"}  # Simple JSON mode for gpt-3.5-turbo
+            json_mode=True  # Request JSON response
         )
 
-        result = json.loads(response.choices[0].message.content)
+        # Make the API call
+        response = provider.create_chat_completion(config)
+        result = json.loads(response.content)
 
         # Validate structure
         if 'topics' not in result:
-            raise ValueError("OpenAI response missing 'topics' key")
+            raise ValueError("LLM response missing 'topics' key")
 
         topics = result['topics']
 
@@ -138,7 +145,7 @@ Important:
         return topics
 
     except json.JSONDecodeError as e:
-        raise Exception(f"Failed to parse OpenAI response as JSON: {e}")
+        raise Exception(f"Failed to parse LLM response as JSON: {e}")
     except Exception as e:
         raise Exception(f"LLM topic identification failed: {e}")
 
@@ -175,7 +182,7 @@ def _extract_headers_summary(ocr_text: str) -> str:
     return '\n'.join(summary_lines)
 
 
-def identify_topics_with_llm_chunked(client: OpenAI, ocr_text: str, total_pages: int,
+def identify_topics_with_llm_chunked(provider: BaseLLMProvider, ocr_text: str, total_pages: int,
                                      chunk_size: int = 50) -> List[Dict]:
     """
     Identify topics using LLM with chunked processing for very large documents.
@@ -184,7 +191,7 @@ def identify_topics_with_llm_chunked(client: OpenAI, ocr_text: str, total_pages:
     combines the results intelligently to handle topics spanning chunk boundaries.
 
     Args:
-        client: OpenAI client instance
+        provider: LLM provider instance
         ocr_text: OCR text with header markers
         total_pages: Total number of pages
         chunk_size: Number of pages per chunk (default 50)
@@ -194,7 +201,7 @@ def identify_topics_with_llm_chunked(client: OpenAI, ocr_text: str, total_pages:
     """
     # If document is small enough, use single-pass approach
     if total_pages <= chunk_size:
-        return identify_topics_with_llm(client, ocr_text, total_pages)
+        return identify_topics_with_llm(provider, ocr_text, total_pages)
 
     print(f"[llm_topic_identifier] Document has {total_pages} pages, using chunked processing...")
 
@@ -213,7 +220,7 @@ def identify_topics_with_llm_chunked(client: OpenAI, ocr_text: str, total_pages:
         chunk_text = _extract_page_range(ocr_text, chunk_start, chunk_end)
 
         # Identify topics in this chunk
-        chunk_topics = identify_topics_with_llm(client, chunk_text, chunk_end - chunk_start + 1)
+        chunk_topics = identify_topics_with_llm(provider, chunk_text, chunk_end - chunk_start + 1)
 
         # Adjust page numbers to absolute (not chunk-relative)
         for topic in chunk_topics:

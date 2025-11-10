@@ -6,7 +6,7 @@ LLM-based semantic analysis if no TOC is found.
 import re
 from ai.toc_detector import detect_toc_probabilistic
 from ai.llm_topic_identifier import identify_topics_with_llm_chunked
-from ai.openai_client import create_openai_client
+from ai.provider_factory import get_llm_provider
 
 
 def identify_document_topics(text: str, progress_callback) -> dict:
@@ -53,13 +53,13 @@ def identify_document_topics(text: str, progress_callback) -> dict:
     # STRATEGY 2: Fall back to LLM if no TOC found
     print("\n[Strategy 2] No valid TOC found, using LLM-based semantic analysis...")
 
-    # Create OpenAI client
-    client = create_openai_client()
+    # Get LLM provider
+    provider = get_llm_provider()
 
     # Use LLM-based approach with chunked processing for large documents
     # This intelligently handles multi-page topics and semantic understanding
     # Using smaller chunk_size=30 for faster processing
-    topics_list = identify_topics_with_llm_chunked(client, text, total_pages, chunk_size=30)
+    topics_list = identify_topics_with_llm_chunked(provider, text, total_pages, chunk_size=30)
 
     # Convert to the expected format
     topics_map = {"topics": topics_list}

@@ -3,7 +3,8 @@ Question generation module - generates quiz questions from topics.
 This module is designed to be testable independently.
 """
 import time
-from ai.openai_client import create_openai_client, call_openai_for_questions
+from ai.provider_factory import get_llm_provider
+from ai.llm_client import generate_questions_with_llm
 from ai.text_processor import create_batches, format_batch_content
 
 
@@ -54,11 +55,16 @@ def generate_questions_for_topics(topic_texts: list, domain_mapping: dict, progr
         print("Warning: No topics provided for question generation")
         return []
 
-    # Create OpenAI client
-    client = create_openai_client()
+    # Get LLM provider
+    provider = get_llm_provider()
+
+    # Get provider-specific batch token limit
+    model = provider.get_default_question_model()
+    batch_token_limit = provider.get_batch_token_limit(model)
+    print(f"Using batch token limit: {batch_token_limit} for {provider}")
 
     # Create batches based on token limits
-    batches = create_batches(topic_texts)
+    batches = create_batches(topic_texts, max_tokens=batch_token_limit)
     print(f"Created {len(batches)} batches for processing")
 
     # Calculate total topics for progress tracking
@@ -82,9 +88,9 @@ def generate_questions_for_topics(topic_texts: list, domain_mapping: dict, progr
         # Format batch content
         batch_content = format_batch_content(batch)
 
-        # Call OpenAI for this batch
+        # Call LLM provider for this batch
         try:
-            batch_questions = call_openai_for_questions(client, batch_content, batch)
+            batch_questions = generate_questions_with_llm(provider, batch_content, batch)
 
             # Map questions to domains
             questions_with_domains = _map_questions_to_domains(
