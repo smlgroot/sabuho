@@ -5,6 +5,9 @@ import { sessionStore } from './sessionStore';
 
 const app = new Hono();
 
+// Get port configuration (used in presigned URLs)
+const port = process.env.MOCK_SERVER_PORT || 4001;
+
 // Manual CORS middleware - set headers BEFORE processing request
 app.use('*', async (c, next) => {
   // Get the requested headers from the preflight request
@@ -102,7 +105,7 @@ app.post('/presign', async (c) => {
   const key = `uploads/${timestamp}/${jobId}/${filename}`;
 
   // Generate mock presigned URL (points to our mock upload endpoint)
-  const uploadUrl = `http://localhost:3001/uploads/${timestamp}/${jobId}/${filename}`;
+  const uploadUrl = `http://localhost:${port}/uploads/${timestamp}/${jobId}/${filename}`;
 
   console.log(`🔑 Generated presigned URL for: ${filename}`);
   if (resource_repository_id) {
@@ -499,8 +502,6 @@ app.get('/health', (c) => {
 });
 
 // Start server
-const port = process.env.MOCK_SERVER_PORT || 3001;
-
 console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
