@@ -1,16 +1,17 @@
 import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from "react-router-dom";
 import { Globe, Brain, Target, Trophy, BookOpen, BarChart3, Sparkles, Zap, AlertCircle, CheckCircle, RotateCcw, Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { usePostHog } from "@/components/PostHogProvider";
-import { useFileUpload } from "@/hooks/useFileUpload";
+import { useFileUpload, DOCUMENT_STATUS } from "@/hooks/useFileUpload";
 import { useQuizProcessing } from "@/hooks/useQuizProcessing";
 import FileUploadStep from "./components/steps/file-upload-step";
 import ProcessingStep from "./components/steps/processing-step";
 import ShareMonetizeStep from "./components/steps/share-monetize-step";
 import TopicsSidebar from "./components/results/topics-sidebar";
 import QuestionsPanel from "./components/results/questions-panel";
+import { DocumentQueue } from "@/components/DocumentQueue";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
@@ -21,19 +22,24 @@ export default function HomePage() {
 
   // Custom hooks for file upload and quiz processing
   const {
+    documentQueue,
     uploadedFile,
     fileInputRef,
     handleFileSelect,
-    resetFile
-  } = useFileUpload((file) => {
-    // Callback when file is selected - only reset if it's the first document
-    if (sessions.length === 0) {
+    removeDocumentFromQueue,
+    updateDocumentStatus,
+    getPendingDocuments,
+    getProcessingDocument,
+    resetDocumentQueue,
+    resetFile,
+    DOCUMENT_STATUS: DOC_STATUS
+  } = useFileUpload((newDocument, currentQueue) => {
+    // Callback when file is selected
+    // Show processing step if we have documents to process
+    if (currentQueue.length > 0 || sessions.length === 0) {
       setCurrentStep(2);
       setQuizGenerated(false);
       setSelectedTopicIndex(null);
-    } else {
-      // For additional documents, just go to processing step
-      setCurrentStep(2);
     }
   });
 
@@ -58,6 +64,7 @@ export default function HomePage() {
   const [quizGenerated, setQuizGenerated] = useState(false);
   const [selectedTopicIndex, setSelectedTopicIndex] = useState(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [currentProcessingDocId, setCurrentProcessingDocId] = useState(null);
 
   const handleMainButton = () => {
     if (user) {
@@ -101,7 +108,7 @@ export default function HomePage() {
 
   const handleResetClick = () => {
     // Only show confirmation if there's actual data to lose
-    if (uploadedFile || topics.length > 0 || questions.length > 0) {
+    if (documentQueue.length > 0 || topics.length > 0 || questions.length > 0) {
       setShowResetDialog(true);
     } else {
       // No data to lose, reset immediately
@@ -110,7 +117,7 @@ export default function HomePage() {
   };
 
   const performReset = () => {
-    resetFile();
+    resetDocumentQueue();
     resetProcessing();
     setQuizGenerated(false);
     setCurrentStep(1);
@@ -121,6 +128,59 @@ export default function HomePage() {
   const handleCancelReset = () => {
     setShowResetDialog(false);
   };
+
+  // Process documents from the queue sequentially
+  const processNextDocument = useCallback(async () => {
+    const pendingDocs = getPendingDocuments();
+
+    if (pendingDocs.length === 0 || isProcessing) {
+      return;
+    }
+
+    const nextDoc = pendingDocs[0];
+    setCurrentProcessingDocId(nextDoc.id);
+    updateDocumentStatus(nextDoc.id, {
+      status: DOC_STATUS.PROCESSING,
+      progress: { stage: 'Starting...', current: 0, total: 100 }
+    });
+
+    try {
+      await handleProcessClick(nextDoc.file);
+      updateDocumentStatus(nextDoc.id, {
+        status: DOC_STATUS.COMPLETED,
+        progress: { stage: 'Complete', current: 100, total: 100 }
+      });
+      setQuizGenerated(true);
+      setCurrentStep(3);
+
+      // Check if there are more documents to process
+      const remainingPending = getPendingDocuments();
+      if (remainingPending.length > 1) { // More than the one we just processed
+        // Continue processing next document
+        setTimeout(() => processNextDocument(), 500);
+      }
+    } catch (error) {
+      updateDocumentStatus(nextDoc.id, {
+        status: DOC_STATUS.FAILED,
+        error: error.message || 'Processing failed'
+      });
+    } finally {
+      setCurrentProcessingDocId(null);
+    }
+  }, [getPendingDocuments, isProcessing, updateDocumentStatus, handleProcessClick]);
+
+  // Watch for processing state changes to update the current document's progress
+  useEffect(() => {
+    if (currentProcessingDocId && currentProcessingState) {
+      updateDocumentStatus(currentProcessingDocId, {
+        progress: {
+          stage: currentProcessingState,
+          current: 50, // You could calculate this based on the state
+          total: 100
+        }
+      });
+    }
+  }, [currentProcessingDocId, currentProcessingState, updateDocumentStatus]);
 
   if (loading) {
     return (
@@ -280,6 +340,7 @@ export default function HomePage() {
                       fileInputRef={fileInputRef}
                       onFileSelect={handleFileSelect}
                       onReset={handleResetClick}
+                      documentQueue={documentQueue}
                     />
 
                     <ProcessingStep
@@ -287,16 +348,21 @@ export default function HomePage() {
                       isProcessing={isProcessing}
                       processingError={processingError}
                       currentProcessingState={currentProcessingState}
-                      onProcessClick={async () => {
-                        await handleProcessClick(uploadedFile);
-                        setQuizGenerated(true);
-                        setCurrentStep(3);
-                      }}
+                      onProcessClick={processNextDocument}
                       onRetry={handleRetry}
                     />
 
                     <ShareMonetizeStep quizGenerated={quizGenerated} />
                   </div>
+
+                  {/* Document Queue Display */}
+                  {documentQueue.length > 0 && (
+                    <DocumentQueue
+                      documentQueue={documentQueue}
+                      onRemoveDocument={removeDocumentFromQueue}
+                      className="mt-4"
+                    />
+                  )}
                 </div>
 
                 {/* Divider */}

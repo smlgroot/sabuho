@@ -1,21 +1,23 @@
-import { Upload, CheckCircle, FileText, BarChart3, RotateCcw } from "lucide-react";
+import { Upload, CheckCircle, FileText, BarChart3, RotateCcw, Plus } from "lucide-react";
 
 export default function FileUploadStep({
   uploadedFile,
   fileInputRef,
   onFileSelect,
-  onReset
+  onReset,
+  documentQueue = []
 }) {
+  const queueCount = documentQueue.length;
   return (
     <div className={`bg-white rounded-lg shadow-md border-2 p-4 transition-all ${
-      uploadedFile ? 'border-green-500 shadow-lg' : 'border-blue-500'
+      queueCount > 0 ? 'border-green-500 shadow-lg' : 'border-blue-500'
     }`}>
       <div className="flex flex-col h-full">
         <div className="flex items-start gap-3 mb-3">
           <div className={`rounded-full p-2 flex-shrink-0 ${
-            uploadedFile ? 'bg-green-100' : 'bg-blue-100'
+            queueCount > 0 ? 'bg-green-100' : 'bg-blue-100'
           }`}>
-            {uploadedFile ? (
+            {queueCount > 0 ? (
               <CheckCircle className="w-5 h-5 text-green-600" />
             ) : (
               <Upload className="w-5 h-5 text-blue-600" />
@@ -24,7 +26,7 @@ export default function FileUploadStep({
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-gray-900 text-sm mb-1">Step 1</h3>
             <p className="text-xs text-gray-600">
-              {uploadedFile ? 'File ready!' : 'Choose a file'}
+              {queueCount > 0 ? `${queueCount} file${queueCount > 1 ? 's' : ''} queued` : 'Choose a file'}
             </p>
           </div>
         </div>
@@ -85,7 +87,7 @@ export default function FileUploadStep({
           </div>
         )}
 
-        {!uploadedFile ? (
+        {queueCount === 0 ? (
           <label
             htmlFor="file-upload-step"
             className="btn btn-primary btn-sm cursor-pointer w-full mt-auto"
@@ -93,13 +95,22 @@ export default function FileUploadStep({
             Select File
           </label>
         ) : (
-          <button
-            onClick={onReset}
-            className="btn btn-outline btn-sm w-full mt-auto hover:btn-error"
-          >
-            <RotateCcw className="w-4 h-4 mr-1" />
-            Start Over
-          </button>
+          <div className="flex gap-2 mt-auto">
+            <label
+              htmlFor="file-upload-step"
+              className="btn btn-outline btn-sm cursor-pointer flex-1"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add More
+            </label>
+            <button
+              onClick={onReset}
+              className="btn btn-outline btn-sm flex-1 hover:btn-error"
+            >
+              <RotateCcw className="w-4 h-4 mr-1" />
+              Reset
+            </button>
+          </div>
         )}
       </div>
     </div>

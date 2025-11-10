@@ -77,14 +77,14 @@ export function useQuizProcessing() {
 
   // Separate function for polling and fetching results
   const pollAndFetchResults = async (s3Key, uploadedFile, repositoryId) => {
-    // Use shorter intervals in dev mode for faster testing
+    // Use reasonable intervals to avoid excessive polling
     const isDev = import.meta.env.DEV;
     const pollingConfig = isDev ? {
-      intervalMs: 1000,        // 1 second in dev for more granular updates (vs 2 seconds in prod)
+      intervalMs: 3000,        // 3 seconds in dev (reduced from 1 second to avoid excessive polling)
       timeoutMs: 300000,       // 5 minutes timeout
       maxWaitForRecord: 60000 // 60 seconds to wait for initial record creation
     } : {
-      intervalMs: 2000,
+      intervalMs: 5000,        // 5 seconds in prod (reduced from 2 seconds to be more conservative)
       timeoutMs: 300000,
       maxWaitForRecord: 60000
     };
