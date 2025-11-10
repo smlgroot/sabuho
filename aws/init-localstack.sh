@@ -90,8 +90,47 @@ aws --endpoint-url=$ENDPOINT s3 ls
 echo "✅ SQS queues created:"
 aws --endpoint-url=$ENDPOINT sqs list-queues --region $REGION
 
-# Note: S3 event notifications to SQS are not fully supported in LocalStack free tier
-# For local testing, you'll need to manually trigger processing or use the mock-server
+# Configure S3 event notifications
+echo "🔔 Configuring S3 event notifications..."
+
+# Get the S3 events queue URL and ARN
+S3_EVENTS_QUEUE_URL=$(aws --endpoint-url=$ENDPOINT sqs get-queue-url \
+    --queue-name sabuho-s3-events \
+    --region $REGION \
+    --output text)
+S3_EVENTS_QUEUE_ARN="arn:aws:sqs:$REGION:000000000000:sabuho-s3-events"
+
+# Set SQS queue policy to allow S3 to send messages
+aws --endpoint-url=$ENDPOINT sqs set-queue-attributes \
+    --queue-url $S3_EVENTS_QUEUE_URL \
+    --attributes '{
+        "Policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"s3.amazonaws.com\"},\"Action\":\"sqs:SendMessage\",\"Resource\":\"'$S3_EVENTS_QUEUE_ARN'\"}]}"
+    }' || echo "Failed to set queue policy"
+
+# Configure S3 bucket notification to send events to SQS
+aws --endpoint-url=$ENDPOINT s3api put-bucket-notification-configuration \
+    --bucket sabuho-files \
+    --notification-configuration '{
+        "QueueConfigurations": [
+            {
+                "QueueArn": "'$S3_EVENTS_QUEUE_ARN'",
+                "Events": ["s3:ObjectCreated:*"],
+                "Filter": {
+                    "Key": {
+                        "FilterRules": [
+                            {
+                                "Name": "prefix",
+                                "Value": "uploads/"
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    }' || echo "Failed to configure S3 notifications"
+
+echo "✅ S3 event notifications configured!"
+echo "   Files uploaded to s3://sabuho-files/uploads/* will automatically trigger SQS messages"
 
 echo "✅ LocalStack initialization complete!"
 echo ""

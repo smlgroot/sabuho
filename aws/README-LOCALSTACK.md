@@ -156,8 +156,7 @@ When services start, you'll see helpful banners with instructions:
 🚀 Presign URL Service Started
 Mode: 🔧 Development (LocalStack)
 📝 DEV MODE - LocalStack Integration
-ℹ️  LocalStack free tier doesn't support S3 event notifications.
-   After uploading a file, you need to manually trigger processing.
+✅ S3 event notifications configured - automatic processing enabled
 ```
 
 ### 2. Upload a document
@@ -168,24 +167,16 @@ Mode: 🔧 Development (LocalStack)
 4. Click "Start Processing"
 5. **Copy the S3 key** from the browser's DevTools Network tab (presign response)
 
-### 3. Trigger Processing (Required for LocalStack)
+### 3. Processing Starts Automatically
 
-⚠️ **Important**: LocalStack free tier doesn't automatically send S3 events to SQS. You must manually trigger processing after uploading.
+✅ **Automatic Processing**: LocalStack is now configured with S3 event notifications, so processing starts automatically when you upload a file - just like production!
 
-After uploading a file, the browser console will display an AWS CLI command. Simply copy and run it in your terminal.
+When a file is uploaded to the `uploads/` folder in S3, LocalStack will automatically:
+1. Send an S3 event to the `sabuho-s3-events` SQS queue
+2. The processor service picks up the message
+3. OCR and AI processing begins
 
-#### Example:
-
-```bash
-aws --endpoint-url=http://localhost:5566 sqs send-message \
-  --queue-url http://localhost:5566/000000000000/sabuho-s3-events \
-  --region us-east-1 \
-  --message-body '{"Records":[{"s3":{"bucket":{"name":"sabuho-files"},"object":{"key":"uploads/2025-11-07/abc-123/document.pdf"}}}]}'
-```
-
-The frontend will automatically generate this command with the correct S3 key after each upload. Just copy-paste from the browser console!
-
-### 4. Monitor the process
+### 4. Monitor the Process
 
 Watch the logs to see the flow:
 
@@ -231,10 +222,9 @@ aws s3 ls s3://sabuho-files/uploads/ --endpoint-url=$AWS_ENDPOINT_URL
 # List SQS queues
 aws sqs list-queues --endpoint-url=$AWS_ENDPOINT_URL
 
-# Send a message to queue (simulates S3 event)
-aws sqs send-message \
+# Check SQS messages (S3 events are sent automatically)
+aws sqs receive-message \
   --queue-url http://localhost:5566/000000000000/sabuho-s3-events \
-  --message-body '{"Records":[{"s3":{"bucket":{"name":"sabuho-files"},"object":{"key":"uploads/test.pdf"}}}]}' \
   --endpoint-url=$AWS_ENDPOINT_URL
 ```
 
@@ -257,14 +247,12 @@ awslocal sqs list-queues
 
 This setup includes helpful tools for testing in LocalStack:
 
-### 1. Browser Console Helper
+### 1. Automatic S3 Event Notifications
 
-After uploading a file in dev mode, the frontend automatically prints an AWS CLI command to your browser console. The command is customized with:
-- The exact S3 key of your uploaded file
-- Correct queue URL
-- Proper message format
-
-Just copy-paste the command into your terminal to trigger processing!
+LocalStack is configured to automatically send S3 events to SQS when files are uploaded, matching production behavior:
+- Files uploaded to `uploads/*` automatically trigger the processing pipeline
+- No manual intervention needed
+- Works exactly like production AWS
 
 ### 2. Startup Banners
 
@@ -313,14 +301,19 @@ curl http://localhost:5566/_localstack/health | jq .services.s3
 
 ### Processing doesn't start
 
-LocalStack free tier doesn't automatically send S3 events to SQS. After uploading a file:
+If processing doesn't start automatically after uploading a file:
 
-1. File gets uploaded to LocalStack S3 ✅
-2. Browser console shows AWS CLI command
-3. Copy and run the command in your terminal to send the SQS message
-4. Processor picks up the message and starts processing
+1. Check that LocalStack initialization completed successfully:
+```bash
+docker-compose logs localstack | grep "S3 event notifications configured"
+```
 
-Check the logs to verify:
+2. Verify the S3 notification configuration:
+```bash
+aws --endpoint-url=http://localhost:5566 s3api get-bucket-notification-configuration --bucket sabuho-files
+```
+
+3. Check the processor logs to verify it's polling the queue:
 ```bash
 docker-compose logs -f processor
 ```
