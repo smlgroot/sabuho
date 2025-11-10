@@ -268,40 +268,59 @@ export default function HomePage() {
               Upload your content and watch AI instantly create personalized, interactive quizzes tailored to what you need to learn
             </p>
 
-            {/* 3-Step Process Section */}
+            {/* Unified Section - Steps + Topics & Questions */}
             <div className="max-w-5xl mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FileUploadStep
-                  uploadedFile={uploadedFile}
-                  fileInputRef={fileInputRef}
-                  onFileSelect={handleFileSelect}
-                  onReset={handleResetClick}
-                />
+              <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                {/* Steps Section - Always Fully Visible */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Process Steps</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FileUploadStep
+                      uploadedFile={uploadedFile}
+                      fileInputRef={fileInputRef}
+                      onFileSelect={handleFileSelect}
+                      onReset={handleResetClick}
+                    />
 
-                <ProcessingStep
-                  currentStep={currentStep}
-                  isProcessing={isProcessing}
-                  processingError={processingError}
-                  currentProcessingState={currentProcessingState}
-                  onProcessClick={async () => {
-                    await handleProcessClick(uploadedFile);
-                    setQuizGenerated(true);
-                    setCurrentStep(3);
-                  }}
-                  onRetry={handleRetry}
-                />
+                    <ProcessingStep
+                      currentStep={currentStep}
+                      isProcessing={isProcessing}
+                      processingError={processingError}
+                      currentProcessingState={currentProcessingState}
+                      onProcessClick={async () => {
+                        await handleProcessClick(uploadedFile);
+                        setQuizGenerated(true);
+                        setCurrentStep(3);
+                      }}
+                      onRetry={handleRetry}
+                    />
 
-                <ShareMonetizeStep quizGenerated={quizGenerated} />
-              </div>
+                    <ShareMonetizeStep quizGenerated={quizGenerated} />
+                  </div>
+                </div>
 
-              {/* Result Section - Topics and Questions */}
-              {(isProcessing || topics.length > 0 || sessions.length > 0) && (
-                <div className="mt-6 bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-                  {/* Header with Stats */}
+                {/* Divider */}
+                <div className="border-t border-gray-200 my-6"></div>
+
+                {/* Topics & Questions Section - With State-based Opacity */}
+                <div className={`transition-opacity ${
+                  (isProcessing || topics.length > 0 || sessions.length > 0)
+                    ? 'opacity-100'
+                    : 'opacity-50'
+                }`}>
+                  {/* Header with Stats and Document Management */}
                   <div className="mb-6 pb-4 border-b border-gray-200">
-                    <div className="flex items-center justify-between flex-wrap gap-4">
-                      <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                        <BookOpen className="w-6 h-6 text-blue-600" />
+                    <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+                      <h3 className={`text-xl font-bold flex items-center gap-2 ${
+                        (isProcessing || topics.length > 0 || sessions.length > 0)
+                          ? 'text-gray-900'
+                          : 'text-gray-400'
+                      }`}>
+                        <BookOpen className={`w-6 h-6 ${
+                          (isProcessing || topics.length > 0 || sessions.length > 0)
+                            ? 'text-blue-600'
+                            : 'text-gray-400'
+                        }`} />
                         Topics & Questions
                       </h3>
                       <div className="flex items-center gap-6 text-sm">
@@ -316,88 +335,66 @@ export default function HomePage() {
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Document Header Tab */}
-                  <div className="flex items-center gap-1">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-blue-200 border-b-0 rounded-t-lg max-w-xs relative" style={{ marginBottom: '-8px', zIndex: 100 }}>
-                      <BookOpen className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                      <p className="text-xs font-semibold text-blue-900 truncate">
-                        {sessions.length > 0 ? `${sessions.length} Document${sessions.length > 1 ? 's' : ''}` : 'Processed Documents'}
-                      </p>
-                    </div>
-                    <button
-                      onClick={handleAddDocument}
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-primary hover:bg-primary-focus text-white transition-colors mb-2 shadow-md hover:shadow-lg"
-                      title="Add another document"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  {/* Vertical Tab Layout */}
-                  <div className="flex flex-col border-2 border-blue-200 rounded-lg">
-                    {/* Document Header inside content */}
-                    <div className="flex items-center justify-between px-6 pt-5 pb-4 bg-base-100">
-                      <div className="flex items-center gap-3">
-                        <BookOpen className="w-5 h-5 text-primary" />
-                        <h4 className="text-lg font-bold text-gray-900">
-                          My Documents
-                        </h4>
-                        <div className="badge badge-primary badge-sm">{sessions.length} doc{sessions.length !== 1 ? 's' : ''}</div>
-                      </div>
-                      <button
-                        onClick={handleAddDocument}
-                        className="btn btn-sm btn-primary gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Add Document
-                      </button>
-                    </div>
-
-                    {/* Document List */}
+                    {/* Document List - Compact View */}
                     {sessions.length > 0 && (
-                      <div className="px-6 pb-4 border-b border-gray-200">
-                        <div className="space-y-2">
-                          {sessions.map((session, index) => (
-                            <div
-                              key={session.id}
-                              className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
-                            >
-                              <BookOpen className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                              <span className="text-sm font-medium text-gray-900 truncate flex-1">
-                                {session.name}
-                              </span>
-                              <div className="badge badge-sm badge-success">
-                                {session.status === 'completed' ? 'Processed' : session.status}
-                              </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {sessions.map((session, index) => (
+                          <div
+                            key={session.id}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-200 text-sm"
+                          >
+                            <BookOpen className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                            <span className="font-medium text-blue-900 truncate max-w-[200px]">
+                              {session.name}
+                            </span>
+                            <div className="badge badge-xs badge-success">
+                              {session.status === 'completed' ? 'Done' : session.status}
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
+                        <button
+                          onClick={handleAddDocument}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-focus text-white rounded-lg text-sm font-medium transition-colors"
+                          title="Add another document"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Add Document
+                        </button>
                       </div>
                     )}
-
-                    {/* Topics and Questions Layout */}
-                    <div className="flex p-4">
-                    <TopicsSidebar
-                      topics={topics}
-                      questions={questions}
-                      questionsCount={questionsCount}
-                      selectedTopicIndex={selectedTopicIndex}
-                      onTopicSelect={setSelectedTopicIndex}
-                    />
-
-                    <QuestionsPanel
-                      topics={topics}
-                      questions={questions}
-                      selectedTopicIndex={selectedTopicIndex}
-                      totalQuestionsGenerated={totalQuestionsGenerated}
-                      questionsCount={questionsCount}
-                    />
-                    </div>
                   </div>
+
+                  {/* Topics and Questions Layout */}
+                  {(isProcessing || topics.length > 0 || sessions.length > 0) ? (
+                    <div className="flex border border-gray-200 rounded-lg">
+                      <TopicsSidebar
+                        topics={topics}
+                        questions={questions}
+                        questionsCount={questionsCount}
+                        selectedTopicIndex={selectedTopicIndex}
+                        onTopicSelect={setSelectedTopicIndex}
+                      />
+
+                      <QuestionsPanel
+                        topics={topics}
+                        questions={questions}
+                        selectedTopicIndex={selectedTopicIndex}
+                        totalQuestionsGenerated={totalQuestionsGenerated}
+                        questionsCount={questionsCount}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-16 border border-dashed border-gray-300 rounded-lg">
+                      <div className="text-center">
+                        <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <p className="text-lg font-semibold text-gray-400 mb-2">No Content Yet</p>
+                        <p className="text-sm text-gray-500">Upload and process a document to see topics and questions here</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
 
           </div>
