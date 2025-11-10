@@ -35,6 +35,7 @@ services:
       - "4001:3001"  # Changed external port from 3001 to 4001
     environment:
       - MOCK_SERVER_PORT=3001
+      - MOCK_SERVER_EXTERNAL_PORT=4001
     networks:
       - sabuho-network
     healthcheck:
