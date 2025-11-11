@@ -14,9 +14,7 @@ export default function FileUploadStep({
     }`}>
       <div className="flex flex-col h-full">
         <div className="flex items-start gap-3 mb-3">
-          <div className={`p-2 flex-shrink-0 ${
-            queueCount > 0 ? 'bg-success/10' : 'bg-primary/10'
-          }`}>
+          <div className="p-2 flex-shrink-0 bg-base-200">
             {queueCount > 0 ? (
               <CheckCircle className="w-5 h-5 text-success" />
             ) : (
@@ -44,7 +42,7 @@ export default function FileUploadStep({
         {uploadedFile && (
           <div className="space-y-2 mb-3">
             {/* File Name */}
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-success/10">
+            <div className="flex items-center gap-2 px-2 py-1.5 bg-base-200">
               <div className="flex-shrink-0 text-success">
                 <FileText className="w-4 h-4" />
               </div>
@@ -54,7 +52,7 @@ export default function FileUploadStep({
             </div>
 
             {/* File Type */}
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-primary/10">
+            <div className="flex items-center gap-2 px-2 py-1.5 bg-base-200">
               <div className="flex-shrink-0 text-primary">
                 {uploadedFile.name.toLowerCase().endsWith('.pdf') && <FileText className="w-4 h-4" />}
                 {uploadedFile.name.toLowerCase().endsWith('.docx') && <FileText className="w-4 h-4" />}

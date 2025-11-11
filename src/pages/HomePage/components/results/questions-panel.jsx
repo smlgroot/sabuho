@@ -268,8 +268,8 @@ export default function QuestionsPanel({
   };
 
   return (
-    <div className="flex-1 bg-primary/5 border-2 border-primary p-6">
-      <div className="mb-4 pb-3 border-b border-primary/20">
+    <div className="flex-1 bg-base-100 border-2 border-primary p-6">
+      <div className="mb-4 pb-3 border-b border-base-content/10">
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-base font-bold uppercase tracking-wide flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
@@ -367,7 +367,7 @@ export default function QuestionsPanel({
                 <div
                   key={q.id}
                   className={`p-4 bg-base-100 border transition-colors ${
-                    isSelected ? 'border-primary bg-primary/10' : 'border-base-content/10'
+                    isSelected ? 'border-primary bg-base-200' : 'border-base-content/10'
                   }`}
                   onMouseEnter={() => setHoveredQuestionId(q.id)}
                   onMouseLeave={() => setHoveredQuestionId(null)}
@@ -402,7 +402,7 @@ export default function QuestionsPanel({
                     <div className="flex-1 min-w-0">
                       <p
                         className={`font-medium mb-3 px-2 py-1 transition-colors ${
-                          selectMode ? '' : 'cursor-pointer ' + (isEditingBody ? 'bg-primary/10' : 'hover:bg-base-200')
+                          selectMode ? '' : 'cursor-pointer ' + (isEditingBody ? 'bg-base-200' : 'hover:bg-base-200')
                         }`}
                         onClick={() => !selectMode && !isEditingBody && handleEditStart(q.id, 'body', q.body)}
                         title={selectMode ? '' : 'Click to edit question'}
@@ -439,8 +439,8 @@ export default function QuestionsPanel({
                             key={optIdx}
                             className={`text-sm py-1.5 px-2 flex items-center gap-2 ${
                               isEditingOption
-                                ? (isCorrect ? 'font-semibold text-success bg-success/10' : 'bg-primary/10')
-                                : (isCorrect ? 'font-semibold text-success bg-success/5' : '')
+                                ? (isCorrect ? 'font-semibold text-success bg-base-200' : 'bg-base-200')
+                                : (isCorrect ? 'font-semibold text-success bg-base-200' : '')
                             }`}
                           >
                             <input

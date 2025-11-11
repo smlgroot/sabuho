@@ -17,7 +17,7 @@ export default function HeroSection({ onGetStarted }) {
       {/* Feature Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="border border-base-content/10 bg-base-100 p-6 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-base-200 mb-4">
             <Upload className="w-6 h-6 text-primary" />
           </div>
           <h3 className="font-semibold mb-2 uppercase text-sm">Easy Upload</h3>
@@ -27,7 +27,7 @@ export default function HeroSection({ onGetStarted }) {
         </div>
 
         <div className="border border-base-content/10 bg-base-100 p-6 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-base-200 mb-4">
             <Sparkles className="w-6 h-6 text-primary" />
           </div>
           <h3 className="font-semibold mb-2 uppercase text-sm">AI Powered</h3>
@@ -37,7 +37,7 @@ export default function HeroSection({ onGetStarted }) {
         </div>
 
         <div className="border border-base-content/10 bg-base-100 p-6 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-base-200 mb-4">
             <Brain className="w-6 h-6 text-primary" />
           </div>
           <h3 className="font-semibold mb-2 uppercase text-sm">Learn Better</h3>
@@ -48,7 +48,7 @@ export default function HeroSection({ onGetStarted }) {
       </div>
 
       {/* Quick Stats */}
-      <div className="bg-base-200/50 border border-base-content/10 p-8">
+      <div className="bg-base-200 border border-base-content/10 p-8">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
           <div>
             <div className="text-3xl font-bold text-primary mb-1">5 sec</div>

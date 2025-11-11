@@ -7,9 +7,7 @@ export default function ShareMonetizeStep({ quizGenerated }) {
     }`}>
       <div className="flex flex-col h-full">
         <div className="flex items-start gap-3 mb-3">
-          <div className={`p-2 flex-shrink-0 ${
-            quizGenerated ? 'bg-warning/10' : 'bg-base-200'
-          }`}>
+          <div className="p-2 flex-shrink-0 bg-base-200">
             <DollarSign className={`w-5 h-5 ${quizGenerated ? 'text-warning' : 'text-base-content/40'}`} />
           </div>
           <div className="flex-1 min-w-0">
@@ -24,7 +22,7 @@ export default function ShareMonetizeStep({ quizGenerated }) {
         {quizGenerated && (
           <div className="space-y-2 mb-3">
             {/* Share Feature */}
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-warning/10">
+            <div className="flex items-center gap-2 px-2 py-1.5 bg-base-200">
               <div className="flex-shrink-0 text-warning">
                 <Globe className="w-4 h-4" />
               </div>
@@ -37,7 +35,7 @@ export default function ShareMonetizeStep({ quizGenerated }) {
             </div>
 
             {/* Sell Feature */}
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-warning/10">
+            <div className="flex items-center gap-2 px-2 py-1.5 bg-base-200">
               <div className="flex-shrink-0 text-warning">
                 <DollarSign className="w-4 h-4" />
               </div>
@@ -50,7 +48,7 @@ export default function ShareMonetizeStep({ quizGenerated }) {
             </div>
 
             {/* Analytics Feature */}
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-warning/10">
+            <div className="flex items-center gap-2 px-2 py-1.5 bg-base-200">
               <div className="flex-shrink-0 text-warning">
                 <BarChart3 className="w-4 h-4" />
               </div>
@@ -72,7 +70,7 @@ export default function ShareMonetizeStep({ quizGenerated }) {
             </button>
           </div>
         ) : (
-          <div className="mt-auto pt-2 border-t border-warning/30 flex items-center justify-center gap-2 text-warning">
+          <div className="mt-auto pt-2 border-t border-base-content/10 flex items-center justify-center gap-2 text-warning">
             <Clock className="w-4 h-4" />
             <span className="text-xs font-semibold">Coming Soon</span>
           </div>

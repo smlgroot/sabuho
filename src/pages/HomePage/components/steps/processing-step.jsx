@@ -116,12 +116,7 @@ export default function ProcessingStep({
     }}>
       <div className="flex flex-col h-full">
         <div className="flex items-start gap-3 mb-3">
-          <div className={`p-2 flex-shrink-0 transition-all ${
-            processingError ? 'bg-error/10' :
-            isProcessing ? 'bg-secondary/10' :
-            isCompleted ? 'bg-success/10' :
-            'bg-secondary/10'
-          }`}>
+          <div className="p-2 flex-shrink-0 transition-all bg-base-200">
             {processingError ? (
               <AlertCircle className="w-5 h-5 text-error" />
             ) : isProcessing ? (
@@ -153,9 +148,7 @@ export default function ProcessingStep({
           <div className="space-y-2 mb-3">
             {/* Upload Stage */}
             <div className={`flex items-center gap-2 px-2 py-1.5 transition-all ${
-              isProcessing && baseStage === "uploading" ? 'bg-secondary/20 animate-pulse' :
-              isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image", "ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'bg-success/10' :
-              isCompleted ? 'bg-success/10' :
+              isProcessing && baseStage === "uploading" ? 'bg-base-200 animate-pulse' :
               'bg-base-200'
             }`}>
               <div className={`flex-shrink-0 ${
@@ -192,9 +185,7 @@ export default function ProcessingStep({
 
             {/* OCR Stage - Show progress if available */}
             <div className={`flex items-center gap-2 px-2 py-1.5 transition-all ${
-              isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image"].includes(baseStage) ? 'bg-secondary/20 animate-pulse' :
-              isProcessing && ["ocr_completed", "ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'bg-success/10' :
-              isCompleted ? 'bg-success/10' :
+              isProcessing && ["processing", "ocr_page", "text_extract_page", "ocr_image"].includes(baseStage) ? 'bg-base-200 animate-pulse' :
               'bg-base-200'
             }`}>
               <div className={`flex-shrink-0 ${
@@ -238,8 +229,7 @@ export default function ProcessingStep({
 
             {/* AI Processing Stage - Show progress if available */}
             <div className={`flex items-center gap-2 px-2 py-1.5 transition-all ${
-              isProcessing && ["ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'bg-secondary/20 animate-pulse' :
-              isCompleted ? 'bg-success/10' :
+              isProcessing && ["ai_processing", "ai_chunking", "ai_topics_identified", "ai_batch"].includes(baseStage) ? 'bg-base-200 animate-pulse' :
               'bg-base-200'
             }`}>
               <div className={`flex-shrink-0 ${

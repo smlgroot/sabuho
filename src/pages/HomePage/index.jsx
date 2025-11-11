@@ -312,19 +312,21 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section - AI Document to Quiz */}
-      <section className="hero min-h-[85vh] bg-base-100">
+      <section className="hero bg-base-100">
         <div className="hero-content px-6 w-full py-16">
           <div className="max-w-5xl w-full">
             {/* Main Heading - Always Visible */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              <span>Transform Documents into</span>
-              <br />
-              <span className="text-primary">Interactive Quizzes</span>
-            </h1>
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold mb-6 leading-tight">
+                <span>Transform Documents into</span>
+                <br />
+                <span className="text-primary">Interactive Quizzes</span>
+              </h1>
 
-            <p className="text-lg text-base-content/70 mb-12 max-w-2xl font-normal">
-              Upload your content and let AI generate personalized quizzes to test your knowledge.
-            </p>
+              <p className="text-base text-base-content/70 max-w-3xl mx-auto font-normal">
+                Upload your content and let AI generate personalized quizzes to test your knowledge.
+              </p>
+            </div>
 
             {/* Show Hero when no activity and user hasn't clicked Get Started, otherwise show process sections */}
             {!showProcessSections && documentQueue.length === 0 && sessions.length === 0 && topics.length === 0 ? (
@@ -332,7 +334,7 @@ export default function HomePage() {
             ) : (
               /* Unified Section - Steps + Topics & Questions */
               <div className="max-w-5xl mb-8">
-                <div className="bg-base-200/50 border border-base-content/10 p-6">
+                <div className="bg-base-200 border border-base-content/10 p-6">
                   {/* Steps Section - Always Fully Visible */}
                   <div className="mb-6">
                     <h3 className="text-base font-semibold uppercase tracking-wide text-base-content/60 mb-4">Process Steps</h3>
@@ -435,7 +437,7 @@ export default function HomePage() {
 
                     {/* Topics and Questions Layout */}
                     {(isProcessing || topics.length > 0 || sessions.length > 0) ? (
-                      <div className="flex border border-base-content/10">
+                      <div className="flex">
                         <TopicsSidebar
                           topics={topics}
                           questions={questions}
@@ -470,7 +472,7 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-6 bg-base-200/30">
+      <section className="px-6 bg-base-200/30">
         <div className="container mx-auto max-w-5xl">
           <h2 className="text-2xl font-bold mb-8 text-center uppercase tracking-wide">Features</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
