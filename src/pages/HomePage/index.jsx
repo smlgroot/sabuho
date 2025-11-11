@@ -1,18 +1,15 @@
 import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from "react-router-dom";
-import { Globe, Brain, Target, Trophy, BookOpen, BarChart3, Sparkles, Zap, AlertCircle, CheckCircle, RotateCcw, Plus } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { Globe, Brain, Target, Trophy, BookOpen, Zap, AlertCircle, RotateCcw, Plus } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { usePostHog } from "@/components/PostHogProvider";
-import { useFileUpload, DOCUMENT_STATUS } from "@/hooks/useFileUpload";
+import { useFileUpload } from "@/hooks/useFileUpload";
 import { useQuizProcessing } from "@/hooks/useQuizProcessing";
-import FileUploadStep from "./components/steps/file-upload-step";
-import ProcessingStep from "./components/steps/processing-step";
-import ShareMonetizeStep from "./components/steps/share-monetize-step";
 import TopicsSidebar from "./components/results/topics-sidebar";
 import QuestionsPanel from "./components/results/questions-panel";
-import { DocumentQueue } from "@/components/DocumentQueue";
 import HeroSection from "./components/hero-section";
+import ProcessStepsModal from "./components/process-steps-modal";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
@@ -23,25 +20,16 @@ export default function HomePage() {
 
   // Custom hooks for file upload and quiz processing
   const {
-    documentQueue,
     uploadedFile,
     fileInputRef,
     handleFileSelect,
-    removeDocumentFromQueue,
-    updateDocumentStatus,
-    getPendingDocuments,
-    getProcessingDocument,
-    resetDocumentQueue,
-    resetFile,
-    DOCUMENT_STATUS: DOC_STATUS
-  } = useFileUpload((newDocument, currentQueue) => {
-    // Callback when file is selected
-    // Show processing step if we have documents to process
-    if (currentQueue.length > 0 || sessions.length === 0) {
-      setCurrentStep(2);
-      setQuizGenerated(false);
-      setSelectedTopicIndex(null);
-    }
+    resetFile
+  } = useFileUpload((newFile) => {
+    // Callback when file is selected - show the process sections area
+    setCurrentStep(2);
+    setQuizGenerated(false);
+    setSelectedTopicIndex(null);
+    setShowProcessSections(true);
   });
 
   const {
@@ -65,8 +53,8 @@ export default function HomePage() {
   const [quizGenerated, setQuizGenerated] = useState(false);
   const [selectedTopicIndex, setSelectedTopicIndex] = useState(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const [currentProcessingDocId, setCurrentProcessingDocId] = useState(null);
   const [showProcessSections, setShowProcessSections] = useState(false);
+  const [showProcessStepsModal, setShowProcessStepsModal] = useState(false);
 
   const handleMainButton = () => {
     if (user) {
@@ -101,16 +89,9 @@ export default function HomePage() {
     setLanguage(lng);
   };
 
-  const handleAddDocument = () => {
-    // Trigger file input to add another document
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
   const handleResetClick = () => {
     // Only show confirmation if there's actual data to lose
-    if (documentQueue.length > 0 || topics.length > 0 || questions.length > 0) {
+    if (uploadedFile || topics.length > 0 || questions.length > 0) {
       setShowResetDialog(true);
     } else {
       // No data to lose, reset immediately
@@ -119,76 +100,36 @@ export default function HomePage() {
   };
 
   const handleGetStarted = () => {
-    // Show the process sections only
-    setShowProcessSections(true);
+    // Open the process steps modal for file upload
+    setShowProcessStepsModal(true);
   };
 
   const performReset = () => {
-    resetDocumentQueue();
+    resetFile();
     resetProcessing();
     setQuizGenerated(false);
     setCurrentStep(1);
     setSelectedTopicIndex(null);
     setShowResetDialog(false);
     setShowProcessSections(false);
+    setShowProcessStepsModal(false);
   };
 
   const handleCancelReset = () => {
     setShowResetDialog(false);
   };
 
-  // Process documents from the queue sequentially
-  const processNextDocument = useCallback(async () => {
-    const pendingDocs = getPendingDocuments();
-
-    if (pendingDocs.length === 0 || isProcessing) {
-      return;
-    }
-
-    const nextDoc = pendingDocs[0];
-    setCurrentProcessingDocId(nextDoc.id);
-    updateDocumentStatus(nextDoc.id, {
-      status: DOC_STATUS.PROCESSING,
-      progress: { stage: 'Starting...', current: 0, total: 100 }
-    });
+  const handleProcess = async () => {
+    if (!uploadedFile) return;
 
     try {
-      await handleProcessClick(nextDoc.file);
-      updateDocumentStatus(nextDoc.id, {
-        status: DOC_STATUS.COMPLETED,
-        progress: { stage: 'Complete', current: 100, total: 100 }
-      });
+      await handleProcessClick(uploadedFile);
       setQuizGenerated(true);
       setCurrentStep(3);
-
-      // Check if there are more documents to process
-      const remainingPending = getPendingDocuments();
-      if (remainingPending.length > 1) { // More than the one we just processed
-        // Continue processing next document
-        setTimeout(() => processNextDocument(), 500);
-      }
     } catch (error) {
-      updateDocumentStatus(nextDoc.id, {
-        status: DOC_STATUS.FAILED,
-        error: error.message || 'Processing failed'
-      });
-    } finally {
-      setCurrentProcessingDocId(null);
+      // Error handling is done in useQuizProcessing hook
     }
-  }, [getPendingDocuments, isProcessing, updateDocumentStatus, handleProcessClick]);
-
-  // Watch for processing state changes to update the current document's progress
-  useEffect(() => {
-    if (currentProcessingDocId && currentProcessingState) {
-      updateDocumentStatus(currentProcessingDocId, {
-        progress: {
-          stage: currentProcessingState,
-          current: 50, // You could calculate this based on the state
-          total: 100
-        }
-      });
-    }
-  }, [currentProcessingDocId, currentProcessingState, updateDocumentStatus]);
+  };
 
   if (loading) {
     return (
@@ -329,48 +270,12 @@ export default function HomePage() {
             </div>
 
             {/* Show Hero when no activity and user hasn't clicked Get Started, otherwise show process sections */}
-            {!showProcessSections && documentQueue.length === 0 && sessions.length === 0 && topics.length === 0 ? (
+            {!showProcessSections && sessions.length === 0 && topics.length === 0 ? (
               <HeroSection onGetStarted={handleGetStarted} />
             ) : (
-              /* Unified Section - Steps + Topics & Questions */
+              /* Unified Section - Topics & Questions */
               <div className="max-w-5xl mb-8">
                 <div className="bg-base-200 border border-base-content/10 p-6">
-                  {/* Steps Section - Always Fully Visible */}
-                  <div className="mb-6">
-                    <h3 className="text-base font-semibold uppercase tracking-wide text-base-content/60 mb-4">Process Steps</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FileUploadStep
-                        uploadedFile={uploadedFile}
-                        fileInputRef={fileInputRef}
-                        onFileSelect={handleFileSelect}
-                        onReset={handleResetClick}
-                        documentQueue={documentQueue}
-                      />
-
-                      <ProcessingStep
-                        currentStep={currentStep}
-                        isProcessing={isProcessing}
-                        processingError={processingError}
-                        currentProcessingState={currentProcessingState}
-                        onProcessClick={processNextDocument}
-                        onRetry={handleRetry}
-                      />
-
-                      <ShareMonetizeStep quizGenerated={quizGenerated} />
-                    </div>
-
-                    {/* Document Queue Display */}
-                    {documentQueue.length > 0 && (
-                      <DocumentQueue
-                        documentQueue={documentQueue}
-                        onRemoveDocument={removeDocumentFromQueue}
-                        className="mt-4"
-                      />
-                    )}
-                  </div>
-
-                  {/* Divider */}
-                  <div className="border-t border-base-content/10 my-6"></div>
 
                   {/* Topics & Questions Section - With State-based Opacity */}
                   <div className={`transition-opacity ${
@@ -378,7 +283,7 @@ export default function HomePage() {
                       ? 'opacity-100'
                       : 'opacity-50'
                   }`}>
-                    {/* Header with Stats and Document Management */}
+                    {/* Header with Stats and Process Steps Button */}
                     <div className="mb-6 pb-4 border-b border-base-content/10">
                       <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
                         <h3 className={`text-base font-semibold uppercase tracking-wide flex items-center gap-2 ${
@@ -393,23 +298,33 @@ export default function HomePage() {
                           }`} />
                           Topics & Questions
                         </h3>
-                        <div className="flex items-center gap-4 text-sm font-mono">
-                          <div>
-                            <span className="text-base-content/60">Topics: </span>
-                            <span className="font-bold text-primary">{topics.length}</span>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-4 text-sm font-mono">
+                            <div>
+                              <span className="text-base-content/60">Topics: </span>
+                              <span className="font-bold text-primary">{topics.length}</span>
+                            </div>
+                            <div className="text-base-content/30">|</div>
+                            <div>
+                              <span className="text-base-content/60">Questions: </span>
+                              <span className="font-bold">{totalQuestionsGenerated}</span>
+                            </div>
                           </div>
-                          <div className="text-base-content/30">|</div>
-                          <div>
-                            <span className="text-base-content/60">Questions: </span>
-                            <span className="font-bold">{totalQuestionsGenerated}</span>
-                          </div>
+                          <button
+                            onClick={() => setShowProcessStepsModal(true)}
+                            className="btn btn-primary btn-sm gap-2"
+                            title="Add new document"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add New Document
+                          </button>
                         </div>
                       </div>
 
-                      {/* Document List - Compact View */}
+                      {/* Document Info - Compact View */}
                       {sessions.length > 0 && (
                         <div className="flex items-center gap-2 flex-wrap">
-                          {sessions.map((session, index) => (
+                          {sessions.map((session) => (
                             <div
                               key={session.id}
                               className="inline-flex items-center gap-2 px-3 py-1.5 bg-base-200 border border-base-content/10 text-sm"
@@ -423,14 +338,6 @@ export default function HomePage() {
                               </div>
                             </div>
                           ))}
-                          <button
-                            onClick={handleAddDocument}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 btn btn-primary btn-sm"
-                            title="Add another document"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            Add Document
-                          </button>
                         </div>
                       )}
                     </div>
@@ -582,6 +489,23 @@ export default function HomePage() {
           <button>close</button>
         </form>
       </dialog>
+
+      {/* Process Steps Modal */}
+      <ProcessStepsModal
+        isOpen={showProcessStepsModal}
+        onClose={() => setShowProcessStepsModal(false)}
+        uploadedFile={uploadedFile}
+        fileInputRef={fileInputRef}
+        onFileSelect={handleFileSelect}
+        onReset={handleResetClick}
+        currentStep={currentStep}
+        isProcessing={isProcessing}
+        processingError={processingError}
+        currentProcessingState={currentProcessingState}
+        onProcessClick={handleProcess}
+        onRetry={handleRetry}
+        quizGenerated={quizGenerated}
+      />
     </div>
   );
 }
