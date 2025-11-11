@@ -50,7 +50,8 @@
       "WebFetch(domain:pypi.org)",
       "WebFetch(domain:onlinelibrary.wiley.com)",
       "WebFetch(domain:www.hindawi.com)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "WebFetch(domain:www.tbench.ai)"
     ],
     "deny": [],
     "ask": []

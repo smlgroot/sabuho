@@ -244,16 +244,16 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="navbar bg-white border-b border-gray-200 px-6 sticky top-0 z-50 shadow-sm">
+      <header className="navbar bg-base-100 border-b border-base-300 px-6 sticky top-0 z-50">
         <div className="flex-1">
-          <a href="/" className="flex items-center gap-3 group cursor-pointer">
+          <a href="/" className="flex items-center gap-2 group cursor-pointer">
             <img
               src="/sabuho_logo_3.png"
               alt="Sabuho Logo"
-              className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
+              className="h-8 w-auto object-contain"
             />
-            <span className="text-2xl font-black tracking-tight">
-              Sabuho<span className="text-primary">.</span>
+            <span className="text-xl font-semibold tracking-tight uppercase">
+              Sabuho
             </span>
           </a>
         </div>
@@ -261,19 +261,19 @@ export default function HomePage() {
           <div className="flex items-center gap-2">
             {/* Language Selector */}
             <div className="dropdown dropdown-end">
-              <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
-                <Globe className="w-5 h-5" />
+              <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
+                <Globe className="w-4 h-4" />
               </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu bg-white rounded-lg shadow-lg z-[1] w-40 p-2 border border-gray-100"
+                className="dropdown-content menu bg-base-100 shadow-lg z-[1] w-40 p-2 border border-base-300"
               >
                 <li>
                   <button
                     onClick={() => changeLanguage("en")}
                     className={language === "en" ? "active" : ""}
                   >
-                    🇺🇸 English
+                    English
                   </button>
                 </li>
                 <li>
@@ -281,7 +281,7 @@ export default function HomePage() {
                     onClick={() => changeLanguage("es")}
                     className={language === "es" ? "active" : ""}
                   >
-                    🇪🇸 Spanish
+                    Spanish
                   </button>
                 </li>
               </ul>
@@ -290,13 +290,13 @@ export default function HomePage() {
             {user && (
               <button
                 onClick={() => navigate("/admin")}
-                className="btn btn-ghost"
+                className="btn btn-ghost btn-sm"
               >
                 {t("Admin")}
               </button>
             )}
 
-            <button onClick={handleHeaderButton} className="btn btn-primary">
+            <button onClick={handleHeaderButton} className="btn btn-primary btn-sm">
               {user ? t("Logout") : t("Sign In")}
             </button>
           </div>
@@ -304,36 +304,25 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section - AI Document to Quiz */}
-      <section className="hero min-h-[85vh] bg-gradient-to-b from-blue-50 to-white">
+      <section className="hero min-h-[85vh] bg-base-100">
         <div className="hero-content px-6 w-full py-16">
           <div className="max-w-5xl w-full">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 text-gray-900 leading-tight tracking-tight">
-              <div className="flex items-center gap-6 flex-wrap">
-                <span className="bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">Any Document</span>
-
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 rounded-full blur-xl opacity-75 group-hover:opacity-100 animate-pulse"></div>
-                  <div className="relative bg-white rounded-full p-4 shadow-2xl">
-                    <Brain className="w-10 h-10 sm:w-14 sm:h-14 text-blue-600" />
-                  </div>
-                  <Sparkles className="w-5 h-5 text-yellow-400 absolute -top-1 -right-1 animate-bounce" />
-                  <Sparkles className="w-4 h-4 text-blue-400 absolute -bottom-1 -left-1 animate-ping" />
-                </div>
-
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Interactive Quiz</span>
-              </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              <span>Transform Documents into</span>
+              <br />
+              <span className="text-primary">Interactive Quizzes</span>
             </h1>
 
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl">
-              Upload your content and watch AI instantly create personalized, interactive quizzes tailored to what you need to learn
+            <p className="text-lg text-base-content/70 mb-12 max-w-2xl font-normal">
+              Upload your content and let AI generate personalized quizzes to test your knowledge.
             </p>
 
             {/* Unified Section - Steps + Topics & Questions */}
             <div className="max-w-5xl mb-8">
-              <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+              <div className="bg-base-200/50 border border-base-300 p-6">
                 {/* Steps Section - Always Fully Visible */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Process Steps</h3>
+                  <h3 className="text-base font-semibold uppercase tracking-wide text-base-content/60 mb-4">Process Steps</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FileUploadStep
                       uploadedFile={uploadedFile}
@@ -366,7 +355,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Divider */}
-                <div className="border-t border-gray-200 my-6"></div>
+                <div className="border-t border-base-300 my-6"></div>
 
                 {/* Topics & Questions Section - With State-based Opacity */}
                 <div className={`transition-opacity ${
@@ -375,29 +364,29 @@ export default function HomePage() {
                     : 'opacity-50'
                 }`}>
                   {/* Header with Stats and Document Management */}
-                  <div className="mb-6 pb-4 border-b border-gray-200">
+                  <div className="mb-6 pb-4 border-b border-base-300">
                     <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-                      <h3 className={`text-xl font-bold flex items-center gap-2 ${
+                      <h3 className={`text-base font-semibold uppercase tracking-wide flex items-center gap-2 ${
                         (isProcessing || topics.length > 0 || sessions.length > 0)
-                          ? 'text-gray-900'
-                          : 'text-gray-400'
+                          ? 'text-base-content/60'
+                          : 'text-base-content/30'
                       }`}>
-                        <BookOpen className={`w-6 h-6 ${
+                        <BookOpen className={`w-5 h-5 ${
                           (isProcessing || topics.length > 0 || sessions.length > 0)
-                            ? 'text-blue-600'
-                            : 'text-gray-400'
+                            ? 'text-primary'
+                            : 'text-base-content/30'
                         }`} />
                         Topics & Questions
                       </h3>
-                      <div className="flex items-center gap-6 text-sm">
+                      <div className="flex items-center gap-4 text-sm font-mono">
                         <div>
-                          <span className="text-gray-600">Topics: </span>
-                          <span className="font-bold text-blue-600">{topics.length}</span>
+                          <span className="text-base-content/60">Topics: </span>
+                          <span className="font-bold text-primary">{topics.length}</span>
                         </div>
-                        <div className="text-gray-400">•</div>
+                        <div className="text-base-content/30">|</div>
                         <div>
-                          <span className="text-gray-600">Total Questions: </span>
-                          <span className="font-bold text-gray-900">{totalQuestionsGenerated}</span>
+                          <span className="text-base-content/60">Questions: </span>
+                          <span className="font-bold">{totalQuestionsGenerated}</span>
                         </div>
                       </div>
                     </div>
@@ -408,10 +397,10 @@ export default function HomePage() {
                         {sessions.map((session, index) => (
                           <div
                             key={session.id}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-200 text-sm"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-base-200 border border-base-300 text-sm"
                           >
-                            <BookOpen className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
-                            <span className="font-medium text-blue-900 truncate max-w-[200px]">
+                            <BookOpen className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                            <span className="font-medium truncate max-w-[200px]">
                               {session.name}
                             </span>
                             <div className="badge badge-xs badge-success">
@@ -421,7 +410,7 @@ export default function HomePage() {
                         ))}
                         <button
                           onClick={handleAddDocument}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-focus text-white rounded-lg text-sm font-medium transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 btn btn-primary btn-sm"
                           title="Add another document"
                         >
                           <Plus className="w-3.5 h-3.5" />
@@ -433,7 +422,7 @@ export default function HomePage() {
 
                   {/* Topics and Questions Layout */}
                   {(isProcessing || topics.length > 0 || sessions.length > 0) ? (
-                    <div className="flex border border-gray-200 rounded-lg">
+                    <div className="flex border border-base-300">
                       <TopicsSidebar
                         topics={topics}
                         questions={questions}
@@ -451,11 +440,11 @@ export default function HomePage() {
                       />
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center py-16 border border-dashed border-gray-300 rounded-lg">
+                    <div className="flex items-center justify-center py-16 border border-dashed border-base-300">
                       <div className="text-center">
-                        <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <p className="text-lg font-semibold text-gray-400 mb-2">No Content Yet</p>
-                        <p className="text-sm text-gray-500">Upload and process a document to see topics and questions here</p>
+                        <BookOpen className="w-16 h-16 text-base-content/20 mx-auto mb-4" />
+                        <p className="text-base font-semibold text-base-content/40 mb-2">No Content Yet</p>
+                        <p className="text-sm text-base-content/30">Upload and process a document to see topics and questions here</p>
                       </div>
                     </div>
                   )}
@@ -468,17 +457,16 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-6 bg-white">
+      <section className="py-16 px-6 bg-base-200/30">
         <div className="container mx-auto max-w-5xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <h2 className="text-2xl font-bold mb-8 text-center uppercase tracking-wide">Features</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div key={index} className="text-center">
-                  <div className="inline-flex rounded-lg bg-blue-100 p-4 mb-3">
-                    <Icon className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-sm font-bold text-gray-900">{feature.title}</h3>
+                <div key={index} className="text-center border border-base-300 bg-base-100 p-4">
+                  <Icon className="w-6 h-6 text-primary mx-auto mb-2" />
+                  <h3 className="text-xs font-semibold uppercase">{feature.title}</h3>
                 </div>
               );
             })}
@@ -487,49 +475,49 @@ export default function HomePage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-16 px-6 bg-gray-50">
+      <section className="py-16 px-6 bg-base-100">
         <div className="container mx-auto max-w-4xl">
-          <h2 className="text-3xl font-bold mb-10 text-center text-gray-900">
+          <h2 className="text-2xl font-bold mb-10 text-center uppercase tracking-wide">
             How It Works
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="border border-base-300 p-6 bg-base-100">
+              <div className="bg-primary text-primary-content w-10 h-10 flex items-center justify-center font-bold text-lg mb-3">
                 1
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Upload</h3>
-              <p className="text-sm text-gray-600">Add your document</p>
+              <h3 className="font-semibold mb-2 uppercase text-sm">Upload</h3>
+              <p className="text-sm text-base-content/60">Add your document</p>
             </div>
 
-            <div className="text-center">
-              <div className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-3">
+            <div className="border border-base-300 p-6 bg-base-100">
+              <div className="bg-primary text-primary-content w-10 h-10 flex items-center justify-center font-bold text-lg mb-3">
                 2
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Generate</h3>
-              <p className="text-sm text-gray-600">AI creates quiz</p>
+              <h3 className="font-semibold mb-2 uppercase text-sm">Generate</h3>
+              <p className="text-sm text-base-content/60">AI creates quiz</p>
             </div>
 
-            <div className="text-center">
-              <div className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-3">
+            <div className="border border-base-300 p-6 bg-base-100">
+              <div className="bg-primary text-primary-content w-10 h-10 flex items-center justify-center font-bold text-lg mb-3">
                 3
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Learn</h3>
-              <p className="text-sm text-gray-600">Track progress</p>
+              <h3 className="font-semibold mb-2 uppercase text-sm">Learn</h3>
+              <p className="text-sm text-base-content/60">Track progress</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6 bg-gradient-to-b from-blue-600 to-blue-700">
+      <section className="py-20 px-6 bg-primary">
         <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="text-4xl font-bold mb-8 text-white">
+          <h2 className="text-3xl font-bold mb-8 text-primary-content uppercase tracking-wide">
             Start Learning Smarter
           </h2>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="btn bg-white hover:bg-gray-100 text-blue-600 border-0 rounded-lg font-semibold px-8 text-base shadow-xl hover:shadow-2xl transition-all"
+            className="btn btn-lg bg-base-100 hover:bg-base-200 text-base-content border-0 font-semibold px-8"
           >
             Try Demo
           </button>
@@ -537,19 +525,19 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="footer footer-center bg-white border-t border-gray-200 text-gray-900 py-8 px-6">
+      <footer className="footer footer-center bg-base-100 border-t border-base-300 py-8 px-6">
         <aside>
           <div className="flex items-center gap-2 mb-2">
             <img
               src="/sabuho_logo_3.png"
               alt="Sabuho Logo"
-              className="h-8 w-auto object-contain"
+              className="h-6 w-auto object-contain"
             />
-            <span className="text-xl font-bold tracking-tight">
-              Sabuho<span className="text-blue-600">.</span>
+            <span className="text-lg font-semibold tracking-tight uppercase">
+              Sabuho
             </span>
           </div>
-          <p className="text-gray-500 text-sm">
+          <p className="text-base-content/60 text-xs">
             © {new Date().getFullYear()} Sabuho
           </p>
         </aside>

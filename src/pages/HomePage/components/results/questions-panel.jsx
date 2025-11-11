@@ -268,11 +268,11 @@ export default function QuestionsPanel({
   };
 
   return (
-    <div className="flex-1 bg-blue-50 border-2 border-blue-500 rounded-lg p-6">
-      <div className="mb-4 pb-3 border-b border-blue-400">
+    <div className="flex-1 bg-primary/5 border-2 border-primary p-6">
+      <div className="mb-4 pb-3 border-b border-primary/20">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-lg font-bold text-blue-900 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
+          <h4 className="text-base font-bold uppercase tracking-wide flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
             {selectedTopicIndex === null
               ? 'All Questions'
               : `Questions for ${topics[selectedTopicIndex]?.name}`}
@@ -322,7 +322,7 @@ export default function QuestionsPanel({
 
         {/* Select Mode Toolbar */}
         {selectMode && (
-          <div className="mt-3 pt-3 border-t border-blue-300 flex items-center justify-between">
+          <div className="mt-3 pt-3 border-t border-primary/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <button
                 className="btn btn-sm btn-ghost gap-2"
@@ -342,7 +342,7 @@ export default function QuestionsPanel({
                 Delete Selected
               </button>
             </div>
-            <span className="text-sm text-blue-700">
+            <span className="text-sm text-base-content/70">
               {selectedQuestions.size} of {filteredQuestions.length} selected
             </span>
           </div>
@@ -352,8 +352,8 @@ export default function QuestionsPanel({
       <div className="space-y-4">
         {filteredQuestions.length === 0 ? (
           <div className="text-center py-8">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-sm text-gray-500">No questions available for this topic</p>
+            <FileText className="w-12 h-12 text-base-content/20 mx-auto mb-3" />
+            <p className="text-sm text-base-content/40">No questions available for this topic</p>
           </div>
         ) : (
           <>
@@ -366,8 +366,8 @@ export default function QuestionsPanel({
               return (
                 <div
                   key={q.id}
-                  className={`p-4 bg-gray-50 border rounded-lg transition-colors ${
-                    isSelected ? 'border-primary bg-primary/5' : 'border-gray-200'
+                  className={`p-4 bg-base-100 border transition-colors ${
+                    isSelected ? 'border-primary bg-primary/10' : 'border-base-300'
                   }`}
                   onMouseEnter={() => setHoveredQuestionId(q.id)}
                   onMouseLeave={() => setHoveredQuestionId(null)}
@@ -401,13 +401,13 @@ export default function QuestionsPanel({
 
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`font-medium text-gray-900 mb-3 rounded px-2 py-1 transition-colors ${
-                          selectMode ? '' : 'cursor-pointer ' + (isEditingBody ? 'bg-blue-100' : 'hover:bg-gray-100')
+                        className={`font-medium mb-3 px-2 py-1 transition-colors ${
+                          selectMode ? '' : 'cursor-pointer ' + (isEditingBody ? 'bg-primary/10' : 'hover:bg-base-200')
                         }`}
                         onClick={() => !selectMode && !isEditingBody && handleEditStart(q.id, 'body', q.body)}
                         title={selectMode ? '' : 'Click to edit question'}
                       >
-                        <span className="font-bold text-purple-600">{index + 1}.</span>{' '}
+                        <span className="font-bold text-primary">{index + 1}.</span>{' '}
                         {isEditingBody ? (
                           <textarea
                             ref={textareaRef}
@@ -415,7 +415,7 @@ export default function QuestionsPanel({
                             onChange={(e) => handleValueChange(q.id, e.target.value)}
                             onBlur={handleEditSave}
                             onKeyDown={handleKeyDown}
-                            className="font-medium text-gray-900 bg-transparent border-none outline-none resize-none align-top p-0 m-0"
+                            className="font-medium bg-transparent border-none outline-none resize-none align-top p-0 m-0"
                             rows="1"
                             style={{ minHeight: '1.5em', width: 'calc(100% - 2rem)' }}
                           />
@@ -437,10 +437,10 @@ export default function QuestionsPanel({
                         return (
                           <div
                             key={optIdx}
-                            className={`text-sm py-1.5 px-2 rounded flex items-center gap-2 ${
+                            className={`text-sm py-1.5 px-2 flex items-center gap-2 ${
                               isEditingOption
-                                ? (isCorrect ? 'font-semibold text-green-700 bg-green-100' : 'text-gray-700 bg-blue-100')
-                                : (isCorrect ? 'font-semibold text-green-700 bg-green-50' : 'text-gray-700')
+                                ? (isCorrect ? 'font-semibold text-success bg-success/10' : 'bg-primary/10')
+                                : (isCorrect ? 'font-semibold text-success bg-success/5' : '')
                             }`}
                           >
                             <input
@@ -460,15 +460,15 @@ export default function QuestionsPanel({
                                 onChange={(e) => handleValueChange(q.id, e.target.value)}
                                 onBlur={handleEditSave}
                                 onKeyDown={handleKeyDown}
-                                className={`bg-transparent border-none outline-none flex-1 px-1 rounded text-sm ${
-                                  isCorrect ? 'font-semibold text-green-700' : 'text-gray-700'
+                                className={`bg-transparent border-none outline-none flex-1 px-1 text-sm ${
+                                  isCorrect ? 'font-semibold text-success' : ''
                                 }`}
                                 style={{ margin: 0 }}
                               />
                             ) : (
                               <span
-                                className={`rounded px-1 transition-colors flex-1 ${
-                                  selectMode ? '' : 'cursor-pointer hover:bg-white/50'
+                                className={`px-1 transition-colors flex-1 ${
+                                  selectMode ? '' : 'cursor-pointer hover:bg-base-200'
                                 }`}
                                 onClick={() => !selectMode && handleEditStart(q.id, 'option', displayText, optIdx)}
                                 title={selectMode ? '' : 'Click to edit option'}

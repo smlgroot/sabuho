@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @plugin "daisyui" {
@@ -6,8 +6,9 @@
 }
 
 @theme {
-  --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --radius: 0.5rem;
+  --font-sans: 'JetBrains Mono', 'IBM Plex Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  --radius: 0.25rem;
 }
 
 /* Safari font rendering optimizations */
@@ -115,25 +116,33 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn {
-  border-radius: 0.5rem;
+  border-radius: 0.25rem;
   font-weight: 400;
   letter-spacing: 0.02em;
 }
 
 .btn-circle {
-  border-radius: 0.5rem; /* Less extreme rounding for circles */
+  border-radius: 0.25rem;
 }
 
 .card, .menu, .modal-box, .alert, .dropdown-content {
-  border-radius: 0.5rem;
+  border-radius: 0.25rem;
 }
 
 .rounded-box {
-  border-radius: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.rounded-lg {
+  border-radius: 0.25rem !important;
+}
+
+.rounded-md {
+  border-radius: 0.25rem !important;
 }
 
 .rounded-full {
-  border-radius: 9999px; /* Keep truly circular elements */
+  border-radius: 0.25rem !important; /* Make more rectangular */
 }
 
 /* Subtle borders - Material Design style (Gmail uses very light or no borders) */
