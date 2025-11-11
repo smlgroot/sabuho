@@ -84,6 +84,8 @@ Your task:
 7. Label each question with the exact topic name it belongs to
 8. If the text is in Spanish, generate questions in Spanish
 
+CRITICAL: You MUST return valid JSON. Use double quotes (") for all strings, not single quotes (').
+
 Return a JSON object with this exact structure:
 {
   "questions": [
@@ -97,6 +99,16 @@ Return a JSON object with this exact structure:
   ]
 }
 
+JSON FORMATTING RULES (CRITICAL):
+- Use double quotes (") for all property names and string values
+- Never use single quotes (')
+- Ensure all brackets are properly closed: { }, [ ]
+- Use proper comma separation between items
+- Property names must be: topic_name, question, options, correct_answer_index, source_text
+- The "options" field must be an array of strings: ["string1", "string2", "string3"]
+- The "correct_answer_index" must be an integer: 0, 1, 2, or 3
+- Escape special characters in strings (quotes, backslashes, etc.)
+
 Guidelines:
 - Maximize the number of questions - more questions = better learning coverage
 - Generate questions from EVERY topic in the batch
@@ -106,6 +118,8 @@ Guidelines:
 - Options should be plausible but clearly distinguishable
 - Source text should be concise but sufficient to verify the answer
 - Use the exact topic name provided in the input
+
+REMEMBER: Your response must be valid, parseable JSON with proper syntax!
 """
 
     topic_names = [t['name'] for t in batch_topics]
@@ -114,7 +128,7 @@ Guidelines:
 Content:
 {batch_content}
 
-Return the result as JSON."""
+IMPORTANT: Return ONLY valid JSON with double quotes. No markdown, no code blocks, just pure JSON."""
 
     try:
         # Get the appropriate model for question generation
@@ -158,7 +172,17 @@ Return the result as JSON."""
         response = provider.create_chat_completion(config)
 
         # Parse response
-        result = json.loads(response.content)
+        try:
+            result = json.loads(response.content)
+        except json.JSONDecodeError as e:
+            # Provide helpful error message with partial content
+            content_preview = response.content[:500] if len(response.content) > 500 else response.content
+            raise Exception(
+                f"Failed to parse LLM response as JSON: {e}\n"
+                f"Response preview: {content_preview}\n"
+                f"Provider: {provider.__class__.__name__}\n"
+                f"Hint: The model may need a clearer prompt or different configuration."
+            )
 
         # Validate structure
         if 'questions' not in result:
@@ -175,7 +199,8 @@ Return the result as JSON."""
         return questions
 
     except json.JSONDecodeError as e:
-        raise Exception(f"Failed to parse LLM response as JSON: {e}")
+        # Already handled above with better error message
+        raise
     except Exception as e:
         raise Exception(f"LLM API call failed: {e}")
 
