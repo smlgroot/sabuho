@@ -252,7 +252,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="navbar bg-base-100 border-b border-base-300 px-6 sticky top-0 z-50">
+      <header className="navbar bg-base-100 border-b border-base-content/10 px-6 sticky top-0 z-50">
         <div className="flex-1">
           <a href="/" className="flex items-center gap-2 group cursor-pointer">
             <img
@@ -274,7 +274,7 @@ export default function HomePage() {
               </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu bg-base-100 shadow-lg z-[1] w-40 p-2 border border-base-300"
+                className="dropdown-content menu bg-base-100 shadow-lg z-[1] w-40 p-2 border border-base-content/10"
               >
                 <li>
                   <button
@@ -332,7 +332,7 @@ export default function HomePage() {
             ) : (
               /* Unified Section - Steps + Topics & Questions */
               <div className="max-w-5xl mb-8">
-                <div className="bg-base-200/50 border border-base-300 p-6">
+                <div className="bg-base-200/50 border border-base-content/10 p-6">
                   {/* Steps Section - Always Fully Visible */}
                   <div className="mb-6">
                     <h3 className="text-base font-semibold uppercase tracking-wide text-base-content/60 mb-4">Process Steps</h3>
@@ -368,7 +368,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-base-300 my-6"></div>
+                  <div className="border-t border-base-content/10 my-6"></div>
 
                   {/* Topics & Questions Section - With State-based Opacity */}
                   <div className={`transition-opacity ${
@@ -377,7 +377,7 @@ export default function HomePage() {
                       : 'opacity-50'
                   }`}>
                     {/* Header with Stats and Document Management */}
-                    <div className="mb-6 pb-4 border-b border-base-300">
+                    <div className="mb-6 pb-4 border-b border-base-content/10">
                       <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
                         <h3 className={`text-base font-semibold uppercase tracking-wide flex items-center gap-2 ${
                           (isProcessing || topics.length > 0 || sessions.length > 0)
@@ -410,7 +410,7 @@ export default function HomePage() {
                           {sessions.map((session, index) => (
                             <div
                               key={session.id}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-base-200 border border-base-300 text-sm"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-base-200 border border-base-content/10 text-sm"
                             >
                               <BookOpen className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                               <span className="font-medium truncate max-w-[200px]">
@@ -435,7 +435,7 @@ export default function HomePage() {
 
                     {/* Topics and Questions Layout */}
                     {(isProcessing || topics.length > 0 || sessions.length > 0) ? (
-                      <div className="flex border border-base-300">
+                      <div className="flex border border-base-content/10">
                         <TopicsSidebar
                           topics={topics}
                           questions={questions}
@@ -453,7 +453,7 @@ export default function HomePage() {
                         />
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center py-16 border border-dashed border-base-300">
+                      <div className="flex items-center justify-center py-16 border border-dashed border-base-content/10">
                         <div className="text-center">
                           <BookOpen className="w-16 h-16 text-base-content/20 mx-auto mb-4" />
                           <p className="text-base font-semibold text-base-content/40 mb-2">No Content Yet</p>
@@ -477,7 +477,7 @@ export default function HomePage() {
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div key={index} className="text-center border border-base-300 bg-base-100 p-4">
+                <div key={index} className="text-center border border-base-content/10 bg-base-100 p-4">
                   <Icon className="w-6 h-6 text-primary mx-auto mb-2" />
                   <h3 className="text-xs font-semibold uppercase">{feature.title}</h3>
                 </div>
@@ -495,7 +495,7 @@ export default function HomePage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="border border-base-300 p-6 bg-base-100">
+            <div className="border border-base-content/10 p-6 bg-base-100">
               <div className="bg-primary text-primary-content w-10 h-10 flex items-center justify-center font-bold text-lg mb-3">
                 1
               </div>
@@ -503,7 +503,7 @@ export default function HomePage() {
               <p className="text-sm text-base-content/60">Add your document</p>
             </div>
 
-            <div className="border border-base-300 p-6 bg-base-100">
+            <div className="border border-base-content/10 p-6 bg-base-100">
               <div className="bg-primary text-primary-content w-10 h-10 flex items-center justify-center font-bold text-lg mb-3">
                 2
               </div>
@@ -511,7 +511,7 @@ export default function HomePage() {
               <p className="text-sm text-base-content/60">AI creates quiz</p>
             </div>
 
-            <div className="border border-base-300 p-6 bg-base-100">
+            <div className="border border-base-content/10 p-6 bg-base-100">
               <div className="bg-primary text-primary-content w-10 h-10 flex items-center justify-center font-bold text-lg mb-3">
                 3
               </div>
@@ -538,7 +538,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="footer footer-center bg-base-100 border-t border-base-300 py-8 px-6">
+      <footer className="footer footer-center bg-base-100 border-t border-base-content/10 py-8 px-6">
         <aside>
           <div className="flex items-center gap-2 mb-2">
             <img

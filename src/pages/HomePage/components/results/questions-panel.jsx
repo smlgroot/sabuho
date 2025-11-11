@@ -367,7 +367,7 @@ export default function QuestionsPanel({
                 <div
                   key={q.id}
                   className={`p-4 bg-base-100 border transition-colors ${
-                    isSelected ? 'border-primary bg-primary/10' : 'border-base-300'
+                    isSelected ? 'border-primary bg-primary/10' : 'border-base-content/10'
                   }`}
                   onMouseEnter={() => setHoveredQuestionId(q.id)}
                   onMouseLeave={() => setHoveredQuestionId(null)}

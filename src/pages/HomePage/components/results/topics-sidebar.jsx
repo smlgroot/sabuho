@@ -15,7 +15,7 @@ export default function TopicsSidebar({
         className={`px-4 py-3 cursor-pointer transition-all relative border-l-2 border-t-2 border-b-2 ${
           selectedTopicIndex === null
             ? 'bg-primary/5 pr-6 z-10 border-primary'
-            : 'bg-base-200 hover:bg-base-300 border-base-300'
+            : 'bg-base-200 hover:bg-base-300 border-base-content/10'
         }`}
         style={ selectedTopicIndex === null ? { marginRight: '-2px' } : { marginRight: '0px' } }
       >
@@ -49,7 +49,7 @@ export default function TopicsSidebar({
             className={`px-4 py-3 cursor-pointer transition-all relative border-l-2 border-t-2 border-b-2 ${
               selectedTopicIndex === index
                 ? 'bg-primary/5 z-10 border-primary'
-                : 'bg-base-200 hover:bg-base-300 border-base-300'
+                : 'bg-base-200 hover:bg-base-300 border-base-content/10'
             }`}
             style={ selectedTopicIndex === index ? { marginRight: '-2px' } : { marginRight: '0px' } }
           >

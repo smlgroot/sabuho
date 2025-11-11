@@ -107,7 +107,7 @@ export default function ProcessingStep({
       currentStep === 2 && !isProcessing ? 'border-primary cursor-pointer' :
       isProcessing ? 'border-secondary' :
       isCompleted ? 'border-success' :
-      'border-base-300 opacity-50 cursor-not-allowed'
+      'opacity-50 cursor-not-allowed'
     }`}
     onClick={() => {
       if (currentStep === 2 && !isProcessing && !processingError) {

@@ -3,7 +3,7 @@ import { DollarSign, Globe, BarChart3, Lock, Clock } from "lucide-react";
 export default function ShareMonetizeStep({ quizGenerated }) {
   return (
     <div className={`bg-base-100 border-2 p-4 transition-all ${
-      quizGenerated ? 'border-warning' : 'border-base-300 opacity-50'
+      quizGenerated ? 'border-warning' : 'opacity-50'
     }`}>
       <div className="flex flex-col h-full">
         <div className="flex items-start gap-3 mb-3">
