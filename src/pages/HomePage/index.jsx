@@ -23,13 +23,14 @@ export default function HomePage() {
     uploadedFile,
     fileInputRef,
     handleFileSelect,
-    resetFile
-  } = useFileUpload((newFile) => {
-    // Callback when file is selected - show the process sections area
+    resetFile,
+    validationError,
+    clearValidationError
+  } = useFileUpload(() => {
+    // Callback when file is selected
     setCurrentStep(2);
     setQuizGenerated(false);
     setSelectedTopicIndex(null);
-    setShowProcessSections(true);
   });
 
   const {
@@ -41,11 +42,13 @@ export default function HomePage() {
     totalQuestionsGenerated,
     s3Key,
     processingError,
+    retryError,
     resourceRepositoryId,
     sessions,
     handleProcessClick,
     handleRetry,
-    resetProcessing
+    resetProcessing,
+    clearRetryError
   } = useQuizProcessing();
 
   // UI state
@@ -53,7 +56,6 @@ export default function HomePage() {
   const [quizGenerated, setQuizGenerated] = useState(false);
   const [selectedTopicIndex, setSelectedTopicIndex] = useState(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const [showProcessSections, setShowProcessSections] = useState(false);
   const [showProcessStepsModal, setShowProcessStepsModal] = useState(false);
 
   const handleMainButton = () => {
@@ -104,6 +106,14 @@ export default function HomePage() {
     setShowProcessStepsModal(true);
   };
 
+  // Reset just the file without closing modal (used by modal's reset button)
+  const handleModalFileReset = () => {
+    resetFile();
+    resetProcessing();
+    setCurrentStep(1);
+    setQuizGenerated(false);
+  };
+
   const performReset = () => {
     resetFile();
     resetProcessing();
@@ -111,7 +121,6 @@ export default function HomePage() {
     setCurrentStep(1);
     setSelectedTopicIndex(null);
     setShowResetDialog(false);
-    setShowProcessSections(false);
     setShowProcessStepsModal(false);
   };
 
@@ -129,6 +138,41 @@ export default function HomePage() {
     } catch (error) {
       // Error handling is done in useQuizProcessing hook
     }
+  };
+
+  const handleRetryWrapper = async () => {
+    // If s3Key exists, retry from where it left off (just poll for results)
+    // If no s3Key, it means upload failed - so re-upload and process from scratch
+    try {
+      if (s3Key) {
+        await handleRetry();
+        // Update state after successful retry
+        setQuizGenerated(true);
+        setCurrentStep(3);
+      } else {
+        await handleProcess();
+      }
+    } catch (error) {
+      // Error handling is done in useQuizProcessing hook
+    }
+  };
+
+  // Close modal after successful completion - keep data visible
+  const handleDoneAndClose = () => {
+    setShowProcessStepsModal(false);
+    setCurrentStep(1);
+    setQuizGenerated(false);
+    resetFile();
+    // Don't reset processing - keep topics and questions visible
+  };
+
+  // Close modal and reset only current upload attempt (keep existing processed data)
+  const handleCancelAndClose = () => {
+    setShowProcessStepsModal(false);
+    setCurrentStep(1);
+    setQuizGenerated(false);
+    resetFile();
+    // Don't reset processing - preserve existing topics and questions from previous uploads
   };
 
   if (loading) {
@@ -269,8 +313,8 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Show Hero when no activity and user hasn't clicked Get Started, otherwise show process sections */}
-            {!showProcessSections && sessions.length === 0 && topics.length === 0 ? (
+            {/* Show Hero until there's processed content */}
+            {sessions.length === 0 && topics.length === 0 ? (
               <HeroSection onGetStarted={handleGetStarted} />
             ) : (
               /* Unified Section - Topics & Questions */
@@ -493,17 +537,22 @@ export default function HomePage() {
       {/* Process Steps Modal */}
       <ProcessStepsModal
         isOpen={showProcessStepsModal}
-        onClose={() => setShowProcessStepsModal(false)}
+        onDone={handleDoneAndClose}
+        onCancel={handleCancelAndClose}
         uploadedFile={uploadedFile}
         fileInputRef={fileInputRef}
         onFileSelect={handleFileSelect}
-        onReset={handleResetClick}
+        onReset={handleModalFileReset}
         currentStep={currentStep}
         isProcessing={isProcessing}
         processingError={processingError}
+        retryError={retryError}
+        validationError={validationError}
         currentProcessingState={currentProcessingState}
         onProcessClick={handleProcess}
-        onRetry={handleRetry}
+        onRetry={handleRetryWrapper}
+        onClearValidationError={clearValidationError}
+        onClearRetryError={clearRetryError}
         quizGenerated={quizGenerated}
       />
     </div>

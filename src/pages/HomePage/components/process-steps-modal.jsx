@@ -6,7 +6,8 @@ import ShareMonetizeStep from "./steps/share-monetize-step";
 
 export default function ProcessStepsModal({
   isOpen,
-  onClose,
+  onDone,
+  onCancel,
   uploadedFile,
   fileInputRef,
   onFileSelect,
@@ -14,14 +15,22 @@ export default function ProcessStepsModal({
   currentStep,
   isProcessing,
   processingError,
+  retryError,
+  validationError,
   currentProcessingState,
   onProcessClick,
   onRetry,
+  onClearValidationError,
+  onClearRetryError,
   quizGenerated
 }) {
   const [showCancelWarning, setShowCancelWarning] = useState(false);
+  const [showResetWarning, setShowResetWarning] = useState(false);
 
   if (!isOpen) return null;
+
+  // Check if any error dialog should be shown
+  const showErrorDialog = validationError || retryError;
 
   const handleCancelClick = () => {
     setShowCancelWarning(true);
@@ -29,17 +38,55 @@ export default function ProcessStepsModal({
 
   const handleConfirmCancel = () => {
     setShowCancelWarning(false);
-    onClose();
+    onCancel();
   };
 
   const handleCancelWarningClose = () => {
     setShowCancelWarning(false);
   };
 
+  const handleResetClick = () => {
+    // Show confirmation before resetting
+    setShowResetWarning(true);
+  };
+
+  const handleConfirmReset = () => {
+    setShowResetWarning(false);
+    onReset();
+  };
+
+  const handleCancelResetWarning = () => {
+    setShowResetWarning(false);
+  };
+
+  const handleCloseErrorDialog = () => {
+    if (validationError) {
+      onClearValidationError();
+    }
+    if (retryError) {
+      onClearRetryError();
+    }
+  };
+
   return (
     <dialog className={`modal ${isOpen ? 'modal-open' : ''}`}>
       <div className="modal-box max-w-4xl">
-        {!showCancelWarning ? (
+        {showErrorDialog ? (
+          <>
+            <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
+              <AlertCircle className="w-6 h-6 text-error" />
+              Error
+            </h3>
+            <p className="py-4">
+              {validationError || retryError}
+            </p>
+            <div className="modal-action">
+              <button onClick={handleCloseErrorDialog} className="btn btn-primary">
+                OK
+              </button>
+            </div>
+          </>
+        ) : !showCancelWarning && !showResetWarning ? (
           <>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold uppercase tracking-wide text-base-content/60">
@@ -52,8 +99,7 @@ export default function ProcessStepsModal({
                 uploadedFile={uploadedFile}
                 fileInputRef={fileInputRef}
                 onFileSelect={onFileSelect}
-                onReset={onReset}
-                documentQueue={[]}
+                onReset={handleResetClick}
               />
 
               <ProcessingStep
@@ -69,16 +115,24 @@ export default function ProcessStepsModal({
             </div>
 
             <div className="modal-action">
-              <button
-                onClick={handleCancelClick}
-                className="btn btn-ghost"
-                disabled={isProcessing}
-              >
-                Cancel
-              </button>
+              {currentStep >= 3 && quizGenerated ? (
+                <button
+                  onClick={onDone}
+                  className="btn btn-primary"
+                >
+                  Done
+                </button>
+              ) : (
+                <button
+                  onClick={handleCancelClick}
+                  className="btn btn-ghost"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </>
-        ) : (
+        ) : showCancelWarning ? (
           <>
             <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
               <AlertCircle className="w-6 h-6 text-warning" />
@@ -96,8 +150,29 @@ export default function ProcessStepsModal({
               </button>
             </div>
           </>
-        )}
+        ) : showResetWarning ? (
+          <>
+            <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
+              <AlertCircle className="w-6 h-6 text-warning" />
+              Reset File?
+            </h3>
+            <p className="py-4">
+              Are you sure you want to reset? The selected file will be removed and you'll need to upload again.
+            </p>
+            <div className="modal-action">
+              <button onClick={handleCancelResetWarning} className="btn btn-ghost">
+                Keep File
+              </button>
+              <button onClick={handleConfirmReset} className="btn btn-error">
+                Yes, Reset
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
+      <form method="dialog" className="modal-backdrop" onClick={handleCancelClick}>
+        <button>close</button>
+      </form>
     </dialog>
   );
 }

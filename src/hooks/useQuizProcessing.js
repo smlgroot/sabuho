@@ -17,6 +17,7 @@ export function useQuizProcessing() {
   const [totalQuestionsGenerated, setTotalQuestionsGenerated] = useState(0);
   const [s3Key, setS3Key] = useState(null);
   const [processingError, setProcessingError] = useState(null);
+  const [retryError, setRetryError] = useState(null);
   const [resourceRepositoryId, setResourceRepositoryId] = useState(null);
   const [sessions, setSessions] = useState([]);
   const { trackEvent } = usePostHog();
@@ -200,13 +201,9 @@ export function useQuizProcessing() {
   };
 
   const handleRetry = async () => {
-    if (!s3Key) {
-      alert('No file to retry. Please upload a file first.');
-      return;
-    }
-
     setIsProcessing(true);
     setProcessingError(null);
+    setRetryError(null);
     setCurrentProcessingState("processing");
 
     try {
@@ -234,8 +231,13 @@ export function useQuizProcessing() {
     setTotalQuestionsGenerated(0);
     setS3Key(null);
     setProcessingError(null);
+    setRetryError(null);
     setResourceRepositoryId(null);
     setSessions([]);
+  };
+
+  const clearRetryError = () => {
+    setRetryError(null);
   };
 
   return {
@@ -247,10 +249,12 @@ export function useQuizProcessing() {
     totalQuestionsGenerated,
     s3Key,
     processingError,
+    retryError,
     resourceRepositoryId,
     sessions,
     handleProcessClick,
     handleRetry,
-    resetProcessing
+    resetProcessing,
+    clearRetryError
   };
 }

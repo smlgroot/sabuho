@@ -1,21 +1,20 @@
-import { Upload, CheckCircle, FileText, BarChart3, RotateCcw, Plus } from "lucide-react";
+import { Upload, CheckCircle, FileText, BarChart3, RotateCcw } from "lucide-react";
 
 export default function FileUploadStep({
   uploadedFile,
   fileInputRef,
   onFileSelect,
-  onReset,
-  documentQueue = []
+  onReset
 }) {
-  const queueCount = documentQueue.length;
+  const hasFile = !!uploadedFile;
   return (
     <div className={`bg-base-100 border-2 p-4 transition-all ${
-      queueCount > 0 ? 'border-success' : 'border-primary'
+      hasFile ? 'border-success' : 'border-primary'
     }`}>
       <div className="flex flex-col h-full">
         <div className="flex items-start gap-3 mb-3">
           <div className="p-2 flex-shrink-0 bg-base-200">
-            {queueCount > 0 ? (
+            {hasFile ? (
               <CheckCircle className="w-5 h-5 text-success" />
             ) : (
               <Upload className="w-5 h-5 text-primary" />
@@ -24,7 +23,7 @@ export default function FileUploadStep({
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm mb-1 uppercase">Step 1</h3>
             <p className="text-xs text-base-content/60">
-              {queueCount > 0 ? `${queueCount} file${queueCount > 1 ? 's' : ''} queued` : 'Choose a file'}
+              {hasFile ? 'File selected' : 'Choose a file'}
             </p>
           </div>
         </div>
@@ -85,7 +84,7 @@ export default function FileUploadStep({
           </div>
         )}
 
-        {queueCount === 0 ? (
+        {!hasFile ? (
           <label
             htmlFor="file-upload-step"
             className="btn btn-primary btn-sm cursor-pointer w-full mt-auto"
@@ -93,22 +92,13 @@ export default function FileUploadStep({
             Select File
           </label>
         ) : (
-          <div className="flex gap-2 mt-auto">
-            <label
-              htmlFor="file-upload-step"
-              className="btn btn-outline btn-sm cursor-pointer flex-1"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add More
-            </label>
-            <button
-              onClick={onReset}
-              className="btn btn-outline btn-sm flex-1 hover:btn-error"
-            >
-              <RotateCcw className="w-4 h-4 mr-1" />
-              Reset
-            </button>
-          </div>
+          <button
+            onClick={onReset}
+            className="btn btn-outline btn-sm w-full mt-auto hover:btn-error"
+          >
+            <RotateCcw className="w-4 h-4 mr-1" />
+            Reset
+          </button>
         )}
       </div>
     </div>
