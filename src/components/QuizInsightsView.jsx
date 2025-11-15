@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { calculateQuestionStats, calculateAccuracy, calculateProgress } from '../utils/questionStats';
-import { BarChart3, TrendingUp, Target, Clock } from 'lucide-react';
+import { BarChart3, TrendingUp, Target, Clock, ArrowLeft } from 'lucide-react';
 
 /**
  * Quiz Insights View Component
@@ -48,10 +48,10 @@ const QuizInsightsView = ({ questions, attempts, onBack }) => {
           <div className="flex items-center gap-4">
             <button
               onClick={onBack}
-              className="btn btn-ghost btn-sm btn-circle"
+              className="btn btn-ghost btn-circle"
               aria-label="Go back"
             >
-              ←
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex-1">
               <h1 className="text-xl font-bold uppercase tracking-wide flex items-center gap-2">

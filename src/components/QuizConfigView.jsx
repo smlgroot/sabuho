@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { calculateQuestionStats } from '../utils/questionStats';
 
 /**
@@ -77,10 +78,10 @@ const QuizConfigView = ({ questions, attempts, onStartQuiz, onBack }) => {
           <div className="flex items-center gap-4 mb-2">
             <button
               onClick={onBack}
-              className="btn btn-ghost btn-sm btn-circle"
+              className="btn btn-ghost btn-circle"
               aria-label="Go back"
             >
-              ←
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex-1">
               <h1 className="text-xl font-bold uppercase tracking-wide">Configure Your Quiz</h1>

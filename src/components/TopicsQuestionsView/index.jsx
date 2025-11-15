@@ -60,92 +60,119 @@ export default function TopicsQuestionsView({
         {/* Topics & Questions Section - With State-based Opacity */}
         <div className={`transition-opacity ${hasContent ? 'opacity-100' : 'opacity-50'}`}>
           {/* Header with Stats and Action Buttons */}
-          <div className="mb-6 pb-4 border-b border-base-content/10">
-            <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-              <h3 className={`text-base font-semibold uppercase tracking-wide flex items-center gap-2 ${
-                hasContent ? 'text-base-content/60' : 'text-base-content/30'
-              }`}>
-                <BookOpen className={`w-5 h-5 ${
-                  hasContent ? 'text-primary' : 'text-base-content/30'
-                }`} />
-                Topics & Questions
-              </h3>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-4 text-sm font-mono">
-                  <div>
-                    <span className="text-base-content/60">Topics: </span>
-                    <span className="font-bold text-primary">{topics.length}</span>
-                  </div>
-                  <div className="text-base-content/30">|</div>
-                  <div>
-                    <span className="text-base-content/60">Questions: </span>
-                    <span className="font-bold">{totalQuestionsGenerated}</span>
-                  </div>
+          <div className="mb-6">
+            {/* Title Row */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded ${hasContent ? 'bg-primary/10' : 'bg-base-content/5'}`}>
+                  <BookOpen className={`w-5 h-5 ${
+                    hasContent ? 'text-primary' : 'text-base-content/30'
+                  }`} />
                 </div>
-                <div className="flex items-center gap-2">
-                  {/* Custom action buttons */}
-                  {actionButtons}
+                <div>
+                  <h3 className={`text-lg font-bold uppercase tracking-wide ${
+                    hasContent ? 'text-base-content' : 'text-base-content/30'
+                  }`}>
+                    Topics & Questions
+                  </h3>
+                  {isDemo && (
+                    <p className="text-xs text-base-content/60 mt-0.5">
+                      Example quiz • Upload your own document to get started
+                    </p>
+                  )}
+                </div>
+              </div>
 
-                  {/* Default action buttons */}
-                  {topics.length > 0 && onShowInsights && (
-                    <button
-                      onClick={onShowInsights}
-                      className="btn btn-ghost btn-sm gap-2"
-                      title="View learning insights and statistics"
-                    >
-                      <BarChart3 className="w-4 h-4" />
-                      Insights
-                    </button>
-                  )}
-                  {showStartLearningButton && topics.length > 0 && onStartLearning && (
-                    <button
-                      onClick={onStartLearning}
-                      className="btn btn-accent gap-2 shadow-lg"
-                    >
-                      Start Learning
-                    </button>
-                  )}
-                  {showAddDocumentButton && onAddDocument && (
-                    <button
-                      onClick={onAddDocument}
-                      className={`btn ${isDemo ? 'btn-primary' : 'btn-primary btn-sm'} gap-2 ${isDemo ? 'shadow-lg' : ''}`}
-                      title={isDemo ? "Upload your own document to create personalized quizzes" : "Add new document"}
-                    >
-                      <Plus className="w-4 h-4" />
-                      {isDemo ? "Upload Your Document" : "Add New Document"}
-                    </button>
-                  )}
-                </div>
+              {/* Action Buttons Group */}
+              <div className="flex items-center gap-2">
+                {/* Custom action buttons */}
+                {actionButtons}
+
+                {/* Default action buttons */}
+                {topics.length > 0 && onShowInsights && (
+                  <button
+                    onClick={onShowInsights}
+                    className="btn btn-secondary btn-sm gap-2"
+                    title="View learning insights and statistics"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    Insights
+                  </button>
+                )}
+                {showStartLearningButton && topics.length > 0 && onStartLearning && (
+                  <button
+                    onClick={onStartLearning}
+                    className="btn btn-accent btn-sm gap-2"
+                  >
+                    Start Learning
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Document Info - Compact View */}
-            {showDocumentInfo && sessions.length > 0 && (
-              <div className="flex items-center gap-3 flex-wrap">
-                {sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-base-200 border border-base-content/10 text-sm"
+            {/* Stats and Document Info Row */}
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              {/* Stats Cards */}
+              <div className="flex items-center gap-3">
+                <div className="bg-base-100 border border-base-content/10 px-4 py-2 rounded">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-base-content/60 uppercase tracking-wide">Topics</span>
+                    <div className="badge badge-primary badge-sm font-bold">{topics.length}</div>
+                  </div>
+                </div>
+                <div className="bg-base-100 border border-base-content/10 px-4 py-2 rounded">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-base-content/60 uppercase tracking-wide">Questions</span>
+                    <div className="badge badge-neutral badge-sm font-bold">{totalQuestionsGenerated}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Document Info Section */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Document Badges */}
+                {showDocumentInfo && sessions.length > 0 && (
+                  <>
+                    {sessions.map((session) => (
+                      <div
+                        key={session.id}
+                        className="inline-flex items-center gap-2 px-3 py-2 bg-base-100 border border-base-content/10 rounded"
+                      >
+                        <BookOpen className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="text-sm font-medium truncate max-w-[200px]">
+                          {session.name}
+                        </span>
+                        <div className="badge badge-xs badge-success">
+                          {session.status === 'completed' ? 'Done' : session.status}
+                        </div>
+                        {isDemo && (
+                          <div className="badge badge-xs badge-info">DEMO</div>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {/* Add Document Button */}
+                {showAddDocumentButton && onAddDocument && (
+                  <button
+                    onClick={onAddDocument}
+                    className={`btn gap-2 ${
+                      isDemo
+                        ? 'btn-primary shadow-lg'
+                        : 'btn-outline btn-sm'
+                    }`}
+                    title={isDemo ? "Upload your own document to create personalized quizzes" : "Add new document"}
                   >
-                    <BookOpen className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                    <span className="font-medium truncate max-w-[200px]">
-                      {session.name}
-                    </span>
-                    <div className="badge badge-xs badge-success">
-                      {session.status === 'completed' ? 'Done' : session.status}
-                    </div>
-                    {isDemo && (
-                      <div className="badge badge-xs badge-info">DEMO</div>
-                    )}
-                  </div>
-                ))}
-                {isDemo && (
-                  <div className="text-xs text-base-content/60 italic">
-                    Example quiz • Upload your own document to get started
-                  </div>
+                    <Plus className="w-4 h-4" />
+                    {isDemo ? "Upload Your Document" : "Add Document"}
+                  </button>
                 )}
               </div>
-            )}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-base-content/10 mt-4"></div>
           </div>
 
           {/* Topics and Questions Layout */}
