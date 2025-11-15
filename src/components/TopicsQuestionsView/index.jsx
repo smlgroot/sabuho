@@ -92,10 +92,10 @@ export default function TopicsQuestionsView({
                 {topics.length > 0 && onShowInsights && (
                   <button
                     onClick={onShowInsights}
-                    className="btn btn-secondary btn-sm gap-2"
+                    className="btn btn-secondary gap-2 shadow-sm"
                     title="View learning insights and statistics"
                   >
-                    <BarChart3 className="w-4 h-4" />
+                    <BarChart3 className="w-5 h-5" />
                     Insights
                   </button>
                 )}
