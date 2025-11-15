@@ -159,7 +159,7 @@ export default function TopicsQuestionsView({
                     onClick={onAddDocument}
                     className={`btn gap-2 ${
                       isDemo
-                        ? 'btn-primary shadow-lg'
+                        ? 'btn-info shadow-lg'
                         : 'btn-outline btn-sm'
                     }`}
                     title={isDemo ? "Upload your own document to create personalized quizzes" : "Add new document"}
