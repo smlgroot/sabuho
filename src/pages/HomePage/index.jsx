@@ -11,6 +11,7 @@ import { filterQuestionsByState } from "@/utils/questionStats";
 import TopicsQuestionsView from "@/components/TopicsQuestionsView";
 import QuizConfigView from "@/components/QuizConfigView";
 import QuizAttemptView from "@/components/QuizAttemptView";
+import QuizInsightsView from "@/components/QuizInsightsView";
 import HeroSection from "./components/hero-section";
 import ProcessStepsModal from "./components/process-steps-modal";
 
@@ -60,7 +61,7 @@ export default function HomePage() {
   const [showProcessStepsModal, setShowProcessStepsModal] = useState(false);
 
   // View stack navigation state
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'quiz-config' | 'quiz-attempt'
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'quiz-config' | 'quiz-attempt' | 'quiz-insights'
   const [viewStack, setViewStack] = useState(['home']);
   const [selectedQuestionStates, setSelectedQuestionStates] = useState([]);
   const [quizCompletionStats, setQuizCompletionStats] = useState(null);
@@ -241,6 +242,12 @@ export default function HomePage() {
   const handleQuizExit = () => {
     trackEvent('quiz_exited', { props: { source: 'homepage' } });
     popView();
+  };
+
+  // Handle show insights
+  const handleShowInsights = () => {
+    trackEvent('insights_viewed', { props: { source: 'homepage' } });
+    pushView('quiz-insights');
   };
 
   if (loading) {
@@ -445,19 +452,7 @@ export default function HomePage() {
     { icon: Trophy, title: "Achievements" }
   ];
 
-  // Render quiz configuration view
-  if (currentView === 'quiz-config') {
-    return (
-      <QuizConfigView
-        questions={displayQuestions}
-        attempts={questionAttemptsHook.attempts}
-        onStartQuiz={handleStartQuiz}
-        onBack={popView}
-      />
-    );
-  }
-
-  // Render quiz attempt view
+  // Render quiz attempt view (full screen)
   if (currentView === 'quiz-attempt') {
     return (
       <QuizAttemptView
@@ -551,32 +546,52 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Always show Topics & Questions View - with demo data or user data */}
-            <TopicsQuestionsView
-              topics={displayTopics}
-              questions={displayQuestions}
-              sessions={displaySessions}
-              isProcessing={isProcessing}
-              totalQuestionsGenerated={hasUserData ? totalQuestionsGenerated : mockQuestions.length}
-              onAddDocument={() => setShowProcessStepsModal(true)}
-              onStartLearning={handleStartLearning}
-              actionButtons={
-                displayTopics.length > 0 ? (
-                  <button
-                    onClick={handleStartLearning}
-                    className="btn btn-accent gap-2 shadow-lg"
-                  >
-                    <Trophy className="w-5 h-5" />
-                    Start Learning
-                  </button>
-                ) : null
-              }
-              showDocumentInfo={true}
-              showAddDocumentButton={true}
-              showStartLearningButton={false}
-              readOnly={isReadOnlyMode}
-              isDemo={isReadOnlyMode}
-            />
+            {/* Conditionally render views based on currentView */}
+            {currentView === 'home' && (
+              <TopicsQuestionsView
+                topics={displayTopics}
+                questions={displayQuestions}
+                sessions={displaySessions}
+                isProcessing={isProcessing}
+                totalQuestionsGenerated={hasUserData ? totalQuestionsGenerated : mockQuestions.length}
+                onAddDocument={() => setShowProcessStepsModal(true)}
+                onStartLearning={handleStartLearning}
+                onShowInsights={handleShowInsights}
+                actionButtons={
+                  displayTopics.length > 0 ? (
+                    <button
+                      onClick={handleStartLearning}
+                      className="btn btn-accent gap-2 shadow-lg"
+                    >
+                      <Trophy className="w-5 h-5" />
+                      Start Learning
+                    </button>
+                  ) : null
+                }
+                showDocumentInfo={true}
+                showAddDocumentButton={true}
+                showStartLearningButton={false}
+                readOnly={isReadOnlyMode}
+                isDemo={isReadOnlyMode}
+              />
+            )}
+
+            {currentView === 'quiz-config' && (
+              <QuizConfigView
+                questions={displayQuestions}
+                attempts={questionAttemptsHook.attempts}
+                onStartQuiz={handleStartQuiz}
+                onBack={popView}
+              />
+            )}
+
+            {currentView === 'quiz-insights' && (
+              <QuizInsightsView
+                questions={displayQuestions}
+                attempts={questionAttemptsHook.attempts}
+                onBack={popView}
+              />
+            )}
           </div>
         </div>
       </section>

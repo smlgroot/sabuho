@@ -1,4 +1,4 @@
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Plus, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import TopicsSidebar from "./topics-sidebar";
 import QuestionsPanel from "./questions-panel";
@@ -17,6 +17,7 @@ import QuestionsPanel from "./questions-panel";
  * @param {Function} props.onAddQuestion - Callback when a question is added
  * @param {Function} props.onAddDocument - Callback when add document button is clicked
  * @param {Function} props.onStartLearning - Callback when start learning button is clicked
+ * @param {Function} props.onShowInsights - Callback when insights button is clicked
  * @param {React.ReactNode} props.actionButtons - Custom action buttons to display in header
  * @param {boolean} props.showDocumentInfo - Whether to show document/session info
  * @param {boolean} props.showAddDocumentButton - Whether to show add document button
@@ -36,6 +37,7 @@ export default function TopicsQuestionsView({
   onAddQuestion,
   onAddDocument,
   onStartLearning,
+  onShowInsights,
   actionButtons,
   showDocumentInfo = true,
   showAddDocumentButton = true,
@@ -85,6 +87,16 @@ export default function TopicsQuestionsView({
                   {actionButtons}
 
                   {/* Default action buttons */}
+                  {topics.length > 0 && onShowInsights && (
+                    <button
+                      onClick={onShowInsights}
+                      className="btn btn-ghost btn-sm gap-2"
+                      title="View learning insights and statistics"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      Insights
+                    </button>
+                  )}
                   {showStartLearningButton && topics.length > 0 && onStartLearning && (
                     <button
                       onClick={onStartLearning}

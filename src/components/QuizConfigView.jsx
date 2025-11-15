@@ -70,11 +70,11 @@ const QuizConfigView = ({ questions, attempts, onStartQuiz, onBack }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-base-200 flex flex-col">
-      {/* Header */}
-      <div className="bg-base-100 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
+    <div className="max-w-5xl mb-8">
+      <div className="bg-base-200 border border-base-content/10 p-6">
+        {/* Header */}
+        <div className="mb-6 pb-4 border-b border-base-content/10">
+          <div className="flex items-center gap-4 mb-2">
             <button
               onClick={onBack}
               className="btn btn-ghost btn-sm btn-circle"
@@ -82,46 +82,41 @@ const QuizConfigView = ({ questions, attempts, onStartQuiz, onBack }) => {
             >
               ←
             </button>
-            <div>
-              <h1 className="text-2xl font-bold">Configure Your Quiz</h1>
-              <p className="text-sm text-base-content/70">
+            <div className="flex-1">
+              <h1 className="text-xl font-bold uppercase tracking-wide">Configure Your Quiz</h1>
+              <p className="text-xs text-base-content/60">
                 Select question types to practice
               </p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 container mx-auto px-4 py-8">
         {/* Summary Stats */}
-        <div className="card bg-base-100 shadow-sm mb-6">
-          <div className="card-body">
-            <h2 className="card-title text-lg">Question Summary</h2>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <div className="text-3xl font-bold text-primary">
-                  {stats.total}
-                </div>
-                <div className="text-sm text-base-content/70">
-                  Total Questions
-                </div>
+        <div className="bg-base-100 border border-base-content/10 p-4 mb-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-base-content/60 mb-4">Question Summary</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-3xl font-bold text-primary">
+                {stats.total}
               </div>
-              <div>
-                <div className="text-3xl font-bold text-accent">
-                  {totalSelected}
-                </div>
-                <div className="text-sm text-base-content/70">
-                  Selected
-                </div>
+              <div className="text-xs text-base-content/60">
+                Total Questions
+              </div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-accent">
+                {totalSelected}
+              </div>
+              <div className="text-xs text-base-content/60">
+                Selected
               </div>
             </div>
           </div>
         </div>
 
         {/* State Selection Cards */}
-        <div className="space-y-4 mb-8">
-          <h2 className="text-lg font-semibold mb-4">
+        <div className="space-y-3 mb-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-base-content/60 mb-3">
             Select Question Types
           </h2>
 
@@ -129,40 +124,38 @@ const QuizConfigView = ({ questions, attempts, onStartQuiz, onBack }) => {
             <div
               key={card.id}
               onClick={() => card.count > 0 && toggleState(card.id)}
-              className={`card bg-base-100 shadow-sm cursor-pointer transition-all duration-200 ${
+              className={`bg-base-100 border border-base-content/10 p-4 cursor-pointer transition-all duration-200 ${
                 isSelected(card.id)
                   ? `ring-2 ring-${card.color} ring-offset-2 ring-offset-base-200`
-                  : 'hover:shadow-md'
+                  : 'hover:border-base-content/20'
               } ${card.count === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              <div className="card-body">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="text-4xl">{card.icon}</div>
-                    <div>
-                      <h3 className="font-semibold text-lg">{card.title}</h3>
-                      <p className="text-sm text-base-content/70">
-                        {card.description}
-                      </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl">{card.icon}</div>
+                  <div>
+                    <h3 className="font-semibold text-sm uppercase">{card.title}</h3>
+                    <p className="text-xs text-base-content/60">
+                      {card.description}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className={`text-2xl font-bold text-${card.color}`}>
+                      {card.count}
+                    </div>
+                    <div className="text-xs text-base-content/60">
+                      questions
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className={`text-3xl font-bold text-${card.color}`}>
-                        {card.count}
-                      </div>
-                      <div className="text-xs text-base-content/70">
-                        questions
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={isSelected(card.id)}
-                      onChange={() => {}}
-                      disabled={card.count === 0}
-                      className={`checkbox checkbox-${card.color} checkbox-lg`}
-                    />
-                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isSelected(card.id)}
+                    onChange={() => {}}
+                    disabled={card.count === 0}
+                    className={`checkbox checkbox-${card.color}`}
+                  />
                 </div>
               </div>
             </div>
@@ -171,32 +164,17 @@ const QuizConfigView = ({ questions, attempts, onStartQuiz, onBack }) => {
 
         {/* Instructions */}
         {selectedStates.length === 0 && (
-          <div className="alert alert-info">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              className="stroke-current shrink-0 w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>Select at least one question type to start your quiz</span>
+          <div className="bg-info/10 border border-info/20 p-3 mb-6">
+            <p className="text-sm text-base-content/70">Select at least one question type to start your quiz</p>
           </div>
         )}
-      </div>
 
-      {/* Footer with Start Quiz Button */}
-      <div className="bg-base-100 border-t border-base-300 sticky bottom-0">
-        <div className="container mx-auto px-4 py-4">
+        {/* Action Buttons */}
+        <div className="flex gap-3">
           <button
             onClick={handleStartQuiz}
             disabled={selectedStates.length === 0 || totalSelected === 0}
-            className="btn btn-primary btn-lg w-full"
+            className="btn btn-primary flex-1"
           >
             {selectedStates.length === 0
               ? 'Select Question Types'
