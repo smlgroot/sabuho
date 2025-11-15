@@ -354,14 +354,25 @@ export default function HomePage() {
                               <span className="font-bold">{totalQuestionsGenerated}</span>
                             </div>
                           </div>
-                          <button
-                            onClick={() => setShowProcessStepsModal(true)}
-                            className="btn btn-primary btn-sm gap-2"
-                            title="Add new document"
-                          >
-                            <Plus className="w-4 h-4" />
-                            Add New Document
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {topics.length > 0 && (
+                              <button
+                                onClick={() => navigate("/online-game")}
+                                className="btn btn-accent gap-2 shadow-lg"
+                              >
+                                <Trophy className="w-5 h-5" />
+                                Start Learning
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setShowProcessStepsModal(true)}
+                              className="btn btn-primary btn-sm gap-2"
+                              title="Add new document"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Add New Document
+                            </button>
+                          </div>
                         </div>
                       </div>
 
