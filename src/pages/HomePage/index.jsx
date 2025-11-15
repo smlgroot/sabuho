@@ -182,46 +182,180 @@ export default function HomePage() {
     );
   }
 
-  // Sample documents for demo
-  const sampleDocuments = [
+  // Mock data for demonstrating Topics & Questions feature
+  const mockTopics = [
     {
-      title: "Biology Notes",
-      icon: "🧬",
-      type: "PDF",
-      description: "Cell Structure & Functions"
+      id: "topic-1",
+      name: "Cell Biology Basics",
+      description: "Understanding the fundamental structure and functions of cells",
+      questionsCount: 5,
+      color: "primary"
     },
     {
-      title: "History Essay",
-      icon: "📜",
-      type: "DOCX",
-      description: "World War II Overview"
+      id: "topic-2",
+      name: "Organelles and Their Functions",
+      description: "Exploring the various organelles within cells and their roles",
+      questionsCount: 4,
+      color: "secondary"
     },
     {
-      title: "Physics Guide",
-      icon: "⚛️",
-      type: "TXT",
-      description: "Newton's Laws of Motion"
+      id: "topic-3",
+      name: "Cell Division",
+      description: "Understanding mitosis and meiosis processes",
+      questionsCount: 3,
+      color: "accent"
     }
   ];
 
-  // Sample quiz questions for demo
-  const sampleQuestions = [
+  const mockQuestions = [
     {
-      question: "What is the main topic covered in this document?",
-      options: ["Option A", "Option B", "Option C", "Option D"],
-      type: "multiple-choice"
+      id: "q1",
+      resource_session_domain_id: "topic-1",
+      body: "What is the primary function of the cell membrane?",
+      options: [
+        "To control what enters and exits the cell [correct]",
+        "To produce energy",
+        "To store genetic information",
+        "To synthesize proteins"
+      ],
+      type: "multiple-choice",
+      difficulty: "easy"
     },
     {
-      question: "Which of the following statements is correct based on the document?",
-      options: ["Statement 1", "Statement 2", "Statement 3", "Statement 4"],
-      type: "multiple-choice"
+      id: "q2",
+      resource_session_domain_id: "topic-1",
+      body: "Which component is found in plant cells but not in animal cells?",
+      options: [
+        "Mitochondria",
+        "Cell wall [correct]",
+        "Nucleus",
+        "Ribosomes"
+      ],
+      type: "multiple-choice",
+      difficulty: "medium"
     },
     {
-      question: "True or False: The document discusses advanced concepts.",
-      options: ["True", "False"],
-      type: "true-false"
+      id: "q3",
+      resource_session_domain_id: "topic-1",
+      body: "The nucleus contains the cell's genetic material.",
+      options: ["True [correct]", "False"],
+      type: "true-false",
+      difficulty: "easy"
+    },
+    {
+      id: "q4",
+      resource_session_domain_id: "topic-1",
+      body: "What is the jelly-like substance that fills the cell?",
+      options: [
+        "Cytoplasm [correct]",
+        "Chloroplast",
+        "Vacuole",
+        "Endoplasmic reticulum"
+      ],
+      type: "multiple-choice",
+      difficulty: "easy"
+    },
+    {
+      id: "q5",
+      resource_session_domain_id: "topic-1",
+      body: "Which structure is responsible for protein synthesis?",
+      options: [
+        "Golgi apparatus",
+        "Ribosomes [correct]",
+        "Lysosomes",
+        "Peroxisomes"
+      ],
+      type: "multiple-choice",
+      difficulty: "medium"
+    },
+    {
+      id: "q6",
+      resource_session_domain_id: "topic-2",
+      body: "What is the powerhouse of the cell?",
+      options: [
+        "Nucleus",
+        "Mitochondria [correct]",
+        "Chloroplast",
+        "Ribosome"
+      ],
+      type: "multiple-choice",
+      difficulty: "easy"
+    },
+    {
+      id: "q7",
+      resource_session_domain_id: "topic-2",
+      body: "The Golgi apparatus packages and distributes proteins.",
+      options: ["True [correct]", "False"],
+      type: "true-false",
+      difficulty: "medium"
+    },
+    {
+      id: "q8",
+      resource_session_domain_id: "topic-2",
+      body: "Which organelle is responsible for photosynthesis in plant cells?",
+      options: [
+        "Mitochondria",
+        "Nucleus",
+        "Chloroplast [correct]",
+        "Vacuole"
+      ],
+      type: "multiple-choice",
+      difficulty: "medium"
+    },
+    {
+      id: "q9",
+      resource_session_domain_id: "topic-2",
+      body: "Lysosomes contain digestive enzymes that break down waste materials.",
+      options: ["True [correct]", "False"],
+      type: "true-false",
+      difficulty: "medium"
+    },
+    {
+      id: "q10",
+      resource_session_domain_id: "topic-3",
+      body: "How many daughter cells are produced during mitosis?",
+      options: ["1", "2 [correct]", "4", "8"],
+      type: "multiple-choice",
+      difficulty: "medium"
+    },
+    {
+      id: "q11",
+      resource_session_domain_id: "topic-3",
+      body: "Meiosis produces genetically identical cells.",
+      options: ["True", "False [correct]"],
+      type: "true-false",
+      difficulty: "medium"
+    },
+    {
+      id: "q12",
+      resource_session_domain_id: "topic-3",
+      body: "Which type of cell division produces gametes (sex cells)?",
+      options: [
+        "Mitosis",
+        "Meiosis [correct]",
+        "Binary fission",
+        "Budding"
+      ],
+      type: "multiple-choice",
+      difficulty: "hard"
     }
   ];
+
+  const mockSessions = [
+    {
+      id: "session-demo",
+      name: "Cell Biology Study Guide.pdf",
+      status: "completed",
+      created_at: new Date().toISOString()
+    }
+  ];
+
+  // Determine if we should show demo data or user data
+  const hasUserData = sessions.length > 0 || topics.length > 0;
+  const displayTopics = hasUserData ? topics : mockTopics;
+  const displayQuestions = hasUserData ? questions : mockQuestions;
+  const displaySessions = hasUserData ? sessions : mockSessions;
+  const isReadOnlyMode = !hasUserData;
 
   const features = [
     { icon: Zap, title: "AI-Powered" },
@@ -309,35 +443,32 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Show Hero until there's processed content */}
-            {sessions.length === 0 && topics.length === 0 ? (
-              <HeroSection onGetStarted={handleGetStarted} />
-            ) : (
-              /* Topics & Questions View */
-              <TopicsQuestionsView
-                topics={topics}
-                questions={questions}
-                sessions={sessions}
-                isProcessing={isProcessing}
-                totalQuestionsGenerated={totalQuestionsGenerated}
-                onAddDocument={() => setShowProcessStepsModal(true)}
-                onStartLearning={() => navigate("/online-game")}
-                actionButtons={
-                  topics.length > 0 ? (
-                    <button
-                      onClick={() => navigate("/online-game")}
-                      className="btn btn-accent gap-2 shadow-lg"
-                    >
-                      <Trophy className="w-5 h-5" />
-                      Start Learning
-                    </button>
-                  ) : null
-                }
-                showDocumentInfo={true}
-                showAddDocumentButton={true}
-                showStartLearningButton={false}
-              />
-            )}
+            {/* Always show Topics & Questions View - with demo data or user data */}
+            <TopicsQuestionsView
+              topics={displayTopics}
+              questions={displayQuestions}
+              sessions={displaySessions}
+              isProcessing={isProcessing}
+              totalQuestionsGenerated={hasUserData ? totalQuestionsGenerated : mockQuestions.length}
+              onAddDocument={() => setShowProcessStepsModal(true)}
+              onStartLearning={() => navigate("/online-game")}
+              actionButtons={
+                displayTopics.length > 0 ? (
+                  <button
+                    onClick={() => navigate("/online-game")}
+                    className="btn btn-accent gap-2 shadow-lg"
+                  >
+                    <Trophy className="w-5 h-5" />
+                    Start Learning
+                  </button>
+                ) : null
+              }
+              showDocumentInfo={true}
+              showAddDocumentButton={true}
+              showStartLearningButton={false}
+              readOnly={isReadOnlyMode}
+              isDemo={isReadOnlyMode}
+            />
           </div>
         </div>
       </section>

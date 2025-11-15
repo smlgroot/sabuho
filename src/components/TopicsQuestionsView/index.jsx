@@ -22,6 +22,7 @@ import QuestionsPanel from "./questions-panel";
  * @param {boolean} props.showAddDocumentButton - Whether to show add document button
  * @param {boolean} props.showStartLearningButton - Whether to show start learning button
  * @param {boolean} props.readOnly - Whether questions are read-only
+ * @param {boolean} props.isDemo - Whether this is demo/sample data
  * @param {string} props.className - Additional CSS classes
  */
 export default function TopicsQuestionsView({
@@ -40,6 +41,7 @@ export default function TopicsQuestionsView({
   showAddDocumentButton = true,
   showStartLearningButton = true,
   readOnly = false,
+  isDemo = false,
   className = ""
 }) {
   const [selectedTopicIndex, setSelectedTopicIndex] = useState(null);
@@ -94,11 +96,11 @@ export default function TopicsQuestionsView({
                   {showAddDocumentButton && onAddDocument && (
                     <button
                       onClick={onAddDocument}
-                      className="btn btn-primary btn-sm gap-2"
-                      title="Add new document"
+                      className={`btn ${isDemo ? 'btn-primary' : 'btn-primary btn-sm'} gap-2 ${isDemo ? 'shadow-lg' : ''}`}
+                      title={isDemo ? "Upload your own document to create personalized quizzes" : "Add new document"}
                     >
                       <Plus className="w-4 h-4" />
-                      Add New Document
+                      {isDemo ? "Upload Your Document" : "Add New Document"}
                     </button>
                   )}
                 </div>
@@ -107,7 +109,7 @@ export default function TopicsQuestionsView({
 
             {/* Document Info - Compact View */}
             {showDocumentInfo && sessions.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-3 flex-wrap">
                 {sessions.map((session) => (
                   <div
                     key={session.id}
@@ -120,8 +122,16 @@ export default function TopicsQuestionsView({
                     <div className="badge badge-xs badge-success">
                       {session.status === 'completed' ? 'Done' : session.status}
                     </div>
+                    {isDemo && (
+                      <div className="badge badge-xs badge-info">DEMO</div>
+                    )}
                   </div>
                 ))}
+                {isDemo && (
+                  <div className="text-xs text-base-content/60 italic">
+                    Example quiz • Upload your own document to get started
+                  </div>
+                )}
               </div>
             )}
           </div>
