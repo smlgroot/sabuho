@@ -51,7 +51,8 @@
       "WebFetch(domain:onlinelibrary.wiley.com)",
       "WebFetch(domain:www.hindawi.com)",
       "Bash(cat:*)",
-      "WebFetch(domain:www.tbench.ai)"
+      "WebFetch(domain:www.tbench.ai)",
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
     "ask": []

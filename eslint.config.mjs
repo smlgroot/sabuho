@@ -24,6 +24,13 @@ export default [
         document: 'readonly',
         navigator: 'readonly',
         fetch: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        alert: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
       }
     }
   }

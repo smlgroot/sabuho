@@ -1,12 +1,16 @@
 import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from "react-router-dom";
 import { Globe, Brain, Target, Trophy, BookOpen, Zap, AlertCircle, RotateCcw, Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { usePostHog } from "@/components/PostHogProvider";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useQuizProcessing } from "@/hooks/useQuizProcessing";
+import { useQuestionAttempts } from "@/hooks/useQuestionAttempts";
+import { filterQuestionsByState } from "@/utils/questionStats";
 import TopicsQuestionsView from "@/components/TopicsQuestionsView";
+import QuizConfigView from "@/components/QuizConfigView";
+import QuizAttemptView from "@/components/QuizAttemptView";
 import HeroSection from "./components/hero-section";
 import ProcessStepsModal from "./components/process-steps-modal";
 
@@ -54,6 +58,15 @@ export default function HomePage() {
   const [quizGenerated, setQuizGenerated] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showProcessStepsModal, setShowProcessStepsModal] = useState(false);
+
+  // View stack navigation state
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'quiz-config' | 'quiz-attempt'
+  const [viewStack, setViewStack] = useState(['home']);
+  const [selectedQuestionStates, setSelectedQuestionStates] = useState([]);
+  const [quizCompletionStats, setQuizCompletionStats] = useState(null);
+
+  // Question attempts tracking (localStorage-based)
+  const questionAttemptsHook = useQuestionAttempts(resourceRepositoryId);
 
   const handleMainButton = () => {
     if (user) {
@@ -169,6 +182,65 @@ export default function HomePage() {
     setQuizGenerated(false);
     resetFile();
     // Don't reset processing - preserve existing topics and questions from previous uploads
+  };
+
+  // View stack navigation functions
+  const pushView = (view) => {
+    setViewStack(prev => [...prev, view]);
+    setCurrentView(view);
+  };
+
+  const popView = () => {
+    setViewStack(prev => {
+      if (prev.length <= 1) return prev;
+      const newStack = prev.slice(0, -1);
+      setCurrentView(newStack[newStack.length - 1]);
+      return newStack;
+    });
+  };
+
+  const resetToHome = () => {
+    setViewStack(['home']);
+    setCurrentView('home');
+    setSelectedQuestionStates([]);
+    setQuizCompletionStats(null);
+  };
+
+  // Handle start learning button click
+  const handleStartLearning = () => {
+    trackEvent('start_learning_clicked', { props: { source: 'homepage' } });
+    pushView('quiz-config');
+  };
+
+  // Handle quiz configuration completion
+  const handleStartQuiz = (selectedStates) => {
+    setSelectedQuestionStates(selectedStates);
+    trackEvent('quiz_started', {
+      props: {
+        source: 'homepage',
+        selectedStates: selectedStates.join(','),
+      },
+    });
+    pushView('quiz-attempt');
+  };
+
+  // Handle quiz completion
+  const handleQuizComplete = (stats) => {
+    setQuizCompletionStats(stats);
+    trackEvent('quiz_completed', {
+      props: {
+        source: 'homepage',
+        ...stats,
+      },
+    });
+    // Show completion modal or navigate back
+    resetToHome();
+  };
+
+  // Handle quiz exit
+  const handleQuizExit = () => {
+    trackEvent('quiz_exited', { props: { source: 'homepage' } });
+    popView();
   };
 
   if (loading) {
@@ -357,6 +429,15 @@ export default function HomePage() {
   const displaySessions = hasUserData ? sessions : mockSessions;
   const isReadOnlyMode = !hasUserData;
 
+  // Filter questions for quiz attempt based on selected states
+  const filteredQuestionsForQuiz = useMemo(() => {
+    return filterQuestionsByState(
+      displayQuestions,
+      questionAttemptsHook.attempts,
+      selectedQuestionStates
+    );
+  }, [displayQuestions, questionAttemptsHook.attempts, selectedQuestionStates]);
+
   const features = [
     { icon: Zap, title: "AI-Powered" },
     { icon: Brain, title: "Smart Learning" },
@@ -364,6 +445,33 @@ export default function HomePage() {
     { icon: Trophy, title: "Achievements" }
   ];
 
+  // Render quiz configuration view
+  if (currentView === 'quiz-config') {
+    return (
+      <QuizConfigView
+        questions={displayQuestions}
+        attempts={questionAttemptsHook.attempts}
+        onStartQuiz={handleStartQuiz}
+        onBack={popView}
+      />
+    );
+  }
+
+  // Render quiz attempt view
+  if (currentView === 'quiz-attempt') {
+    return (
+      <QuizAttemptView
+        questions={filteredQuestionsForQuiz}
+        selectedStates={selectedQuestionStates}
+        recordAttempt={questionAttemptsHook.recordAttempt}
+        getAttempt={questionAttemptsHook.getAttempt}
+        onComplete={handleQuizComplete}
+        onExit={handleQuizExit}
+      />
+    );
+  }
+
+  // Render home view (default)
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -451,11 +559,11 @@ export default function HomePage() {
               isProcessing={isProcessing}
               totalQuestionsGenerated={hasUserData ? totalQuestionsGenerated : mockQuestions.length}
               onAddDocument={() => setShowProcessStepsModal(true)}
-              onStartLearning={() => navigate("/online-game")}
+              onStartLearning={handleStartLearning}
               actionButtons={
                 displayTopics.length > 0 ? (
                   <button
-                    onClick={() => navigate("/online-game")}
+                    onClick={handleStartLearning}
                     className="btn btn-accent gap-2 shadow-lg"
                   >
                     <Trophy className="w-5 h-5" />
