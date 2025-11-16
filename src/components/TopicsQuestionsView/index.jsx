@@ -1,4 +1,4 @@
-import { BookOpen, Plus, BarChart3 } from "lucide-react";
+import { BookOpen, Plus, BarChart3, DollarSign } from "lucide-react";
 import { useState } from "react";
 import TopicsSidebar from "./topics-sidebar";
 import QuestionsPanel from "./questions-panel";
@@ -18,6 +18,7 @@ import QuestionsPanel from "./questions-panel";
  * @param {Function} props.onAddDocument - Callback when add document button is clicked
  * @param {Function} props.onStartLearning - Callback when start learning button is clicked
  * @param {Function} props.onShowInsights - Callback when insights button is clicked
+ * @param {Function} props.onShowMonetize - Callback when monetize button is clicked
  * @param {React.ReactNode} props.actionButtons - Custom action buttons to display in header
  * @param {boolean} props.showDocumentInfo - Whether to show document/session info
  * @param {boolean} props.showAddDocumentButton - Whether to show add document button
@@ -38,6 +39,7 @@ export default function TopicsQuestionsView({
   onAddDocument,
   onStartLearning,
   onShowInsights,
+  onShowMonetize,
   actionButtons,
   showDocumentInfo = true,
   showAddDocumentButton = true,
@@ -97,6 +99,16 @@ export default function TopicsQuestionsView({
                   >
                     <BarChart3 className="w-5 h-5" />
                     <span className="hidden sm:inline">Insights</span>
+                  </button>
+                )}
+                {topics.length > 0 && onShowMonetize && (
+                  <button
+                    onClick={onShowMonetize}
+                    className="btn btn-warning gap-2"
+                    title="Explore monetization options"
+                  >
+                    <DollarSign className="w-5 h-5" />
+                    <span className="hidden sm:inline">Monetize</span>
                   </button>
                 )}
                 {showStartLearningButton && topics.length > 0 && onStartLearning && (

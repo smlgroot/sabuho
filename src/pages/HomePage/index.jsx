@@ -12,6 +12,7 @@ import TopicsQuestionsView from "@/components/TopicsQuestionsView";
 import QuizConfigView from "@/components/QuizConfigView";
 import QuizAttemptView from "@/components/QuizAttemptView";
 import QuizInsightsView from "@/components/QuizInsightsView";
+import QuizMonetizeView from "@/components/QuizMonetizeView";
 import HeroSection from "./components/hero-section";
 import ProcessStepsModal from "./components/process-steps-modal";
 
@@ -61,7 +62,7 @@ export default function HomePage() {
   const [showProcessStepsModal, setShowProcessStepsModal] = useState(false);
 
   // View stack navigation state
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'quiz-config' | 'quiz-attempt' | 'quiz-insights'
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'quiz-config' | 'quiz-attempt' | 'quiz-insights' | 'quiz-monetize'
   const [viewStack, setViewStack] = useState(['home']);
   const [selectedQuestionStates, setSelectedQuestionStates] = useState([]);
   const [quizCompletionStats, setQuizCompletionStats] = useState(null);
@@ -248,6 +249,12 @@ export default function HomePage() {
   const handleShowInsights = () => {
     trackEvent('insights_viewed', { props: { source: 'homepage' } });
     pushView('quiz-insights');
+  };
+
+  // Handle show monetize
+  const handleShowMonetize = () => {
+    trackEvent('monetize_viewed', { props: { source: 'homepage' } });
+    pushView('quiz-monetize');
   };
 
   if (loading) {
@@ -573,6 +580,7 @@ export default function HomePage() {
                 onAddDocument={() => setShowProcessStepsModal(true)}
                 onStartLearning={handleStartLearning}
                 onShowInsights={handleShowInsights}
+                onShowMonetize={handleShowMonetize}
                 actionButtons={
                   displayTopics.length > 0 ? (
                     <button
@@ -605,6 +613,12 @@ export default function HomePage() {
               <QuizInsightsView
                 questions={displayQuestions}
                 attempts={questionAttemptsHook.attempts}
+                onBack={popView}
+              />
+            )}
+
+            {currentView === 'quiz-monetize' && (
+              <QuizMonetizeView
                 onBack={popView}
               />
             )}
