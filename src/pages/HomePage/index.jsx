@@ -546,6 +546,22 @@ export default function HomePage() {
               </p>
             </div>
 
+            {/* Features Section */}
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-8 text-center uppercase tracking-wide">Features</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {features.map((feature, index) => {
+                  const Icon = feature.icon;
+                  return (
+                    <div key={index} className="text-center border border-base-content/10 bg-base-100 p-4">
+                      <Icon className="w-6 h-6 text-primary mx-auto mb-2" />
+                      <h3 className="text-xs font-semibold uppercase">{feature.title}</h3>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Conditionally render views based on currentView */}
             {currentView === 'home' && (
               <TopicsQuestionsView
@@ -592,24 +608,6 @@ export default function HomePage() {
                 onBack={popView}
               />
             )}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="px-6 bg-base-200/30">
-        <div className="container mx-auto max-w-5xl">
-          <h2 className="text-2xl font-bold mb-8 text-center uppercase tracking-wide">Features</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div key={index} className="text-center border border-base-content/10 bg-base-100 p-4">
-                  <Icon className="w-6 h-6 text-primary mx-auto mb-2" />
-                  <h3 className="text-xs font-semibold uppercase">{feature.title}</h3>
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>
