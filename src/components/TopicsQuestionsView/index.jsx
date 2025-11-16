@@ -62,7 +62,7 @@ export default function TopicsQuestionsView({
           {/* Header with Stats and Action Buttons */}
           <div className="mb-6">
             {/* Title Row */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded ${hasContent ? 'bg-primary/10' : 'bg-base-content/5'}`}>
                   <BookOpen className={`w-5 h-5 ${
@@ -84,7 +84,7 @@ export default function TopicsQuestionsView({
               </div>
 
               {/* Action Buttons Group */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {/* Custom action buttons */}
                 {actionButtons}
 
@@ -96,15 +96,16 @@ export default function TopicsQuestionsView({
                     title="View learning insights and statistics"
                   >
                     <BarChart3 className="w-5 h-5" />
-                    Insights
+                    <span className="hidden sm:inline">Insights</span>
                   </button>
                 )}
                 {showStartLearningButton && topics.length > 0 && onStartLearning && (
                   <button
                     onClick={onStartLearning}
-                    className="btn btn-accent btn-sm gap-2"
+                    className="btn btn-accent gap-2"
                   >
-                    Start Learning
+                    <span className="hidden sm:inline">Start Learning</span>
+                    <span className="sm:hidden">Start</span>
                   </button>
                 )}
               </div>
