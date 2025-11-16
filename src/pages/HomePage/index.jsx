@@ -73,7 +73,7 @@ export default function HomePage() {
   const handleMainButton = () => {
     if (user) {
       trackEvent('admin_access_clicked', { props: { source: 'homepage' } });
-      navigate("/admin");
+      navigate("/admin-v2");
     } else {
       trackEvent('login_clicked', { props: { source: 'homepage' } });
       navigate("/auth");
@@ -522,10 +522,10 @@ export default function HomePage() {
 
             {user && (
               <button
-                onClick={() => navigate("/admin")}
+                onClick={() => navigate("/admin-v2")}
                 className="btn btn-ghost btn-sm"
               >
-                {t("Admin")}
+                {t("Dashboard")}
               </button>
             )}
 
@@ -568,6 +568,35 @@ export default function HomePage() {
                 })}
               </div>
             </div>
+
+            {/* Sign Up CTA - Show when in demo mode */}
+            {isReadOnlyMode && (
+              <div className="bg-gradient-to-r from-primary to-accent p-8 rounded-lg mb-8 text-center">
+                <h2 className="text-2xl font-bold text-white mb-3 uppercase tracking-wide">
+                  Ready to Save Your Progress?
+                </h2>
+                <p className="text-white/90 mb-6 max-w-2xl mx-auto">
+                  Create a free account to save your quiz progress, add unlimited documents, and track your learning journey
+                </p>
+                <div className="flex gap-3 justify-center flex-wrap">
+                  <button
+                    onClick={() => {
+                      trackEvent('signup_cta_clicked', { props: { source: 'homepage_hero' } });
+                      navigate("/auth");
+                    }}
+                    className="btn btn-lg bg-white text-primary hover:bg-base-100 border-0 font-semibold px-8"
+                  >
+                    Sign Up Free
+                  </button>
+                  <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="btn btn-lg btn-outline border-white text-white hover:bg-white hover:text-primary"
+                  >
+                    Try Demo First
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Conditionally render views based on currentView */}
             {currentView === 'home' && (

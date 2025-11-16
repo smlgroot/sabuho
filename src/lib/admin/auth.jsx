@@ -76,7 +76,7 @@ export function AuthProvider({ children }) {
   // Handle redirect after successful login in a separate effect
   useEffect(() => {
     if (user && location.pathname === '/auth') {
-      navigate('/admin/domains', { replace: true })
+      navigate('/admin-v2', { replace: true })
     }
   }, [user, location.pathname, navigate])
 
