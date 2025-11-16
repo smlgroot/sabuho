@@ -1,21 +1,88 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Zap, Target, BookOpen, RotateCcw, Trophy, Focus } from 'lucide-react';
 import { calculateQuestionStats } from '../utils/questionStats';
 
 /**
  * Quiz Configuration View Component
  * Allows users to select question states (unanswered, correct, incorrect) for quiz creation
+ * Includes quiz presets for quick access to common quiz types
  */
 const QuizConfigView = ({ questions, attempts, onStartQuiz, onBack }) => {
   const [selectedStates, setSelectedStates] = useState([]);
+  const [selectedPreset, setSelectedPreset] = useState(null);
 
   // Calculate statistics
   const stats = useMemo(() => {
     return calculateQuestionStats(questions, attempts);
   }, [questions, attempts]);
 
+  // Quiz preset configurations
+  const quizPresets = [
+    {
+      id: 'quick-sprint',
+      name: 'Quick Sprint',
+      description: '5 random questions - fast practice',
+      icon: Zap,
+      color: 'warning',
+      states: ['unanswered', 'correct', 'incorrect'],
+      maxQuestions: 5,
+    },
+    {
+      id: 'focus-mode',
+      name: 'Focus Mode',
+      description: 'Unanswered questions only',
+      icon: Focus,
+      color: 'primary',
+      states: ['unanswered'],
+      maxQuestions: null,
+    },
+    {
+      id: 'deep-dive',
+      name: 'Deep Dive',
+      description: 'Master your incorrect answers',
+      icon: Target,
+      color: 'error',
+      states: ['incorrect'],
+      maxQuestions: null,
+    },
+    {
+      id: 'practice-run',
+      name: 'Practice Run',
+      description: '10 questions - balanced practice',
+      icon: BookOpen,
+      color: 'info',
+      states: ['unanswered', 'correct', 'incorrect'],
+      maxQuestions: 10,
+    },
+    {
+      id: 'full-review',
+      name: 'Full Review',
+      description: 'All questions - comprehensive',
+      icon: RotateCcw,
+      color: 'accent',
+      states: ['unanswered', 'correct', 'incorrect'],
+      maxQuestions: null,
+    },
+    {
+      id: 'mastery-challenge',
+      name: 'Mastery Challenge',
+      description: 'Unanswered + Incorrect only',
+      icon: Trophy,
+      color: 'success',
+      states: ['unanswered', 'incorrect'],
+      maxQuestions: null,
+    },
+  ];
+
+  // Handle preset selection
+  const selectPreset = (preset) => {
+    setSelectedPreset(preset.id);
+    setSelectedStates(preset.states);
+  };
+
   // Toggle state selection
   const toggleState = (state) => {
+    setSelectedPreset(null); // Clear preset when manually selecting
     setSelectedStates(prev => {
       if (prev.includes(state)) {
         return prev.filter(s => s !== state);
@@ -92,6 +159,47 @@ const QuizConfigView = ({ questions, attempts, onStartQuiz, onBack }) => {
           </div>
         </div>
 
+        {/* Quiz Presets */}
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-base-content/60 mb-3">
+            Quick Start Presets
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {quizPresets.map(preset => {
+              const Icon = preset.icon;
+              const questionsInPreset = preset.states.reduce((total, state) => total + (stats[state] || 0), 0);
+              const availableQuestions = preset.maxQuestions ? Math.min(questionsInPreset, preset.maxQuestions) : questionsInPreset;
+              const isDisabled = availableQuestions === 0;
+
+              return (
+                <button
+                  key={preset.id}
+                  onClick={() => !isDisabled && selectPreset(preset)}
+                  disabled={isDisabled}
+                  className={`bg-base-100 border border-base-content/10 p-3 text-left transition-all duration-200 ${
+                    selectedPreset === preset.id
+                      ? `ring-2 ring-${preset.color} ring-offset-2 ring-offset-base-200`
+                      : 'hover:border-base-content/20'
+                  } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  <div className="flex items-start gap-2 mb-2">
+                    <Icon className={`w-4 h-4 text-${preset.color} flex-shrink-0 mt-0.5`} />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-xs uppercase truncate">{preset.name}</h3>
+                    </div>
+                  </div>
+                  <p className="text-xs text-base-content/60 mb-2 line-clamp-2">
+                    {preset.description}
+                  </p>
+                  <div className="text-xs font-medium text-base-content/70">
+                    {availableQuestions} question{availableQuestions !== 1 ? 's' : ''}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Summary Stats */}
         <div className="bg-base-100 border border-base-content/10 p-4 mb-6">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-base-content/60 mb-4">Question Summary</h2>
@@ -116,51 +224,49 @@ const QuizConfigView = ({ questions, attempts, onStartQuiz, onBack }) => {
         </div>
 
         {/* State Selection Cards */}
-        <div className="space-y-3 mb-6">
+        <div className="mb-6">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-base-content/60 mb-3">
-            Select Question Types
+            Or Customize Question Types
           </h2>
 
-          {stateCards.map(card => (
-            <div
-              key={card.id}
-              onClick={() => card.count > 0 && toggleState(card.id)}
-              className={`bg-base-100 border border-base-content/10 p-4 cursor-pointer transition-all duration-200 ${
-                isSelected(card.id)
-                  ? `ring-2 ring-${card.color} ring-offset-2 ring-offset-base-200`
-                  : 'hover:border-base-content/20'
-              } ${card.count === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-3xl">{card.icon}</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {stateCards.map(card => (
+              <div
+                key={card.id}
+                onClick={() => card.count > 0 && toggleState(card.id)}
+                className={`bg-base-100 border border-base-content/10 p-4 cursor-pointer transition-all duration-200 ${
+                  isSelected(card.id)
+                    ? `ring-2 ring-${card.color} ring-offset-2 ring-offset-base-200`
+                    : 'hover:border-base-content/20'
+                } ${card.count === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-2xl">{card.icon}</div>
+                    <input
+                      type="checkbox"
+                      checked={isSelected(card.id)}
+                      onChange={() => {}}
+                      disabled={card.count === 0}
+                      className={`checkbox checkbox-${card.color} checkbox-sm`}
+                    />
+                  </div>
                   <div>
-                    <h3 className="font-semibold text-sm uppercase">{card.title}</h3>
-                    <p className="text-xs text-base-content/60">
+                    <h3 className="font-semibold text-sm uppercase mb-1">{card.title}</h3>
+                    <p className="text-xs text-base-content/60 mb-2">
                       {card.description}
                     </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <div className={`text-2xl font-bold text-${card.color}`}>
+                    <div className={`text-xl font-bold text-${card.color}`}>
                       {card.count}
-                    </div>
-                    <div className="text-xs text-base-content/60">
-                      questions
+                      <span className="text-xs text-base-content/60 font-normal ml-1">
+                        questions
+                      </span>
                     </div>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={isSelected(card.id)}
-                    onChange={() => {}}
-                    disabled={card.count === 0}
-                    className={`checkbox checkbox-${card.color}`}
-                  />
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Instructions */}
