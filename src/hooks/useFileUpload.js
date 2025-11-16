@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { usePostHog } from "@/components/PostHogProvider";
 
 export function useFileUpload(onFileSelect) {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [validationError, setValidationError] = useState(null);
   const fileInputRef = useRef(null);
   const { trackEvent } = usePostHog();
 
@@ -36,14 +37,27 @@ export function useFileUpload(onFileSelect) {
 
     const validation = validateFile(file);
     if (!validation.valid) {
-      alert(validation.error);
+      setValidationError(validation.error);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       return;
     }
 
+    // Clear any previous validation errors
+    setValidationError(null);
+
+    // Set the uploaded file
     setUploadedFile(file);
     trackEvent('file_selected', { props: { fileType: file.type, fileName: file.name } });
 
-    // Call the callback to handle additional state resets in parent
+    // Reset file input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    // Call the callback to handle additional state updates in parent
     if (onFileSelect) {
       onFileSelect(file);
     }
@@ -75,22 +89,29 @@ export function useFileUpload(onFileSelect) {
     }
   };
 
-  const resetFile = () => {
+  const resetFile = useCallback(() => {
     setUploadedFile(null);
+    setValidationError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
+  }, []);
+
+  const clearValidationError = useCallback(() => {
+    setValidationError(null);
+  }, []);
 
   return {
     uploadedFile,
+    resetFile,
     isDragging,
     fileInputRef,
     handleFileSelect,
     handleDragOver,
     handleDragLeave,
     handleDrop,
-    resetFile,
-    validateFile
+    validateFile,
+    validationError,
+    clearValidationError
   };
 }

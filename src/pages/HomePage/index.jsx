@@ -1,16 +1,20 @@
 import { useAuth } from "@/lib/admin/auth";
 import { useNavigate } from "react-router-dom";
-import { Globe, Brain, Target, Trophy, BookOpen, BarChart3, Sparkles, Zap, AlertCircle, CheckCircle, RotateCcw, Plus } from "lucide-react";
-import { useState } from "react";
+import { Globe, Brain, Target, Trophy, BookOpen, Zap, AlertCircle, RotateCcw, Plus } from "lucide-react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { usePostHog } from "@/components/PostHogProvider";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useQuizProcessing } from "@/hooks/useQuizProcessing";
-import FileUploadStep from "./components/steps/file-upload-step";
-import ProcessingStep from "./components/steps/processing-step";
-import ShareMonetizeStep from "./components/steps/share-monetize-step";
-import TopicsSidebar from "./components/results/topics-sidebar";
-import QuestionsPanel from "./components/results/questions-panel";
+import { useQuestionAttempts } from "@/hooks/useQuestionAttempts";
+import { filterQuestionsByState } from "@/utils/questionStats";
+import TopicsQuestionsView from "@/components/TopicsQuestionsView";
+import QuizConfigView from "@/components/QuizConfigView";
+import QuizAttemptView from "@/components/QuizAttemptView";
+import QuizInsightsView from "@/components/QuizInsightsView";
+import QuizMonetizeView from "@/components/QuizMonetizeView";
+import HeroSection from "./components/hero-section";
+import ProcessStepsModal from "./components/process-steps-modal";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
@@ -24,17 +28,13 @@ export default function HomePage() {
     uploadedFile,
     fileInputRef,
     handleFileSelect,
-    resetFile
-  } = useFileUpload((file) => {
-    // Callback when file is selected - only reset if it's the first document
-    if (sessions.length === 0) {
-      setCurrentStep(2);
-      setQuizGenerated(false);
-      setSelectedTopicIndex(null);
-    } else {
-      // For additional documents, just go to processing step
-      setCurrentStep(2);
-    }
+    resetFile,
+    validationError,
+    clearValidationError
+  } = useFileUpload(() => {
+    // Callback when file is selected
+    setCurrentStep(2);
+    setQuizGenerated(false);
   });
 
   const {
@@ -46,23 +46,34 @@ export default function HomePage() {
     totalQuestionsGenerated,
     s3Key,
     processingError,
+    retryError,
     resourceRepositoryId,
     sessions,
     handleProcessClick,
     handleRetry,
-    resetProcessing
+    resetProcessing,
+    clearRetryError
   } = useQuizProcessing();
 
   // UI state
   const [currentStep, setCurrentStep] = useState(1);
   const [quizGenerated, setQuizGenerated] = useState(false);
-  const [selectedTopicIndex, setSelectedTopicIndex] = useState(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showProcessStepsModal, setShowProcessStepsModal] = useState(false);
+
+  // View stack navigation state
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'quiz-config' | 'quiz-attempt' | 'quiz-insights' | 'quiz-monetize'
+  const [viewStack, setViewStack] = useState(['home']);
+  const [selectedQuestionStates, setSelectedQuestionStates] = useState([]);
+  const [quizCompletionStats, setQuizCompletionStats] = useState(null);
+
+  // Question attempts tracking (localStorage-based)
+  const questionAttemptsHook = useQuestionAttempts(resourceRepositoryId);
 
   const handleMainButton = () => {
     if (user) {
       trackEvent('admin_access_clicked', { props: { source: 'homepage' } });
-      navigate("/admin");
+      navigate("/admin-v2");
     } else {
       trackEvent('login_clicked', { props: { source: 'homepage' } });
       navigate("/auth");
@@ -92,13 +103,6 @@ export default function HomePage() {
     setLanguage(lng);
   };
 
-  const handleAddDocument = () => {
-    // Trigger file input to add another document
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
   const handleResetClick = () => {
     // Only show confirmation if there's actual data to lose
     if (uploadedFile || topics.length > 0 || questions.length > 0) {
@@ -109,17 +113,148 @@ export default function HomePage() {
     }
   };
 
+  const handleGetStarted = () => {
+    // Open the process steps modal for file upload
+    setShowProcessStepsModal(true);
+  };
+
+  // Reset just the file without closing modal (used by modal's reset button)
+  const handleModalFileReset = () => {
+    resetFile();
+    resetProcessing();
+    setCurrentStep(1);
+    setQuizGenerated(false);
+  };
+
   const performReset = () => {
     resetFile();
     resetProcessing();
     setQuizGenerated(false);
     setCurrentStep(1);
-    setSelectedTopicIndex(null);
     setShowResetDialog(false);
+    setShowProcessStepsModal(false);
   };
 
   const handleCancelReset = () => {
     setShowResetDialog(false);
+  };
+
+  const handleProcess = async () => {
+    if (!uploadedFile) return;
+
+    try {
+      await handleProcessClick(uploadedFile);
+      setQuizGenerated(true);
+      setCurrentStep(3);
+    } catch (error) {
+      // Error handling is done in useQuizProcessing hook
+    }
+  };
+
+  const handleRetryWrapper = async () => {
+    // If s3Key exists, retry from where it left off (just poll for results)
+    // If no s3Key, it means upload failed - so re-upload and process from scratch
+    try {
+      if (s3Key) {
+        await handleRetry();
+        // Update state after successful retry
+        setQuizGenerated(true);
+        setCurrentStep(3);
+      } else {
+        await handleProcess();
+      }
+    } catch (error) {
+      // Error handling is done in useQuizProcessing hook
+    }
+  };
+
+  // Close modal after successful completion - keep data visible
+  const handleDoneAndClose = () => {
+    setShowProcessStepsModal(false);
+    setCurrentStep(1);
+    setQuizGenerated(false);
+    resetFile();
+    // Don't reset processing - keep topics and questions visible
+  };
+
+  // Close modal and reset only current upload attempt (keep existing processed data)
+  const handleCancelAndClose = () => {
+    setShowProcessStepsModal(false);
+    setCurrentStep(1);
+    setQuizGenerated(false);
+    resetFile();
+    // Don't reset processing - preserve existing topics and questions from previous uploads
+  };
+
+  // View stack navigation functions
+  const pushView = (view) => {
+    setViewStack(prev => [...prev, view]);
+    setCurrentView(view);
+  };
+
+  const popView = () => {
+    setViewStack(prev => {
+      if (prev.length <= 1) return prev;
+      const newStack = prev.slice(0, -1);
+      setCurrentView(newStack[newStack.length - 1]);
+      return newStack;
+    });
+  };
+
+  const resetToHome = () => {
+    setViewStack(['home']);
+    setCurrentView('home');
+    setSelectedQuestionStates([]);
+    setQuizCompletionStats(null);
+  };
+
+  // Handle start learning button click
+  const handleStartLearning = () => {
+    trackEvent('start_learning_clicked', { props: { source: 'homepage' } });
+    pushView('quiz-config');
+  };
+
+  // Handle quiz configuration completion
+  const handleStartQuiz = (selectedStates) => {
+    setSelectedQuestionStates(selectedStates);
+    trackEvent('quiz_started', {
+      props: {
+        source: 'homepage',
+        selectedStates: selectedStates.join(','),
+      },
+    });
+    pushView('quiz-attempt');
+  };
+
+  // Handle quiz completion
+  const handleQuizComplete = (stats) => {
+    setQuizCompletionStats(stats);
+    trackEvent('quiz_completed', {
+      props: {
+        source: 'homepage',
+        ...stats,
+      },
+    });
+    // Show completion modal or navigate back
+    resetToHome();
+  };
+
+  // Handle quiz exit
+  const handleQuizExit = () => {
+    trackEvent('quiz_exited', { props: { source: 'homepage' } });
+    popView();
+  };
+
+  // Handle show insights
+  const handleShowInsights = () => {
+    trackEvent('insights_viewed', { props: { source: 'homepage' } });
+    pushView('quiz-insights');
+  };
+
+  // Handle show monetize
+  const handleShowMonetize = () => {
+    trackEvent('monetize_viewed', { props: { source: 'homepage' } });
+    pushView('quiz-monetize');
   };
 
   if (loading) {
@@ -133,46 +268,189 @@ export default function HomePage() {
     );
   }
 
-  // Sample documents for demo
-  const sampleDocuments = [
+  // Mock data for demonstrating Topics & Questions feature
+  const mockTopics = [
     {
-      title: "Biology Notes",
-      icon: "🧬",
-      type: "PDF",
-      description: "Cell Structure & Functions"
+      id: "topic-1",
+      name: "Cell Biology Basics",
+      description: "Understanding the fundamental structure and functions of cells",
+      questionsCount: 5,
+      color: "primary"
     },
     {
-      title: "History Essay",
-      icon: "📜",
-      type: "DOCX",
-      description: "World War II Overview"
+      id: "topic-2",
+      name: "Organelles and Their Functions",
+      description: "Exploring the various organelles within cells and their roles",
+      questionsCount: 4,
+      color: "secondary"
     },
     {
-      title: "Physics Guide",
-      icon: "⚛️",
-      type: "TXT",
-      description: "Newton's Laws of Motion"
+      id: "topic-3",
+      name: "Cell Division",
+      description: "Understanding mitosis and meiosis processes",
+      questionsCount: 3,
+      color: "accent"
     }
   ];
 
-  // Sample quiz questions for demo
-  const sampleQuestions = [
+  const mockQuestions = [
     {
-      question: "What is the main topic covered in this document?",
-      options: ["Option A", "Option B", "Option C", "Option D"],
-      type: "multiple-choice"
+      id: "q1",
+      resource_session_domain_id: "topic-1",
+      body: "What is the primary function of the cell membrane?",
+      options: [
+        "To control what enters and exits the cell [correct]",
+        "To produce energy",
+        "To store genetic information",
+        "To synthesize proteins"
+      ],
+      type: "multiple-choice",
+      difficulty: "easy"
     },
     {
-      question: "Which of the following statements is correct based on the document?",
-      options: ["Statement 1", "Statement 2", "Statement 3", "Statement 4"],
-      type: "multiple-choice"
+      id: "q2",
+      resource_session_domain_id: "topic-1",
+      body: "Which component is found in plant cells but not in animal cells?",
+      options: [
+        "Mitochondria",
+        "Cell wall [correct]",
+        "Nucleus",
+        "Ribosomes"
+      ],
+      type: "multiple-choice",
+      difficulty: "medium"
     },
     {
-      question: "True or False: The document discusses advanced concepts.",
-      options: ["True", "False"],
-      type: "true-false"
+      id: "q3",
+      resource_session_domain_id: "topic-1",
+      body: "The nucleus contains the cell's genetic material.",
+      options: ["True [correct]", "False"],
+      type: "true-false",
+      difficulty: "easy"
+    },
+    {
+      id: "q4",
+      resource_session_domain_id: "topic-1",
+      body: "What is the jelly-like substance that fills the cell?",
+      options: [
+        "Cytoplasm [correct]",
+        "Chloroplast",
+        "Vacuole",
+        "Endoplasmic reticulum"
+      ],
+      type: "multiple-choice",
+      difficulty: "easy"
+    },
+    {
+      id: "q5",
+      resource_session_domain_id: "topic-1",
+      body: "Which structure is responsible for protein synthesis?",
+      options: [
+        "Golgi apparatus",
+        "Ribosomes [correct]",
+        "Lysosomes",
+        "Peroxisomes"
+      ],
+      type: "multiple-choice",
+      difficulty: "medium"
+    },
+    {
+      id: "q6",
+      resource_session_domain_id: "topic-2",
+      body: "What is the powerhouse of the cell?",
+      options: [
+        "Nucleus",
+        "Mitochondria [correct]",
+        "Chloroplast",
+        "Ribosome"
+      ],
+      type: "multiple-choice",
+      difficulty: "easy"
+    },
+    {
+      id: "q7",
+      resource_session_domain_id: "topic-2",
+      body: "The Golgi apparatus packages and distributes proteins.",
+      options: ["True [correct]", "False"],
+      type: "true-false",
+      difficulty: "medium"
+    },
+    {
+      id: "q8",
+      resource_session_domain_id: "topic-2",
+      body: "Which organelle is responsible for photosynthesis in plant cells?",
+      options: [
+        "Mitochondria",
+        "Nucleus",
+        "Chloroplast [correct]",
+        "Vacuole"
+      ],
+      type: "multiple-choice",
+      difficulty: "medium"
+    },
+    {
+      id: "q9",
+      resource_session_domain_id: "topic-2",
+      body: "Lysosomes contain digestive enzymes that break down waste materials.",
+      options: ["True [correct]", "False"],
+      type: "true-false",
+      difficulty: "medium"
+    },
+    {
+      id: "q10",
+      resource_session_domain_id: "topic-3",
+      body: "How many daughter cells are produced during mitosis?",
+      options: ["1", "2 [correct]", "4", "8"],
+      type: "multiple-choice",
+      difficulty: "medium"
+    },
+    {
+      id: "q11",
+      resource_session_domain_id: "topic-3",
+      body: "Meiosis produces genetically identical cells.",
+      options: ["True", "False [correct]"],
+      type: "true-false",
+      difficulty: "medium"
+    },
+    {
+      id: "q12",
+      resource_session_domain_id: "topic-3",
+      body: "Which type of cell division produces gametes (sex cells)?",
+      options: [
+        "Mitosis",
+        "Meiosis [correct]",
+        "Binary fission",
+        "Budding"
+      ],
+      type: "multiple-choice",
+      difficulty: "hard"
     }
   ];
+
+  const mockSessions = [
+    {
+      id: "session-demo",
+      name: "Cell Biology Study Guide.pdf",
+      status: "completed",
+      created_at: new Date().toISOString()
+    }
+  ];
+
+  // Determine if we should show demo data or user data
+  const hasUserData = sessions.length > 0 || topics.length > 0;
+  const displayTopics = hasUserData ? topics : mockTopics;
+  const displayQuestions = hasUserData ? questions : mockQuestions;
+  const displaySessions = hasUserData ? sessions : mockSessions;
+  const isReadOnlyMode = !hasUserData;
+
+  // Filter questions for quiz attempt based on selected states
+  const filteredQuestionsForQuiz = useMemo(() => {
+    return filterQuestionsByState(
+      displayQuestions,
+      questionAttemptsHook.attempts,
+      selectedQuestionStates
+    );
+  }, [displayQuestions, questionAttemptsHook.attempts, selectedQuestionStates]);
 
   const features = [
     { icon: Zap, title: "AI-Powered" },
@@ -181,19 +459,34 @@ export default function HomePage() {
     { icon: Trophy, title: "Achievements" }
   ];
 
+  // Render quiz attempt view (full screen)
+  if (currentView === 'quiz-attempt') {
+    return (
+      <QuizAttemptView
+        questions={filteredQuestionsForQuiz}
+        selectedStates={selectedQuestionStates}
+        recordAttempt={questionAttemptsHook.recordAttempt}
+        getAttempt={questionAttemptsHook.getAttempt}
+        onComplete={handleQuizComplete}
+        onExit={handleQuizExit}
+      />
+    );
+  }
+
+  // Render home view (default)
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="navbar bg-white border-b border-gray-200 px-6 sticky top-0 z-50 shadow-sm">
+      <header className="navbar bg-base-100 border-b border-base-content/10 px-6 sticky top-0 z-50">
         <div className="flex-1">
-          <a href="/" className="flex items-center gap-3 group cursor-pointer">
+          <a href="/" className="flex items-center gap-2 group cursor-pointer">
             <img
               src="/sabuho_logo_3.png"
               alt="Sabuho Logo"
-              className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
+              className="h-8 w-auto object-contain"
             />
-            <span className="text-2xl font-black tracking-tight">
-              Sabuho<span className="text-primary">.</span>
+            <span className="text-xl font-semibold tracking-tight uppercase">
+              Sabuho
             </span>
           </a>
         </div>
@@ -201,19 +494,19 @@ export default function HomePage() {
           <div className="flex items-center gap-2">
             {/* Language Selector */}
             <div className="dropdown dropdown-end">
-              <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
-                <Globe className="w-5 h-5" />
+              <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
+                <Globe className="w-4 h-4" />
               </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu bg-white rounded-lg shadow-lg z-[1] w-40 p-2 border border-gray-100"
+                className="dropdown-content menu bg-base-100 shadow-lg z-[1] w-40 p-2 border border-base-content/10"
               >
                 <li>
                   <button
                     onClick={() => changeLanguage("en")}
                     className={language === "en" ? "active" : ""}
                   >
-                    🇺🇸 English
+                    English
                   </button>
                 </li>
                 <li>
@@ -221,7 +514,7 @@ export default function HomePage() {
                     onClick={() => changeLanguage("es")}
                     className={language === "es" ? "active" : ""}
                   >
-                    🇪🇸 Spanish
+                    Spanish
                   </button>
                 </li>
               </ul>
@@ -229,14 +522,14 @@ export default function HomePage() {
 
             {user && (
               <button
-                onClick={() => navigate("/admin")}
-                className="btn btn-ghost"
+                onClick={() => navigate("/admin-v2")}
+                className="btn btn-ghost btn-sm"
               >
-                {t("Admin")}
+                {t("Dashboard")}
               </button>
             )}
 
-            <button onClick={handleHeaderButton} className="btn btn-primary">
+            <button onClick={handleHeaderButton} className="btn btn-primary btn-sm">
               {user ? t("Logout") : t("Sign In")}
             </button>
           </div>
@@ -244,226 +537,168 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section - AI Document to Quiz */}
-      <section className="hero min-h-[85vh] bg-gradient-to-b from-blue-50 to-white">
+      <section className="hero bg-base-100">
         <div className="hero-content px-6 w-full py-16">
           <div className="max-w-5xl w-full">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 text-gray-900 leading-tight tracking-tight">
-              <div className="flex items-center gap-6 flex-wrap">
-                <span className="bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">Any Document</span>
+            {/* Main Heading - Always Visible */}
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold mb-6 leading-tight">
+                <span>Transform Documents into</span>
+                <br />
+                <span className="text-primary">Interactive Quizzes</span>
+              </h1>
 
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 rounded-full blur-xl opacity-75 group-hover:opacity-100 animate-pulse"></div>
-                  <div className="relative bg-white rounded-full p-4 shadow-2xl">
-                    <Brain className="w-10 h-10 sm:w-14 sm:h-14 text-blue-600" />
-                  </div>
-                  <Sparkles className="w-5 h-5 text-yellow-400 absolute -top-1 -right-1 animate-bounce" />
-                  <Sparkles className="w-4 h-4 text-blue-400 absolute -bottom-1 -left-1 animate-ping" />
-                </div>
+              <p className="text-base text-base-content/70 max-w-3xl mx-auto font-normal">
+                Upload your content and let AI generate personalized quizzes to test your knowledge.
+              </p>
+            </div>
 
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Interactive Quiz</span>
-              </div>
-            </h1>
-
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl">
-              Upload your content and watch AI instantly create personalized, interactive quizzes tailored to what you need to learn
-            </p>
-
-            {/* Unified Section - Steps + Topics & Questions */}
-            <div className="max-w-5xl mb-8">
-              <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-                {/* Steps Section - Always Fully Visible */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Process Steps</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FileUploadStep
-                      uploadedFile={uploadedFile}
-                      fileInputRef={fileInputRef}
-                      onFileSelect={handleFileSelect}
-                      onReset={handleResetClick}
-                    />
-
-                    <ProcessingStep
-                      currentStep={currentStep}
-                      isProcessing={isProcessing}
-                      processingError={processingError}
-                      currentProcessingState={currentProcessingState}
-                      onProcessClick={async () => {
-                        await handleProcessClick(uploadedFile);
-                        setQuizGenerated(true);
-                        setCurrentStep(3);
-                      }}
-                      onRetry={handleRetry}
-                    />
-
-                    <ShareMonetizeStep quizGenerated={quizGenerated} />
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="border-t border-gray-200 my-6"></div>
-
-                {/* Topics & Questions Section - With State-based Opacity */}
-                <div className={`transition-opacity ${
-                  (isProcessing || topics.length > 0 || sessions.length > 0)
-                    ? 'opacity-100'
-                    : 'opacity-50'
-                }`}>
-                  {/* Header with Stats and Document Management */}
-                  <div className="mb-6 pb-4 border-b border-gray-200">
-                    <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-                      <h3 className={`text-xl font-bold flex items-center gap-2 ${
-                        (isProcessing || topics.length > 0 || sessions.length > 0)
-                          ? 'text-gray-900'
-                          : 'text-gray-400'
-                      }`}>
-                        <BookOpen className={`w-6 h-6 ${
-                          (isProcessing || topics.length > 0 || sessions.length > 0)
-                            ? 'text-blue-600'
-                            : 'text-gray-400'
-                        }`} />
-                        Topics & Questions
-                      </h3>
-                      <div className="flex items-center gap-6 text-sm">
-                        <div>
-                          <span className="text-gray-600">Topics: </span>
-                          <span className="font-bold text-blue-600">{topics.length}</span>
-                        </div>
-                        <div className="text-gray-400">•</div>
-                        <div>
-                          <span className="text-gray-600">Total Questions: </span>
-                          <span className="font-bold text-gray-900">{totalQuestionsGenerated}</span>
-                        </div>
-                      </div>
+            {/* Features Section */}
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-8 text-center uppercase tracking-wide">Features</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {features.map((feature, index) => {
+                  const Icon = feature.icon;
+                  return (
+                    <div key={index} className="text-center border border-base-content/10 bg-base-100 p-4">
+                      <Icon className="w-6 h-6 text-primary mx-auto mb-2" />
+                      <h3 className="text-xs font-semibold uppercase">{feature.title}</h3>
                     </div>
-
-                    {/* Document List - Compact View */}
-                    {sessions.length > 0 && (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {sessions.map((session, index) => (
-                          <div
-                            key={session.id}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-200 text-sm"
-                          >
-                            <BookOpen className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
-                            <span className="font-medium text-blue-900 truncate max-w-[200px]">
-                              {session.name}
-                            </span>
-                            <div className="badge badge-xs badge-success">
-                              {session.status === 'completed' ? 'Done' : session.status}
-                            </div>
-                          </div>
-                        ))}
-                        <button
-                          onClick={handleAddDocument}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-focus text-white rounded-lg text-sm font-medium transition-colors"
-                          title="Add another document"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          Add Document
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Topics and Questions Layout */}
-                  {(isProcessing || topics.length > 0 || sessions.length > 0) ? (
-                    <div className="flex border border-gray-200 rounded-lg">
-                      <TopicsSidebar
-                        topics={topics}
-                        questions={questions}
-                        questionsCount={questionsCount}
-                        selectedTopicIndex={selectedTopicIndex}
-                        onTopicSelect={setSelectedTopicIndex}
-                      />
-
-                      <QuestionsPanel
-                        topics={topics}
-                        questions={questions}
-                        selectedTopicIndex={selectedTopicIndex}
-                        totalQuestionsGenerated={totalQuestionsGenerated}
-                        questionsCount={questionsCount}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center py-16 border border-dashed border-gray-300 rounded-lg">
-                      <div className="text-center">
-                        <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <p className="text-lg font-semibold text-gray-400 mb-2">No Content Yet</p>
-                        <p className="text-sm text-gray-500">Upload and process a document to see topics and questions here</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
             </div>
 
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto max-w-5xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div key={index} className="text-center">
-                  <div className="inline-flex rounded-lg bg-blue-100 p-4 mb-3">
-                    <Icon className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-sm font-bold text-gray-900">{feature.title}</h3>
+            {/* Sign Up CTA - Show when in demo mode */}
+            {isReadOnlyMode && (
+              <div className="bg-gradient-to-r from-primary to-accent p-8 rounded-lg mb-8 text-center">
+                <h2 className="text-2xl font-bold text-white mb-3 uppercase tracking-wide">
+                  Ready to Save Your Progress?
+                </h2>
+                <p className="text-white/90 mb-6 max-w-2xl mx-auto">
+                  Create a free account to save your quiz progress, add unlimited documents, and track your learning journey
+                </p>
+                <div className="flex gap-3 justify-center flex-wrap">
+                  <button
+                    onClick={() => {
+                      trackEvent('signup_cta_clicked', { props: { source: 'homepage_hero' } });
+                      navigate("/auth");
+                    }}
+                    className="btn btn-lg bg-white text-primary hover:bg-base-100 border-0 font-semibold px-8"
+                  >
+                    Sign Up Free
+                  </button>
+                  <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="btn btn-lg btn-outline border-white text-white hover:bg-white hover:text-primary"
+                  >
+                    Try Demo First
+                  </button>
                 </div>
-              );
-            })}
+              </div>
+            )}
+
+            {/* Conditionally render views based on currentView */}
+            {currentView === 'home' && (
+              <TopicsQuestionsView
+                topics={displayTopics}
+                questions={displayQuestions}
+                sessions={displaySessions}
+                isProcessing={isProcessing}
+                totalQuestionsGenerated={hasUserData ? totalQuestionsGenerated : mockQuestions.length}
+                onAddDocument={() => setShowProcessStepsModal(true)}
+                onStartLearning={handleStartLearning}
+                onShowInsights={handleShowInsights}
+                onShowMonetize={handleShowMonetize}
+                actionButtons={
+                  displayTopics.length > 0 ? (
+                    <button
+                      onClick={handleStartLearning}
+                      className="btn btn-accent gap-2 shadow-lg"
+                    >
+                      <Trophy className="w-5 h-5" />
+                      Start Learning
+                    </button>
+                  ) : null
+                }
+                showDocumentInfo={true}
+                showAddDocumentButton={true}
+                showStartLearningButton={false}
+                readOnly={isReadOnlyMode}
+                isDemo={isReadOnlyMode}
+              />
+            )}
+
+            {currentView === 'quiz-config' && (
+              <QuizConfigView
+                questions={displayQuestions}
+                attempts={questionAttemptsHook.attempts}
+                onStartQuiz={handleStartQuiz}
+                onBack={popView}
+              />
+            )}
+
+            {currentView === 'quiz-insights' && (
+              <QuizInsightsView
+                questions={displayQuestions}
+                attempts={questionAttemptsHook.attempts}
+                onBack={popView}
+              />
+            )}
+
+            {currentView === 'quiz-monetize' && (
+              <QuizMonetizeView
+                onBack={popView}
+              />
+            )}
           </div>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section className="py-16 px-6 bg-gray-50">
+      <section className="py-16 px-6 bg-base-100">
         <div className="container mx-auto max-w-4xl">
-          <h2 className="text-3xl font-bold mb-10 text-center text-gray-900">
+          <h2 className="text-2xl font-bold mb-10 text-center uppercase tracking-wide">
             How It Works
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="border border-base-content/10 p-6 bg-base-100">
+              <div className="bg-primary text-primary-content w-10 h-10 flex items-center justify-center font-bold text-lg mb-3">
                 1
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Upload</h3>
-              <p className="text-sm text-gray-600">Add your document</p>
+              <h3 className="font-semibold mb-2 uppercase text-sm">Upload</h3>
+              <p className="text-sm text-base-content/60">Add your document</p>
             </div>
 
-            <div className="text-center">
-              <div className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-3">
+            <div className="border border-base-content/10 p-6 bg-base-100">
+              <div className="bg-primary text-primary-content w-10 h-10 flex items-center justify-center font-bold text-lg mb-3">
                 2
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Generate</h3>
-              <p className="text-sm text-gray-600">AI creates quiz</p>
+              <h3 className="font-semibold mb-2 uppercase text-sm">Generate</h3>
+              <p className="text-sm text-base-content/60">AI creates quiz</p>
             </div>
 
-            <div className="text-center">
-              <div className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-3">
+            <div className="border border-base-content/10 p-6 bg-base-100">
+              <div className="bg-primary text-primary-content w-10 h-10 flex items-center justify-center font-bold text-lg mb-3">
                 3
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Learn</h3>
-              <p className="text-sm text-gray-600">Track progress</p>
+              <h3 className="font-semibold mb-2 uppercase text-sm">Learn</h3>
+              <p className="text-sm text-base-content/60">Track progress</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6 bg-gradient-to-b from-blue-600 to-blue-700">
+      <section className="py-20 px-6 bg-primary">
         <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="text-4xl font-bold mb-8 text-white">
+          <h2 className="text-3xl font-bold mb-8 text-primary-content uppercase tracking-wide">
             Start Learning Smarter
           </h2>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="btn bg-white hover:bg-gray-100 text-blue-600 border-0 rounded-lg font-semibold px-8 text-base shadow-xl hover:shadow-2xl transition-all"
+            className="btn btn-lg bg-base-100 hover:bg-base-200 text-base-content border-0 font-semibold px-8"
           >
             Try Demo
           </button>
@@ -471,19 +706,19 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="footer footer-center bg-white border-t border-gray-200 text-gray-900 py-8 px-6">
+      <footer className="footer footer-center bg-base-100 border-t border-base-content/10 py-8 px-6">
         <aside>
           <div className="flex items-center gap-2 mb-2">
             <img
               src="/sabuho_logo_3.png"
               alt="Sabuho Logo"
-              className="h-8 w-auto object-contain"
+              className="h-6 w-auto object-contain"
             />
-            <span className="text-xl font-bold tracking-tight">
-              Sabuho<span className="text-blue-600">.</span>
+            <span className="text-lg font-semibold tracking-tight uppercase">
+              Sabuho
             </span>
           </div>
-          <p className="text-gray-500 text-sm">
+          <p className="text-base-content/60 text-xs">
             © {new Date().getFullYear()} Sabuho
           </p>
         </aside>
@@ -513,6 +748,28 @@ export default function HomePage() {
           <button>close</button>
         </form>
       </dialog>
+
+      {/* Process Steps Modal */}
+      <ProcessStepsModal
+        isOpen={showProcessStepsModal}
+        onDone={handleDoneAndClose}
+        onCancel={handleCancelAndClose}
+        uploadedFile={uploadedFile}
+        fileInputRef={fileInputRef}
+        onFileSelect={handleFileSelect}
+        onReset={handleModalFileReset}
+        currentStep={currentStep}
+        isProcessing={isProcessing}
+        processingError={processingError}
+        retryError={retryError}
+        validationError={validationError}
+        currentProcessingState={currentProcessingState}
+        onProcessClick={handleProcess}
+        onRetry={handleRetryWrapper}
+        onClearValidationError={clearValidationError}
+        onClearRetryError={clearRetryError}
+        quizGenerated={quizGenerated}
+      />
     </div>
   );
 }

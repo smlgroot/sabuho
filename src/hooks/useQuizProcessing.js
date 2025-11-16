@@ -17,6 +17,7 @@ export function useQuizProcessing() {
   const [totalQuestionsGenerated, setTotalQuestionsGenerated] = useState(0);
   const [s3Key, setS3Key] = useState(null);
   const [processingError, setProcessingError] = useState(null);
+  const [retryError, setRetryError] = useState(null);
   const [resourceRepositoryId, setResourceRepositoryId] = useState(null);
   const [sessions, setSessions] = useState([]);
   const { trackEvent } = usePostHog();
@@ -77,14 +78,14 @@ export function useQuizProcessing() {
 
   // Separate function for polling and fetching results
   const pollAndFetchResults = async (s3Key, uploadedFile, repositoryId) => {
-    // Use shorter intervals in dev mode for faster testing
+    // Use reasonable intervals to avoid excessive polling
     const isDev = import.meta.env.DEV;
     const pollingConfig = isDev ? {
-      intervalMs: 1000,        // 1 second in dev for more granular updates (vs 2 seconds in prod)
+      intervalMs: 3000,        // 3 seconds in dev (reduced from 1 second to avoid excessive polling)
       timeoutMs: 300000,       // 5 minutes timeout
       maxWaitForRecord: 60000 // 60 seconds to wait for initial record creation
     } : {
-      intervalMs: 2000,
+      intervalMs: 5000,        // 5 seconds in prod (reduced from 2 seconds to be more conservative)
       timeoutMs: 300000,
       maxWaitForRecord: 60000
     };
@@ -200,13 +201,9 @@ export function useQuizProcessing() {
   };
 
   const handleRetry = async () => {
-    if (!s3Key) {
-      alert('No file to retry. Please upload a file first.');
-      return;
-    }
-
     setIsProcessing(true);
     setProcessingError(null);
+    setRetryError(null);
     setCurrentProcessingState("processing");
 
     try {
@@ -234,8 +231,13 @@ export function useQuizProcessing() {
     setTotalQuestionsGenerated(0);
     setS3Key(null);
     setProcessingError(null);
+    setRetryError(null);
     setResourceRepositoryId(null);
     setSessions([]);
+  };
+
+  const clearRetryError = () => {
+    setRetryError(null);
   };
 
   return {
@@ -247,10 +249,12 @@ export function useQuizProcessing() {
     totalQuestionsGenerated,
     s3Key,
     processingError,
+    retryError,
     resourceRepositoryId,
     sessions,
     handleProcessClick,
     handleRetry,
-    resetProcessing
+    resetProcessing,
+    clearRetryError
   };
 }

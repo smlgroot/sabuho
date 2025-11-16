@@ -7,6 +7,7 @@ const HomePage = lazy(() => import('@/pages/HomePage'))
 const AuthPage = lazy(() => import('@/pages/AuthPage'))
 const ConfirmEmailPage = lazy(() => import('@/pages/ConfirmEmailPage'))
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
+const AdminPageV2 = lazy(() => import('@/pages/AdminPageV2'))
 const OnlineGamePage = lazy(() => import('@/pages/OnlineGamePage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
@@ -77,6 +78,14 @@ export const router = createBrowserRouter([
             element: null, // Handled by AdminPage
           },
         ],
+      },
+      {
+        path: 'admin-v2',
+        element: (
+          <LazyPage>
+            <AdminPageV2 />
+          </LazyPage>
+        ),
       },
       {
         path: 'online-game/:attemptId',

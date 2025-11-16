@@ -1,4 +1,4 @@
-import { FileText, CheckCircle, Plus, CheckSquare, ChevronDown, ChevronRight, Trash2, AlertCircle } from "lucide-react";
+import { FileText, Plus, CheckSquare, ChevronDown, ChevronRight, Trash2, AlertCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 export default function QuestionsPanel({
@@ -6,7 +6,11 @@ export default function QuestionsPanel({
   questions,
   selectedTopicIndex,
   totalQuestionsGenerated,
-  questionsCount
+  questionsCount,
+  onUpdateQuestion,
+  onDeleteQuestions,
+  onAddQuestion,
+  readOnly = false
 }) {
   const [editingField, setEditingField] = useState(null);
   const [editValues, setEditValues] = useState({});
@@ -32,12 +36,13 @@ export default function QuestionsPanel({
   }, [editingField]);
 
   const handleEditStart = (questionId, type, value, optionIndex = null) => {
+    if (readOnly) return;
     setEditingField({ questionId, type, optionIndex });
     setEditValues({ [questionId]: value });
   };
 
   const handleEditSave = () => {
-    if (!editingField) return;
+    if (!editingField || readOnly) return;
 
     const { questionId, type, optionIndex } = editingField;
     const newValue = editValues[questionId];
@@ -54,14 +59,20 @@ export default function QuestionsPanel({
       }
       setLocalQuestions(updatedLocalQuestions);
     } else {
-      // It's an existing question
+      // It's an existing question - notify parent
       const questionIndex = questions.findIndex(q => q.id === questionId);
       if (questionIndex !== -1) {
+        const updatedQuestion = { ...questions[questionIndex] };
         if (type === 'body') {
-          questions[questionIndex].body = newValue;
+          updatedQuestion.body = newValue;
         } else if (type === 'option') {
-          const isCorrect = questions[questionIndex].options[optionIndex].includes('[correct]');
-          questions[questionIndex].options[optionIndex] = isCorrect ? `${newValue} [correct]` : newValue;
+          const isCorrect = updatedQuestion.options[optionIndex].includes('[correct]');
+          updatedQuestion.options = [...updatedQuestion.options];
+          updatedQuestion.options[optionIndex] = isCorrect ? `${newValue} [correct]` : newValue;
+        }
+        // Call parent callback
+        if (onUpdateQuestion) {
+          onUpdateQuestion(updatedQuestion);
         }
       }
     }
@@ -71,6 +82,8 @@ export default function QuestionsPanel({
   };
 
   const handleCorrectAnswerChange = (questionId, optionIndex) => {
+    if (readOnly) return;
+
     // Check if it's a new question (local)
     const localIndex = localQuestions.findIndex(q => q.id === questionId);
     if (localIndex !== -1) {
@@ -85,17 +98,19 @@ export default function QuestionsPanel({
         setLocalQuestions(updatedLocalQuestions);
       }
     } else {
-      // It's an existing question
+      // It's an existing question - notify parent
       const questionIndex = questions.findIndex(q => q.id === questionId);
       if (questionIndex !== -1 && questions[questionIndex].options) {
-        // Remove [correct] from all options
-        questions[questionIndex].options = questions[questionIndex].options.map(opt =>
+        const updatedQuestion = { ...questions[questionIndex] };
+        updatedQuestion.options = updatedQuestion.options.map(opt =>
           opt.replace(' [correct]', '').replace('[correct]', '').trim()
         );
-        // Add [correct] to the selected option
-        questions[questionIndex].options[optionIndex] = `${questions[questionIndex].options[optionIndex]} [correct]`;
-        // Force re-render
-        setEditingField({ ...editingField });
+        updatedQuestion.options[optionIndex] = `${updatedQuestion.options[optionIndex]} [correct]`;
+
+        // Call parent callback
+        if (onUpdateQuestion) {
+          onUpdateQuestion(updatedQuestion);
+        }
       }
     }
   };
@@ -217,16 +232,15 @@ export default function QuestionsPanel({
     const updatedLocalQuestions = localQuestions.filter(q => !selectedQuestions.has(q.id));
     setLocalQuestions(updatedLocalQuestions);
 
-    // Filter out selected questions from prop questions
-    // Note: This modifies the questions array directly. In a real app, you'd want to handle this differently
-    // For now, we'll just remove them from the local state
-    const selectedIds = Array.from(selectedQuestions);
-    selectedIds.forEach(id => {
-      const index = questions.findIndex(q => q.id === id);
-      if (index !== -1) {
-        questions.splice(index, 1);
-      }
+    // Get IDs of questions to delete from the main questions array
+    const questionsToDelete = Array.from(selectedQuestions).filter(id => {
+      return questions.some(q => q.id === id);
     });
+
+    // Notify parent to delete questions
+    if (questionsToDelete.length > 0 && onDeleteQuestions) {
+      onDeleteQuestions(questionsToDelete);
+    }
 
     // Clear selection and close dialog
     setSelectedQuestions(new Set());
@@ -237,7 +251,9 @@ export default function QuestionsPanel({
     setShowDeleteDialog(false);
   };
 
-  const handleAddQuestion = () => {
+  const handleAddQuestionClick = () => {
+    if (readOnly) return;
+
     const newQuestion = {
       id: `new-${Date.now()}`,
       body: "New question - click to edit",
@@ -261,6 +277,11 @@ export default function QuestionsPanel({
       [newQuestion.id]: true
     }));
 
+    // Notify parent if callback provided
+    if (onAddQuestion) {
+      onAddQuestion(newQuestion);
+    }
+
     // Optionally start editing immediately
     setTimeout(() => {
       handleEditStart(newQuestion.id, 'body', newQuestion.body);
@@ -280,48 +301,50 @@ export default function QuestionsPanel({
         </div>
 
         {/* Toolbar */}
-        <div className="flex items-center gap-2">
-          <button
-            className="btn btn-sm btn-ghost gap-2"
-            onClick={handleAddQuestion}
-            title="Add a new question"
-            disabled={selectMode}
-          >
-            <Plus className="w-4 h-4" />
-            Add Question
-          </button>
+        {!readOnly && (
+          <div className="flex items-center gap-2">
+            <button
+              className="btn btn-sm btn-ghost gap-2"
+              onClick={handleAddQuestionClick}
+              title="Add a new question"
+              disabled={selectMode}
+            >
+              <Plus className="w-4 h-4" />
+              Add Question
+            </button>
 
-          <button
-            className={`btn btn-sm ${selectMode ? 'btn-primary' : 'btn-ghost'} gap-2`}
-            onClick={toggleSelectMode}
-            title="Toggle select mode"
-          >
-            <CheckSquare className="w-4 h-4" />
-            {selectMode ? 'Exit Select' : 'Select Mode'}
-          </button>
+            <button
+              className={`btn btn-sm ${selectMode ? 'btn-primary' : 'btn-ghost'} gap-2`}
+              onClick={toggleSelectMode}
+              title="Toggle select mode"
+            >
+              <CheckSquare className="w-4 h-4" />
+              {selectMode ? 'Exit Select' : 'Select Mode'}
+            </button>
 
-          <button
-            className="btn btn-sm btn-ghost gap-2"
-            onClick={handleCollapseExpandAll}
-            title="Collapse or expand all questions"
-            disabled={selectMode}
-          >
-            {filteredQuestions.every(q => expandedQuestions[q.id]) ? (
-              <>
-                <ChevronRight className="w-4 h-4" />
-                Collapse All
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-4 h-4" />
-                Expand All
-              </>
-            )}
-          </button>
-        </div>
+            <button
+              className="btn btn-sm btn-ghost gap-2"
+              onClick={handleCollapseExpandAll}
+              title="Collapse or expand all questions"
+              disabled={selectMode}
+            >
+              {filteredQuestions.every(q => expandedQuestions[q.id]) ? (
+                <>
+                  <ChevronRight className="w-4 h-4" />
+                  Collapse All
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  Expand All
+                </>
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Select Mode Toolbar */}
-        {selectMode && (
+        {selectMode && !readOnly && (
           <div className="mt-3 pt-3 border-t border-primary/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <button
@@ -374,23 +397,25 @@ export default function QuestionsPanel({
                 >
                   <div className="flex items-start gap-2">
                     {/* Chevron - only visible on hover */}
-                    <button
-                      onClick={() => toggleQuestionExpand(q.id)}
-                      className={`flex-shrink-0 mt-1 transition-opacity ${
-                        isHovered ? 'opacity-100' : 'opacity-0'
-                      }`}
-                      title={isExpanded ? "Collapse answers" : "Expand answers"}
-                      disabled={selectMode}
-                    >
-                      {isExpanded ? (
-                        <ChevronDown className="w-4 h-4 text-gray-500" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-gray-500" />
-                      )}
-                    </button>
+                    {!readOnly && (
+                      <button
+                        onClick={() => toggleQuestionExpand(q.id)}
+                        className={`flex-shrink-0 mt-1 transition-opacity ${
+                          isHovered ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        title={isExpanded ? "Collapse answers" : "Expand answers"}
+                        disabled={selectMode}
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-gray-500" />
+                        )}
+                      </button>
+                    )}
 
                     {/* Select checkbox - visible in select mode */}
-                    {selectMode && (
+                    {selectMode && !readOnly && (
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -402,10 +427,10 @@ export default function QuestionsPanel({
                     <div className="flex-1 min-w-0">
                       <p
                         className={`font-medium mb-3 px-2 py-1 transition-colors ${
-                          selectMode ? '' : 'cursor-pointer ' + (isEditingBody ? 'bg-base-200' : 'hover:bg-base-200')
+                          readOnly || selectMode ? '' : 'cursor-pointer ' + (isEditingBody ? 'bg-base-200' : 'hover:bg-base-200')
                         }`}
-                        onClick={() => !selectMode && !isEditingBody && handleEditStart(q.id, 'body', q.body)}
-                        title={selectMode ? '' : 'Click to edit question'}
+                        onClick={() => !readOnly && !selectMode && !isEditingBody && handleEditStart(q.id, 'body', q.body)}
+                        title={readOnly || selectMode ? '' : 'Click to edit question'}
                       >
                         <span className="font-bold text-primary">{index + 1}.</span>{' '}
                         {isEditingBody ? (
@@ -426,60 +451,60 @@ export default function QuestionsPanel({
 
                       {/* Answer options - only shown when expanded */}
                       {isExpanded && q.options && q.options.length > 0 && (
-                    <div className="space-y-1 pl-5">
-                      {q.options.map((option, optIdx) => {
-                        const isCorrect = option.includes('[correct]');
-                        const displayText = option.replace('[correct]', '').trim();
-                        const isEditingOption = editingField?.questionId === q.id &&
-                                               editingField?.type === 'option' &&
-                                               editingField?.optionIndex === optIdx;
+                        <div className="space-y-1 pl-5">
+                          {q.options.map((option, optIdx) => {
+                            const isCorrect = option.includes('[correct]');
+                            const displayText = option.replace('[correct]', '').trim();
+                            const isEditingOption = editingField?.questionId === q.id &&
+                                                   editingField?.type === 'option' &&
+                                                   editingField?.optionIndex === optIdx;
 
-                        return (
-                          <div
-                            key={optIdx}
-                            className={`text-sm py-1.5 px-2 flex items-center gap-2 ${
-                              isEditingOption
-                                ? (isCorrect ? 'font-semibold text-success bg-base-200' : 'bg-base-200')
-                                : (isCorrect ? 'font-semibold text-success bg-base-200' : '')
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isCorrect}
-                              onChange={() => !selectMode && handleCorrectAnswerChange(q.id, optIdx)}
-                              className="checkbox checkbox-success checkbox-sm flex-shrink-0"
-                              title={selectMode ? '' : 'Mark as correct answer'}
-                              disabled={selectMode}
-                            />
-                            <span className="flex-shrink-0">{String.fromCharCode(65 + optIdx)}.</span>
-                            {isEditingOption ? (
-                              <input
-                                ref={inputRef}
-                                type="text"
-                                value={editValues[q.id]}
-                                onChange={(e) => handleValueChange(q.id, e.target.value)}
-                                onBlur={handleEditSave}
-                                onKeyDown={handleKeyDown}
-                                className={`bg-transparent border-none outline-none flex-1 px-1 text-sm ${
-                                  isCorrect ? 'font-semibold text-success' : ''
+                            return (
+                              <div
+                                key={optIdx}
+                                className={`text-sm py-1.5 px-2 flex items-center gap-2 ${
+                                  isEditingOption
+                                    ? (isCorrect ? 'font-semibold text-success bg-base-200' : 'bg-base-200')
+                                    : (isCorrect ? 'font-semibold text-success bg-base-200' : '')
                                 }`}
-                                style={{ margin: 0 }}
-                              />
-                            ) : (
-                              <span
-                                className={`px-1 transition-colors flex-1 ${
-                                  selectMode ? '' : 'cursor-pointer hover:bg-base-200'
-                                }`}
-                                onClick={() => !selectMode && handleEditStart(q.id, 'option', displayText, optIdx)}
-                                title={selectMode ? '' : 'Click to edit option'}
                               >
-                                {displayText}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
+                                <input
+                                  type="checkbox"
+                                  checked={isCorrect}
+                                  onChange={() => !readOnly && !selectMode && handleCorrectAnswerChange(q.id, optIdx)}
+                                  className="checkbox checkbox-success checkbox-sm flex-shrink-0"
+                                  title={readOnly || selectMode ? '' : 'Mark as correct answer'}
+                                  disabled={readOnly || selectMode}
+                                />
+                                <span className="flex-shrink-0">{String.fromCharCode(65 + optIdx)}.</span>
+                                {isEditingOption ? (
+                                  <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={editValues[q.id]}
+                                    onChange={(e) => handleValueChange(q.id, e.target.value)}
+                                    onBlur={handleEditSave}
+                                    onKeyDown={handleKeyDown}
+                                    className={`bg-transparent border-none outline-none flex-1 px-1 text-sm ${
+                                      isCorrect ? 'font-semibold text-success' : ''
+                                    }`}
+                                    style={{ margin: 0 }}
+                                  />
+                                ) : (
+                                  <span
+                                    className={`px-1 transition-colors flex-1 ${
+                                      readOnly || selectMode ? '' : 'cursor-pointer hover:bg-base-200'
+                                    }`}
+                                    onClick={() => !readOnly && !selectMode && handleEditStart(q.id, 'option', displayText, optIdx)}
+                                    title={readOnly || selectMode ? '' : 'Click to edit option'}
+                                  >
+                                    {displayText}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   </div>
